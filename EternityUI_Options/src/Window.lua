@@ -83,11 +83,17 @@ local function buildSidebar(frame)
     version:SetPoint("BOTTOMLEFT", logo, "BOTTOMRIGHT", 8, 3)
     version:SetText(E.version)
 
-    -- The page list scrolls when it doesn't fit above the profile line (many modules, or a
-    -- small options scale).
+    -- The active profile, on the logo's line and flush right; cut with "..." if it's long.
+    chrome.profile = Widgets.Text(frame, 13, "muted")
+    chrome.profile:SetPoint("BOTTOMLEFT", version, "BOTTOMRIGHT", 8, 0)
+    chrome.profile:SetPoint("RIGHT", frame, "LEFT", SIDEBAR - 16, 0)
+    chrome.profile:SetJustifyH("RIGHT")
+    chrome.profile:SetWordWrap(false)
+
+    -- The page list scrolls when it doesn't fit (many modules, or a small options scale).
     local nav = Widgets.Scroll(frame)
     nav:SetPoint("TOPLEFT", 0, -60)
-    nav:SetPoint("BOTTOMRIGHT", frame, "BOTTOMLEFT", SIDEBAR - 4, 44)
+    nav:SetPoint("BOTTOMRIGHT", frame, "BOTTOMLEFT", SIDEBAR - 4, 16)
     chrome.nav = nav
 
     local y = 0
@@ -107,9 +113,6 @@ local function buildSidebar(frame)
         y = y - 36
     end
     nav:SetContentHeight(-y)
-
-    chrome.profile = Widgets.Text(frame, 13, "muted")
-    chrome.profile:SetPoint("BOTTOMLEFT", 22, 18)
 
     local line = Widgets.Rect(frame, Theme.colors.line)
     line:SetPoint("TOPLEFT", SIDEBAR, 0)
