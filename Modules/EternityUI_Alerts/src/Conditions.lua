@@ -1,5 +1,5 @@
--- When a rule may show: its class, level, group, place and the moments it hides in. Nobody needs a
--- reminder while dead, so that one isn't an option.
+-- When a rule may show: its class, level, group, place, combat and the moments it hides in. Nobody
+-- needs a reminder while dead, so that one isn't an option.
 
 ---@type string, EternityUIAlertsNamespace
 local _, ns = ...
@@ -46,7 +46,10 @@ local GROUPS = {
 ---@param context table from Context
 ---@return boolean
 function Conditions.Passes(rule, context)
-    if context.dead or (rule.hideCombat and context.combat) then
+    if context.dead then
+        return false
+    end
+    if (rule.combat == "out" and context.combat) or (rule.combat == "in" and not context.combat) then
         return false
     end
     if (rule.hideResting and context.resting) or (rule.hideMounted and context.mounted) then

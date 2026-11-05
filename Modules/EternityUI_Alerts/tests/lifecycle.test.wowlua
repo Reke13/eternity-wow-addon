@@ -29,7 +29,7 @@ local function rule(fields)
         place = "any",
         hideResting = false,
         hideMounted = false,
-        hideCombat = false,
+        combat = "any",
     }
     for key, value in pairs(fields or {}) do
         base[key] = value
@@ -64,7 +64,9 @@ local function conditions()
     expect(passes(rule({ group = "solo" }), context())).toBe(true)
     expect(passes(rule({ place = "instance" }), context())).toBe(false)
     expect(passes(rule({ place = "world" }), context({ instance = true }))).toBe(false)
-    expect(passes(rule({ hideCombat = true }), context({ combat = true }))).toBe(false)
+    expect(passes(rule({ combat = "out" }), context({ combat = true }))).toBe(false)
+    expect(passes(rule({ combat = "in" }), context())).toBe(false)
+    expect(passes(rule({ combat = "in" }), context({ combat = true }))).toBe(true)
     expect(passes(rule({ hideMounted = true }), context({ mounted = true }))).toBe(false)
     expect(passes(rule({ hideResting = true }), context({ resting = true }))).toBe(false)
 end

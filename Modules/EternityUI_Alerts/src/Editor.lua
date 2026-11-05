@@ -151,10 +151,11 @@ local function buildForm(view)
         end
     end
 
-    -- field: { frame, kinds = { kind = true } or nil, load = fun(rule) }
-    local function add(frame, kinds, load)
+    -- field: { frame, kinds = { kind = true } or nil, load = fun(rule), when = fun(rule): boolean }
+    -- when: shown only if it returns true (fields that make no sense with another field's value).
+    local function add(frame, kinds, load, when)
         frame:SetParent(form)
-        form.fields[#form.fields + 1] = { frame = frame, kinds = kinds, load = load }
+        form.fields[#form.fields + 1] = { frame = frame, kinds = kinds, load = load, when = when }
     end
 
     local function heading(text)
@@ -178,11 +179,11 @@ local function buildForm(view)
         return box
     end
 
-    local function textField(label, key, placeholder, kinds)
+    local function textField(label, key, placeholder, kinds, when)
         local box = input(key, placeholder)
         add(Widgets.Row(form, label, box), kinds, function(rule)
             box:SetText(rule[key])
-        end)
+        end, when)
     end
 
     local function dropdown(label, key, list, kinds, after)
@@ -197,13 +198,18 @@ local function buildForm(view)
         end)
     end
 
-    local function toggle(label, key, kinds)
+    local function toggle(label, key, kinds, when)
         local control = Widgets.Toggle(form, function(value)
             set(key, value)
         end)
         add(Widgets.Row(form, label, control), kinds, function(rule)
             control:SetValue(rule[key])
-        end)
+        end, when)
+    end
+
+    -- The icons can't be clicked in combat (they're secure buttons): no click fields then.
+    local function clickable(rule)
+        return rule.combat ~= "in"
     end
 
     local function slider(label, key, min, max, format, kinds)
@@ -252,8 +258,8 @@ local function buildForm(view)
         spells:SetText(rule.spells)
     end)
 
-    toggle(L.FIELD_CLICK, "click", { buff = true })
-    textField(L.FIELD_CLICK_USE, "clickUse", L.CLICK_USE_HINT, { buff = true })
+    toggle(L.FIELD_CLICK, "click", { buff = true }, clickable)
+    textField(L.FIELD_CLICK_USE, "clickUse", L.CLICK_USE_HINT, { buff = true }, clickable)
     textField(L.FIELD_ITEM, "item", L.ITEM_HINT, { item = true })
     dropdown(L.FIELD_SLOT, "slot", choices("SLOT_", { "both", "main", "off" }), { enchant = true })
 
@@ -275,9 +281,22 @@ local function buildForm(view)
     end)
     dropdown(L.FIELD_GROUP, "group", choices("GROUP_", { "any", "solo", "group", "raid" }))
     dropdown(L.FIELD_PLACE, "place", choices("PLACE_", { "any", "instance", "world" }))
+    dropdown(L.FIELD_COMBAT, "combat", choices("COMBAT_", { "out", "any", "in" }), nil, function()
+        view:Refresh()
+    end)
+    -- Buff rules that show in combat: what they can't know there.
+    local note = CreateFrame("Frame", nil, form)
+    note:SetHeight(34)
+    local noteText = Widgets.Text(note, 12, "muted")
+    noteText:SetPoint("TOPLEFT", 0, -4)
+    noteText:SetPoint("RIGHT")
+    noteText:SetJustifyH("LEFT")
+    noteText:SetText(L.COMBAT_BUFF_HINT)
+    add(note, { buff = true }, nil, function(rule)
+        return rule.combat ~= "out"
+    end)
     toggle(L.HIDE_RESTING, "hideResting")
     toggle(L.HIDE_MOUNTED, "hideMounted")
-    toggle(L.HIDE_COMBAT, "hideCombat")
 
     heading(L.LOOK)
     toggle(L.FIELD_GLOW, "glow")
@@ -292,7 +311,7 @@ local function buildForm(view)
     function form.Load(rule)
         local y = 0
         for _, field in ipairs(form.fields) do
-            local shown = not field.kinds or field.kinds[rule.kind]
+            local shown = (not field.kinds or field.kinds[rule.kind]) and (not field.when or field.when(rule))
             field.frame:SetShown(shown and true or false)
             if shown then
                 if field.load then
