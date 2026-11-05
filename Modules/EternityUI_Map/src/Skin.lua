@@ -61,16 +61,13 @@ local function borderRegions(map)
     }
 end
 
+-- The quest details page keeps its parchment: Blizzard writes its texts in dark ink.
 local function questRegions()
     local quest, scroll = _G.QuestMapFrame, _G.QuestScrollFrame
     local list = {}
     if quest then
         list[#list + 1] = quest.VerticalSeparator
         list[#list + 1] = quest.Background
-        if quest.DetailsFrame then
-            list[#list + 1] = quest.DetailsFrame.BackFrame
-            list[#list + 1] = quest.DetailsFrame.Bg
-        end
     end
     if scroll then
         list[#list + 1] = scroll.Background

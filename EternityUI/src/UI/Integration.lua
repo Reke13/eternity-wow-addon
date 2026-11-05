@@ -22,15 +22,17 @@ local function registerCompartment()
     })
 end
 
--- Closes Blizzard's options (Eternity's window would open behind them) and shows Eternity's,
--- without closing it if it's already open.
+-- Shows Eternity's window over Blizzard's options, without closing it if it's already open.
+-- Blizzard's options stay open: closing them from here would run their OnHide (bindings, micro
+-- buttons) tainted by this click.
 local function openFromSettings()
-    if SettingsPanel and SettingsPanel:IsShown() then
-        HideUIPanel(SettingsPanel)
-    end
     local window = EternityUI.OptionsWindow
     if not (window and window.frame and window.frame:IsShown()) then
         EternityUI:ToggleOptions()
+    end
+    window = EternityUI.OptionsWindow
+    if window and window.frame then
+        window.frame:Raise()
     end
 end
 

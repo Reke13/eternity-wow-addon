@@ -52,7 +52,12 @@ ns.CoreOptions = {
                         "neon",
                         "nightcity",
                         "void",
-                        "graphite"
+                        "graphite",
+                        "bubblegum",
+                        "sakura",
+                        "fuchsia",
+                        "cottoncandy",
+                        "borahae"
                     ),
                 },
                 {
@@ -76,6 +81,9 @@ ns.CoreOptions = {
                 },
                 { id = "fontScale", type = "range", default = 1, min = 0.8, max = 1.3, step = 0.05 },
                 { id = "pixelPerfect", type = "toggle", default = false },
+                { id = "wallpaper", type = "toggle", default = false },
+                { id = "wallpaperDim", type = "range", default = 0.6, min = 0.2, max = 0.9, step = 0.05 },
+                { id = "portraits", type = "toggle", default = false },
             },
         },
     },

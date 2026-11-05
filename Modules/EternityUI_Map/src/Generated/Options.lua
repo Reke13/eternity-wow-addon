@@ -326,8 +326,8 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = true,
                     label = {
-                        enUS = "Restyle the quest log panel",
-                        esES = "Estilo en el panel del registro de misiones",
+                        enUS = "Restyle the quest list",
+                        esES = "Estilo en la lista de misiones",
                     },
                     visibleWhen = {
                         ["look.skin"] = true,

@@ -36,7 +36,7 @@ Check every API against what the client exports: [wow-ui-source](https://github.
 - **Secure buttons:** register `LeftButtonUp` and `LeftButtonDown`. `SecureActionButton_OnClick` acts on the press when the `ActionButtonUseKeyDown` CVar is on, so an up-only button does nothing and shows no error. With both registered, set `useOnKeyDown = false` and make wrapper snippets ignore the press, or a click runs twice.
 - **Restricted snippets:** `RunAttribute` scrubs its return values, so a frame handle comes back nil. Return an index and fetch the frame with `GetFrameRef`.
 - **Combat:** protected frames only change out of combat. Queue that work with `EternityUI.Combat.Run`.
-- **Taint:** don't call Blizzard methods that run its panel layout, don't replace Blizzard methods (use `hooksecurefunc` or `HookScript`), and don't use `UISpecialFrames`.
+- **Taint:** don't call Blizzard methods that run its panel or Edit Mode layout, don't write fields on Blizzard's frames and tables, don't replace Blizzard methods (use `hooksecurefunc` or `HookScript`), and don't use `UISpecialFrames`. Tainted code that later meets a secret value errors, and nothing clears it short of `/reload`.
 - **Bag buttons:** never call `ContainerFrameItemButtonMixin:Initialize` from an addon. `SetID` on the parent and on the button is enough.
 - **Textures:** `texture:SetAlpha` replaces the alpha of its vertex color, so put opacity in the color. TGAs have no mipmaps, so a large texture scaled far down comes out jagged.
 - **Fonts:** `FontString:SetText` errors until the string has a font.

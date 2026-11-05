@@ -1,0 +1,18 @@
+-- The module registers and leaves nothing on screen without a theme that has portraits.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Portraits"
+
+@test("the module starts")
+local function starts()
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+end
+
+@test("nothing shows while portraits are off")
+local function hidden()
+    local module: any = EternityUI:GetModule(NAME)
+    module:RefreshAll()
+    for _, overlay in pairs(module.overlays) do
+        expect(overlay:IsShown()).toBe(false)
+    end
+end

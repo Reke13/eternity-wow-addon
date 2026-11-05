@@ -16,7 +16,6 @@ local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
 local L, Inventory = ns.L, ns.Inventory
 
-
 local QUALITY_FROM = { poor = 0, common = 1, uncommon = 2, rare = 3, epic = 4 }
 local QUEST_COLOR = { 1, 0.82, 0.2, 1 }
 local FOOTER_TEXT = 12 -- size of the gold and free slots texts

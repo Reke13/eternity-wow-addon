@@ -31,8 +31,7 @@ function Checks.AurasRestricted()
 end
 
 -- The buffs on the player, by spell ID and by lower case name, each with when it runs out (0: it
--- doesn't). Read by index, the same call the Rules tab lists them with: rules with Thorns or Mark
--- of the Wild never cleared on the client with the lookups by name and ID. A buff without a name or
+-- doesn't). Read by index, the same call the Rules tab lists them with. A buff without a name or
 -- an ID (some zone and system auras) only adds what it has; a secret one is skipped. The durations
 -- seen are kept for the combat estimate.
 ---@return table<number|string, number>?
@@ -115,10 +114,16 @@ function Checks.OnCast(spellID)
     for _, rule in ipairs(Rules.List()) do
         if rule.kind == "buff" and rule.enabled then
             for _, entry in ipairs(Rules.Entries(rule.spells)) do
-                if entry == spellID or (name and (
-                    (type(entry) == "string" and entry:lower() == name)
-                    or (type(entry) == "number" and spellName(entry) == name)
-                )) then
+                if
+                    entry == spellID
+                    or (
+                        name
+                        and (
+                            (type(entry) == "string" and entry:lower() == name)
+                            or (type(entry) == "number" and spellName(entry) == name)
+                        )
+                    )
+                then
                     matched = true
                 end
             end
