@@ -28,7 +28,7 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_InfoBar` | Information bar |
 | `EternityUI_Map` | World map |
 | `EternityUI_Minimap` | Minimap and button collector |
-| `EternityUI_Objectives` | Objective tracker |
+| `EternityUI_Objectives` | Quest tracker |
 | `EternityUI_Stats` | Detailed stats panel |
 | `EternityUI_Tooltip` | Tooltips |
 

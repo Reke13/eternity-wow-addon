@@ -5,8 +5,8 @@ ns.OptionsSchema = {
     format = 1,
     module = "EternityUI_Objectives",
     title = {
-        enUS = "Objectives",
-        esES = "Objetivos",
+        enUS = "Quests",
+        esES = "Misiones",
     },
     description = {
         enUS = "Blizzard's quest and objective tracker with the Eternity look. Its position, height and text size stay in Blizzard's Edit Mode.",
@@ -562,8 +562,9 @@ ns.OptionsSchema = {
                         enUS = "Title",
                         esES = "Título",
                     },
-                    visibleWhen = {
-                        ["colors.mode"] = "theme",
+                    description = {
+                        enUS = "Quest titles with theme colors, and the smaller section headers in every mode.",
+                        esES = "Títulos de misión con los colores del tema, y las cabeceras de sección pequeñas en cualquier modo.",
                     },
                 },
                 {
@@ -586,6 +587,12 @@ ns.OptionsSchema = {
                         enUS = "Objective",
                         esES = "Objetivo",
                     },
+                    visibleWhen = {
+                        ["colors.mode"] = {
+                            "difficulty",
+                            "theme",
+                        },
+                    },
                 },
                 {
                     id = "objectiveHover",
@@ -594,6 +601,12 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Objective on hover",
                         esES = "Objetivo al pasar el ratón",
+                    },
+                    visibleWhen = {
+                        ["colors.mode"] = {
+                            "difficulty",
+                            "theme",
+                        },
                     },
                 },
                 {
@@ -604,6 +617,12 @@ ns.OptionsSchema = {
                         enUS = "Objective done",
                         esES = "Objetivo terminado",
                     },
+                    visibleWhen = {
+                        ["colors.mode"] = {
+                            "difficulty",
+                            "theme",
+                        },
+                    },
                 },
                 {
                     id = "ready",
@@ -613,6 +632,12 @@ ns.OptionsSchema = {
                         enUS = "Quest ready to turn in",
                         esES = "Misión lista para entregar",
                     },
+                    visibleWhen = {
+                        ["colors.mode"] = {
+                            "difficulty",
+                            "theme",
+                        },
+                    },
                 },
                 {
                     id = "failed",
@@ -621,6 +646,12 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Failed or running out",
                         esES = "Fallido o a punto de acabar",
+                    },
+                    visibleWhen = {
+                        ["colors.mode"] = {
+                            "difficulty",
+                            "theme",
+                        },
                     },
                 },
                 {
@@ -640,6 +671,9 @@ ns.OptionsSchema = {
                         enUS = "Section header",
                         esES = "Cabecera de sección",
                     },
+                    visibleWhen = {
+                        ["look.headers"] = true,
+                    },
                 },
                 {
                     id = "bar",
@@ -649,6 +683,9 @@ ns.OptionsSchema = {
                         enUS = "Progress bar",
                         esES = "Barra de progreso",
                     },
+                    visibleWhen = {
+                        ["look.bars"] = true,
+                    },
                 },
                 {
                     id = "flash",
@@ -657,6 +694,9 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Completion flash",
                         esES = "Destello al completar",
+                    },
+                    visibleWhen = {
+                        ["feedback.flash"] = true,
                     },
                 },
             },

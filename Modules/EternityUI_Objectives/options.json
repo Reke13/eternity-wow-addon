@@ -1,7 +1,7 @@
 {
   "format": 1,
   "module": "EternityUI_Objectives",
-  "title": { "enUS": "Objectives", "esES": "Objetivos" },
+  "title": { "enUS": "Quests", "esES": "Misiones" },
   "description": {
     "enUS": "Blizzard's quest and objective tracker with the Eternity look. Its position, height and text size stay in Blizzard's Edit Mode.",
     "esES": "El seguimiento de misiones de Blizzard con el estilo de Eternity. Posición, alto y tamaño de texto: Modo Edición de Blizzard."
@@ -213,17 +213,17 @@
             { "value": "blizzard", "label": { "enUS": "Blizzard's", "esES": "Los de Blizzard" } }
           ]
         },
-        { "id": "title", "type": "color", "default": "@text", "label": { "enUS": "Title", "esES": "Título" }, "visibleWhen": { "colors.mode": "theme" } },
+        { "id": "title", "type": "color", "default": "@text", "label": { "enUS": "Title", "esES": "Título" }, "description": { "enUS": "Quest titles with theme colors, and the smaller section headers in every mode.", "esES": "Títulos de misión con los colores del tema, y las cabeceras de sección pequeñas en cualquier modo." } },
         { "id": "titleHover", "type": "color", "default": "@accent", "label": { "enUS": "Title on hover", "esES": "Título al pasar el ratón" }, "visibleWhen": { "colors.mode": "theme" } },
-        { "id": "objective", "type": "color", "default": "@textMuted", "label": { "enUS": "Objective", "esES": "Objetivo" } },
-        { "id": "objectiveHover", "type": "color", "default": "@text", "label": { "enUS": "Objective on hover", "esES": "Objetivo al pasar el ratón" } },
-        { "id": "complete", "type": "color", "default": "@success", "label": { "enUS": "Objective done", "esES": "Objetivo terminado" } },
-        { "id": "ready", "type": "color", "default": "@success", "label": { "enUS": "Quest ready to turn in", "esES": "Misión lista para entregar" } },
-        { "id": "failed", "type": "color", "default": "@danger", "label": { "enUS": "Failed or running out", "esES": "Fallido o a punto de acabar" } },
+        { "id": "objective", "type": "color", "default": "@textMuted", "label": { "enUS": "Objective", "esES": "Objetivo" }, "visibleWhen": { "colors.mode": ["difficulty", "theme"] } },
+        { "id": "objectiveHover", "type": "color", "default": "@text", "label": { "enUS": "Objective on hover", "esES": "Objetivo al pasar el ratón" }, "visibleWhen": { "colors.mode": ["difficulty", "theme"] } },
+        { "id": "complete", "type": "color", "default": "@success", "label": { "enUS": "Objective done", "esES": "Objetivo terminado" }, "visibleWhen": { "colors.mode": ["difficulty", "theme"] } },
+        { "id": "ready", "type": "color", "default": "@success", "label": { "enUS": "Quest ready to turn in", "esES": "Misión lista para entregar" }, "visibleWhen": { "colors.mode": ["difficulty", "theme"] } },
+        { "id": "failed", "type": "color", "default": "@danger", "label": { "enUS": "Failed or running out", "esES": "Fallido o a punto de acabar" }, "visibleWhen": { "colors.mode": ["difficulty", "theme"] } },
         { "id": "dash", "type": "color", "default": "@accent", "label": { "enUS": "Objective dash", "esES": "Guion del objetivo" } },
-        { "id": "section", "type": "color", "default": "@accent", "label": { "enUS": "Section header", "esES": "Cabecera de sección" } },
-        { "id": "bar", "type": "color", "default": "@accent", "label": { "enUS": "Progress bar", "esES": "Barra de progreso" } },
-        { "id": "flash", "type": "color", "default": "@accent", "label": { "enUS": "Completion flash", "esES": "Destello al completar" } }
+        { "id": "section", "type": "color", "default": "@accent", "label": { "enUS": "Section header", "esES": "Cabecera de sección" }, "visibleWhen": { "look.headers": true } },
+        { "id": "bar", "type": "color", "default": "@accent", "label": { "enUS": "Progress bar", "esES": "Barra de progreso" }, "visibleWhen": { "look.bars": true } },
+        { "id": "flash", "type": "color", "default": "@accent", "label": { "enUS": "Completion flash", "esES": "Destello al completar" }, "visibleWhen": { "feedback.flash": true } }
       ]
     }
   ]

@@ -13,9 +13,23 @@ ns.ModulePage = ModulePage
 local ROW = 44
 local CAPTION = 30
 
+-- visibleWhen = { [path] = value } or { [path] = { value, value } }: every path must match (one of
+-- its values when there is a list).
+local function matches(value, wanted)
+    if type(wanted) ~= "table" then
+        return value == wanted
+    end
+    for _, candidate in ipairs(wanted) do
+        if value == candidate then
+            return true
+        end
+    end
+    return false
+end
+
 local function isVisible(module, option)
     for path, wanted in pairs(option.visibleWhen or {}) do
-        if E.store:Get(module.name, path) ~= wanted then
+        if not matches(E.store:Get(module.name, path), wanted) then
             return false
         end
     end

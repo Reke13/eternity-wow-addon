@@ -9,7 +9,7 @@
   },
   "addon": {
     "name": "EternityUI_Objectives",
-    "title": "Eternity Objectives",
+    "title": "Eternity Quests",
     "notes": "Eternity module: Blizzard's quest and objective tracker restyled with the Eternity look, with auto fade, hideable sections and completion feedback."
   },
   "addon-dependencies": {
