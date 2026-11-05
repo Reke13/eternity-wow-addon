@@ -69,7 +69,50 @@ local INFO_SLOTS = { "above", "top", "bottom", "below" }
 local function cluster()
     return _G.MinimapCluster
 end
+-- Forever's day and night cycle (the sun and moon on the map's ring) has no name: it's the frame
+-- in MinimapContainer that holds the "UI-HUD-Minimap-Frame-Cycle" texture (Blizzard_Minimap,
+-- Camelot/Diel.lua). Searched once, two levels down.
+local CYCLE_ATLAS = "UI-HUD-Minimap-Frame-Cycle"
+local dayNightFrame
+
+local function hasCycleAtlas(frame, depth)
+    for _, region in ipairs({ frame:GetRegions() }) do
+        if region.GetAtlas and region:GetAtlas() == CYCLE_ATLAS then
+            return true
+        end
+    end
+    if depth > 0 then
+        for _, child in ipairs({ frame:GetChildren() }) do
+            if hasCycleAtlas(child, depth - 1) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function findDayNight()
+    if dayNightFrame then
+        return dayNightFrame
+    end
+    local c = _G.MinimapCluster
+    local container = c and c.MinimapContainer
+    if not container then
+        return nil
+    end
+    for _, child in ipairs({ container:GetChildren() }) do
+        if child ~= Minimap and hasCycleAtlas(child, 1) then
+            dayNightFrame = child
+            return child
+        end
+    end
+    return nil
+end
+
 local BLIZZARD = {
+    dayNight = function()
+        return findDayNight()
+    end,
     zoneText = function()
         -- BorderTop: the header background in Retail.
         local c = cluster()
@@ -335,7 +378,7 @@ end
 
 local ABOVE_MAP = 10 -- frame levels over the map
 
-local PLACEABLE = { "calendar", "tracking", "mail", "difficulty", "compartment", "expansion", "clock" }
+local PLACEABLE = { "dayNight", "calendar", "tracking", "mail", "difficulty", "compartment", "expansion", "clock" }
 
 --- A point on the map's edge for an angle (0 = right, 90 = up), in the map's units from its center.
 ---@param angle number degrees

@@ -223,8 +223,8 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = true,
                     label = {
-                        enUS = "Calendar (sun and moon)",
-                        esES = "Calendario (sol y luna)",
+                        enUS = "Calendar",
+                        esES = "Calendario",
                     },
                 },
                 {
@@ -301,6 +301,15 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Expansion summary button",
                         esES = "Botón del resumen de la expansión",
+                    },
+                },
+                {
+                    id = "dayNight",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Day and night cycle (sun and moon)",
+                        esES = "Ciclo de día y noche (sol y luna)",
                     },
                 },
             },
@@ -718,8 +727,8 @@ ns.OptionsSchema = {
                     type = "select",
                     default = "blizzard",
                     label = {
-                        enUS = "Calendar (sun and moon)",
-                        esES = "Calendario (sol y luna)",
+                        enUS = "Calendar",
+                        esES = "Calendario",
                     },
                     values = {
                         {
@@ -1019,6 +1028,50 @@ ns.OptionsSchema = {
                     },
                     visibleWhen = {
                         ["placement.clock"] = "edge",
+                    },
+                },
+                {
+                    id = "dayNight",
+                    type = "select",
+                    default = "blizzard",
+                    label = {
+                        enUS = "Day and night cycle (sun and moon)",
+                        esES = "Ciclo de día y noche (sol y luna)",
+                    },
+                    values = {
+                        {
+                            value = "blizzard",
+                            label = {
+                                enUS = "Where Blizzard puts it",
+                                esES = "Donde lo pone Blizzard",
+                            },
+                        },
+                        {
+                            value = "edge",
+                            label = {
+                                enUS = "On the map's edge",
+                                esES = "En el borde del mapa",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "dayNightAngle",
+                    type = "range",
+                    default = 57,
+                    min = 0,
+                    max = 359,
+                    step = 1,
+                    label = {
+                        enUS = "Day and night cycle: angle (degrees)",
+                        esES = "Ciclo de día y noche: ángulo (grados)",
+                    },
+                    description = {
+                        enUS = "0 right, 90 top, 180 left, 270 bottom.",
+                        esES = "0 derecha, 90 arriba, 180 izquierda, 270 abajo.",
+                    },
+                    visibleWhen = {
+                        ["placement.dayNight"] = "edge",
                     },
                 },
                 {
