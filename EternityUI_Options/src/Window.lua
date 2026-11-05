@@ -37,10 +37,32 @@ function Window.Show(page)
         end
         other.nav:SetActive(other == page)
     end
+    Window.RevealNav(page)
     chrome.title:SetText(page.title)
     chrome.note:SetText(page.note)
     Window.current = page
     Window.Refresh()
+end
+
+--- Scrolls the page list so the page's entry is in view (it may be opened from elsewhere).
+---@param page table
+function Window.RevealNav(page)
+    local nav = Window.chrome.nav
+    local height = nav and nav:GetHeight() or 0
+    if not page.navTop or height <= 0 then
+        return
+    end
+    local top, bottom = page.navTop, page.navTop + page.nav:GetHeight()
+    local offset = nav:GetVerticalScroll()
+    if top < offset then
+        offset = top
+    elseif bottom > offset + height then
+        offset = bottom - height
+    else
+        return
+    end
+    nav:SetVerticalScroll(offset)
+    nav:SetContentHeight(nav.child:GetHeight()) -- clamps the offset and moves the thumb
 end
 
 --- Updates what the window shows from the current state.
@@ -61,21 +83,30 @@ local function buildSidebar(frame)
     version:SetPoint("BOTTOMLEFT", logo, "BOTTOMRIGHT", 8, 3)
     version:SetText(E.version)
 
-    local y = -60
+    -- The page list scrolls when it doesn't fit above the profile line (many modules, or a
+    -- small options scale).
+    local nav = Widgets.Scroll(frame)
+    nav:SetPoint("TOPLEFT", 0, -60)
+    nav:SetPoint("BOTTOMRIGHT", frame, "BOTTOMLEFT", SIDEBAR - 4, 44)
+    chrome.nav = nav
+
+    local y = 0
     for _, page in ipairs(Window.pages) do
         if page.module and not chrome.section then
-            chrome.section = Widgets.Text(frame, 13, "muted")
+            chrome.section = Widgets.Text(nav.child, 13, "muted")
             chrome.section:SetPoint("TOPLEFT", 22, y - 12)
             chrome.section:SetText(L.MODULES:upper())
             y = y - 34
         end
-        page.nav = Widgets.Button(frame, page.title, "nav", function()
+        page.nav = Widgets.Button(nav.child, page.title, "nav", function()
             Window.Show(page)
         end)
         page.nav:SetPoint("TOPLEFT", 12, y)
         page.nav:SetWidth(SIDEBAR - 24)
+        page.navTop = -y
         y = y - 36
     end
+    nav:SetContentHeight(-y)
 
     chrome.profile = Widgets.Text(frame, 13, "muted")
     chrome.profile:SetPoint("BOTTOMLEFT", 22, 18)
