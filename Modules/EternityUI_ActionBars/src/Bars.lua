@@ -333,17 +333,19 @@ local function arrangeLoose(bar)
     fitGrid(frame, #shown, perRow, width, height, spacing)
 end
 
--- Totem and extra: Blizzard's frames stacked top to bottom, centered.
+-- Totem and extra: Blizzard's frames stacked top to bottom, centered (the extra bar with its
+-- Spacing between them).
 local function arrangeHolder(bar)
     local frame = bar.frame
+    local gap = bar.id == "extra" and opt("extra.spacing") or 0
     local width, height = 0, 0
-    for _, held in ipairs(bar.buttons) do
+    for i, held in ipairs(bar.buttons) do
         local w, h = held:GetSize()
         width = math.max(width, w)
         held:SetParent(frame)
         held:ClearAllPoints()
         held:SetPoint("TOP", frame, "TOP", 0, -height)
-        height = height + h
+        height = height + h + (i < #bar.buttons and held:IsShown() and gap or 0)
     end
     frame:SetSize(math.max(width, EMPTY_HOLDER), math.max(height, EMPTY_HOLDER))
 end
@@ -366,6 +368,10 @@ function Bars:Arrange(bar)
     bar.arranging = true
     local source = bar.kind and ns.Sources[bar.kind]
     local ok, err = pcall(ns.Sources.Quietly, function()
+        -- Prepare: the source's own layout inside its frames, before they're measured.
+        if source and source.Prepare then
+            source.Prepare(bar)
+        end
         if bar.holder then
             arrangeHolder(bar)
         elseif bar.plain then

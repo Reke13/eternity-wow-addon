@@ -278,6 +278,59 @@ local function artOf(frame)
     return frame.Style
 end
 
+-- The zone ability buttons Blizzard shows now, left to right.
+local function zoneButtons()
+    local frame = _G.ZoneAbilityFrame
+    local container = frame and frame.SpellButtonContainer
+    local list = {}
+    if not container then
+        return list, nil
+    end
+    for _, child in ipairs({ container:GetChildren() }) do
+        if child:IsShown() and ns.Style.CanSkin(child) then
+            list[#list + 1] = child
+        end
+    end
+    table.sort(list, function(a, b)
+        return (a:GetLeft() or 0) < (b:GetLeft() or 0)
+    end)
+    return list, container
+end
+
+-- The extra button and the zone ability buttons: Eternity's look (or Blizzard's back) and our
+-- spacing between the zone buttons, in a row. Blizzard lays the row out again when the abilities
+-- change; the hook in Install sends the bar back here (out of combat: the buttons are secure).
+local function prepareExtra()
+    local skin = opt("extra.skin")
+    local buttons, container = zoneButtons()
+    local extra = _G.ExtraActionButton1
+    if extra then
+        buttons[#buttons + 1] = extra
+    end
+    for _, button in ipairs(buttons) do
+        if skin then
+            ns.Style:Apply(button, button:GetWidth())
+        else
+            ns.Style:Remove(button)
+        end
+    end
+    if extra then
+        buttons[#buttons] = nil
+    end
+    if not container or #buttons == 0 then
+        return
+    end
+    local gap = opt("extra.spacing")
+    local x, height = 0, 0
+    for i, button in ipairs(buttons) do
+        button:ClearAllPoints()
+        button:SetPoint("TOPLEFT", container, "TOPLEFT", x, 0)
+        x = x + button:GetWidth() + (i < #buttons and gap or 0)
+        height = math.max(height, button:GetHeight())
+    end
+    container:SetSize(x, height)
+end
+
 Sources.extra = {
     List = function()
         local list = {}
@@ -297,6 +350,7 @@ Sources.extra = {
             frame.ignoreInLayout = true
         end
     end,
+    Prepare = prepareExtra,
     -- After every layout: the art follows the option.
     Arrange = function(bar)
         for _, frame in ipairs(bar.buttons) do
@@ -309,6 +363,16 @@ Sources.extra = {
     end,
     -- Back into ExtraAbilityContainer if Blizzard still lists the frame there (it shows it).
     Return = function(bar)
+        local buttons, row = zoneButtons()
+        for _, button in ipairs(buttons) do
+            ns.Style:Remove(button)
+        end
+        if _G.ExtraActionButton1 then
+            ns.Style:Remove(_G.ExtraActionButton1)
+        end
+        if row and row.Layout then
+            row:Layout()
+        end
         local container = _G.ExtraAbilityContainer
         for art, alpha in pairs(extraArt) do
             art:SetAlpha(alpha)
@@ -331,6 +395,15 @@ Sources.extra = {
     Install = function(bar)
         for _, frame in ipairs(Sources.extra.List()) do
             Sources.Guard(frame)
+        end
+        local zone = _G.ZoneAbilityFrame
+        if zone and zone.UpdateDisplayedZoneAbilities and not Sources.zoneHooked then
+            Sources.zoneHooked = true
+            hooksecurefunc(zone, "UpdateDisplayedZoneAbilities", function()
+                if Bars.running and bar.taken then
+                    Bars:Arrange(bar)
+                end
+            end)
         end
     end,
 }

@@ -4033,6 +4033,35 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "skin",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Look like the action buttons",
+                        esES = "Aspecto de los botones de acción",
+                    },
+                    description = {
+                        enUS = "Shape, border (thickness, color, class color) and backdrop from the Appearance tab. Off, Blizzard's look.",
+                        esES = "Forma, borde (grosor, color, color de clase) y fondo de la pestaña Apariencia. Desactivado, el aspecto de Blizzard.",
+                    },
+                },
+                {
+                    id = "spacing",
+                    type = "range",
+                    default = 4,
+                    min = 0,
+                    max = 30,
+                    step = 1,
+                    label = {
+                        enUS = "Spacing",
+                        esES = "Separación",
+                    },
+                    description = {
+                        enUS = "Between the zone ability buttons, and between the extra button and them. Applied out of combat.",
+                        esES = "Entre los botones de habilidad de zona, y entre el botón extra y ellos. Se aplica fuera de combate.",
+                    },
+                },
+                {
                     id = "scale",
                     type = "range",
                     default = 1,
