@@ -16,7 +16,6 @@ local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
 local L, Inventory = ns.L, ns.Inventory
 
-local CONTROL_HEIGHT = 32
 
 local QUALITY_FROM = { poor = 0, common = 1, uncommon = 2, rare = 3, epic = 4 }
 local QUEST_COLOR = { 1, 0.82, 0.2, 1 }
@@ -448,13 +447,20 @@ end
 --- Toolbar and footer around the content; the window's size. There is no header: the menu and
 --- close buttons sit at the end of the toolbar.
 function Grid:LayoutChrome(width, height)
-    local w, pad, edge = self.frame, opt("window.padding"), opt("window.toolbarPadding")
+    local w, pad, control = self.frame, opt("window.padding"), opt("window.toolbarHeight")
     local toolbar = self.toolbar
     toolbar:ClearAllPoints()
-    toolbar:SetPoint("TOPLEFT", w.body, "TOPLEFT", edge, -edge)
-    toolbar:SetSize(width + 2 * (pad - edge), CONTROL_HEIGHT)
+    toolbar:SetPoint("TOPLEFT", w.body, "TOPLEFT", pad, -pad)
+    toolbar:SetSize(width, control)
+    self.search:SetHeight(control)
+    self.sort:SetHeight(control)
+    self.menu:SetSize(control, control)
+    w.close:SetSize(control, control)
     local left = 0
     if self.tabs then
+        self.tabs.buttonHeight = control
+        self.tabs:SetHeight(control)
+        self.tabs:Paint()
         self.tabs:SetShown(self.tabs.count > 1)
         if self.tabs.count > 1 then
             left = self.tabs:GetWidth() + 8
@@ -470,8 +476,8 @@ function Grid:LayoutChrome(width, height)
     self.search:SetPoint("LEFT", toolbar, "LEFT", left, 0)
     self.search:SetPoint("RIGHT", self.sort, "LEFT", -8, 0)
     self.content:ClearAllPoints()
-    self.content:SetPoint("TOPLEFT", w.body, "TOPLEFT", pad, -(edge + CONTROL_HEIGHT + pad))
-    w:SetSize(width + 2 * pad, edge + CONTROL_HEIGHT + height + 2 * pad + 1 + w.footer:GetHeight())
+    self.content:SetPoint("TOPLEFT", toolbar, "BOTTOMLEFT", 0, -pad)
+    w:SetSize(width + 2 * pad, control + height + 3 * pad + 1 + w.footer:GetHeight())
     self:UpdateFooter()
 end
 
@@ -667,12 +673,10 @@ function Grid.New(module, kind)
     w.body:SetPoint("BOTTOMRIGHT", w.footer, "TOPRIGHT")
     self.toolbar = CreateFrame("Frame", nil, w.body)
     w.close:SetParent(self.toolbar)
-    w.close:SetSize(30, 30)
 
     self.menu = Widgets.Button(self.toolbar, "...", "ghost", function()
         self:OpenMenu(self.menu)
     end)
-    self.menu:SetSize(30, 30)
     hint(self.menu, L.CHARACTERS, L.CHARACTERS_HINT)
 
     self.search = Widgets.Input(self.toolbar, nil, L.SEARCH)

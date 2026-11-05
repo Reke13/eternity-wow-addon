@@ -645,19 +645,19 @@ ns.OptionsSchema = {
                     },
                 },
                 {
-                    id = "toolbarPadding",
+                    id = "toolbarHeight",
                     type = "range",
-                    default = 12,
-                    min = 0,
-                    max = 24,
+                    default = 30,
+                    min = 18,
+                    max = 40,
                     step = 1,
                     label = {
-                        enUS = "Toolbar margin",
-                        esES = "Margen de la barra superior",
+                        enUS = "Toolbar height",
+                        esES = "Alto de la barra superior",
                     },
                     description = {
-                        enUS = "Space between the window's edge and Search, Sort, ... and ×.",
-                        esES = "Espacio entre el borde de la ventana y Buscar, Ordenar, ... y ×.",
+                        enUS = "Height of Search, Sort, ... and ×. Lower it for a more compact window.",
+                        esES = "Altura de Buscar, Ordenar, ... y ×. Bájala para una ventana más compacta.",
                     },
                 },
                 {
