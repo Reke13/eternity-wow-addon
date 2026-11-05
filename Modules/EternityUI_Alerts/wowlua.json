@@ -39,7 +39,9 @@
     "globals": [
       "EternityUI",
       "EternityUIAlertsDB",
-      "SOUNDKIT"
+      "SOUNDKIT",
+      "SLASH_ETERNITYALERTS1",
+      "SLASH_ETERNITYALERTS2"
     ]
   }
 }

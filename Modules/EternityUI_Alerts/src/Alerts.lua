@@ -193,4 +193,46 @@ function Module:OnConfigChanged()
     end
 end
 
+--- /etavisos: what the module believes about each buff rule now (to find out why one doesn't show).
+function Module:Report()
+    local context = Conditions.Context()
+    print(L.DEBUG_HEADER:format(
+        tostring(context.combat),
+        tostring(Checks.AurasRestricted()),
+        Checks.known and L.YES or L.NO
+    ))
+    local now = GetTime()
+    for _, rule in ipairs(Rules.List()) do
+        if rule.kind == "buff" then
+            local state = self.state[rule.id] or {}
+            local left = {}
+            for _, entry in ipairs(Rules.Entries(rule.spells)) do
+                local key = type(entry) == "string" and entry:lower() or entry
+                local expires = Checks.known and Checks.known[key]
+                if expires == nil then
+                    left[#left + 1] = tostring(entry) .. ": -"
+                elseif expires == 0 then
+                    left[#left + 1] = tostring(entry) .. ": " .. L.DEBUG_FOREVER
+                else
+                    left[#left + 1] = tostring(entry) .. ": " .. math.floor(expires - now) .. " s"
+                end
+            end
+            print(L.DEBUG_RULE:format(
+                rule.name,
+                tostring(rule.enabled),
+                L["COMBAT_" .. tostring(rule.combat)] or tostring(rule.combat),
+                tostring(state.firing),
+                tostring(state.showing),
+                table.concat(left, ", ")
+            ))
+        end
+    end
+end
+
+SLASH_ETERNITYALERTS1 = "/etavisos"
+SLASH_ETERNITYALERTS2 = "/etalerts"
+SlashCmdList.ETERNITYALERTS = function()
+    Module:Report()
+end
+
 E:RegisterModule(addonName, Module)
