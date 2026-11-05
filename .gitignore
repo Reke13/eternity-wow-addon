@@ -1,0 +1,7 @@
+# Builds
+dist/
+
+# Editors and systems
+.vscode/
+.DS_Store
+Thumbs.db

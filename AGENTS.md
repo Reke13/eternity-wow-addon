@@ -1,0 +1,43 @@
+# Notes for coding agents
+
+Eternity is a UI suite for **World of Warcraft: Forever** (wowlua flavor `camelot`, Interface 16001). It targets Forever only.
+
+## Layout
+
+- `EternityUI/`: the core. It exposes one global, `EternityUI`: store, modules, theme, widgets, Mover, combat queue and events.
+- `EternityUI_Options/`: the options window and the Mover, loaded on demand.
+- `Modules/EternityUI_*/`: one addon per part of the UI, each with `wowlua.json`, `options.json`, `src/` and `tests/`.
+
+Modules register with `EternityUI:RegisterModule(name, definition)`. A module's own tabs are `definition.tabs`, with `build(parent, setHeight)` returning a view that has a `Refresh` method. Read options with `EternityUI.store:Get(module, path)` and register movable frames with `EternityUI.Mover.Register`, setting `owner` to the module's name.
+
+## Building
+
+The build scripts live in a private workspace, not here, so this repository can't build or run its tests on its own. Don't add a second build system. Install from the zip in Releases.
+
+Don't edit generated output by hand: `src/Generated/Options.lua` comes from each module's `options.json`, and TOC files come from `wowlua.json`. Change the source, and say in your pull request that the options need regenerating.
+
+## Rules
+
+- Code, comments and docs are in English. Player-facing text is enUS and esES.
+- Lua 5.1. Tests are `*.test.wowlua`.
+- Addons are independent. No module depends on another, and disabling one gives Blizzard's UI back, without `/reload` whenever possible.
+- Use the core's widgets when they exist. Addon `src/Ui.lua` files are thin layers over them.
+- Blizzard's restrictions are not worked around: secret values, protected frames and taint are limits to design for.
+- `src/libs/` holds third-party libraries, kept exactly as published.
+- Don't call anything tested in game unless it was run on the real client. Tests run in an emulator.
+
+## Forever pitfalls
+
+Check every API against what the client exports: [wow-ui-source](https://github.com/Gethe/wow-ui-source) shows what Forever ships, and much of it differs from Retail.
+
+- **Secret values:** comparing or doing arithmetic on one errors. Check with `issecretvalue` first, or pass the value untouched to a widget that accepts it.
+- **Geometry can be secret:** `GetWidth` and `GetHeight` of a frame showing secret values return secrets, so check before doing math on them.
+- **Auras:** they can't be read while `C_Secrets.ShouldAurasBeSecret()` is true, which covers combat. A check that can't tell should keep its last state.
+- **Secure buttons:** register `LeftButtonUp` and `LeftButtonDown`. `SecureActionButton_OnClick` acts on the press when the `ActionButtonUseKeyDown` CVar is on, so an up-only button does nothing and shows no error. With both registered, set `useOnKeyDown = false` and make wrapper snippets ignore the press, or a click runs twice.
+- **Restricted snippets:** `RunAttribute` scrubs its return values, so a frame handle comes back nil. Return an index and fetch the frame with `GetFrameRef`.
+- **Combat:** protected frames only change out of combat. Queue that work with `EternityUI.Combat.Run`.
+- **Taint:** don't call Blizzard methods that run its panel layout, don't replace Blizzard methods (use `hooksecurefunc` or `HookScript`), and don't use `UISpecialFrames`.
+- **Bag buttons:** never call `ContainerFrameItemButtonMixin:Initialize` from an addon. `SetID` on the parent and on the button is enough.
+- **Textures:** `texture:SetAlpha` replaces the alpha of its vertex color, so put opacity in the color. TGAs have no mipmaps, so a large texture scaled far down comes out jagged.
+- **Fonts:** `FontString:SetText` errors until the string has a font.
+- **Events:** registering an unknown event errors. `EternityUI.Events.On` checks first.
