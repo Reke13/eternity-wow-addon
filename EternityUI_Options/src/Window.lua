@@ -44,6 +44,42 @@ function Window.Show(page)
     Window.Refresh()
 end
 
+-- The page list only stops at the top of an entry (or of the Modules caption): never with an entry
+-- cut in half under the logo. The content gets room below the last entry for its last stop.
+
+-- The highest stop that shows the end of the list.
+local function lastStop(nav)
+    local range = nav.listHeight - nav:GetHeight()
+    for _, stop in ipairs(nav.stops) do
+        if stop >= range then
+            return stop
+        end
+    end
+    return nav.stops[#nav.stops]
+end
+
+--- Scrolls the page list to a stop (the nearest one at or below offset).
+---@param offset number
+function Window.ScrollNav(offset)
+    local nav = Window.chrome.nav
+    if not nav or nav:GetHeight() <= 0 then
+        return
+    end
+    local last = math.max(lastStop(nav), 0)
+    local target = 0
+    for _, stop in ipairs(nav.stops) do
+        if stop <= offset + 0.5 and stop <= last then
+            target = stop
+        end
+    end
+    if nav.listHeight <= nav:GetHeight() then
+        target = 0
+    end
+    nav:SetContentHeight(math.max(nav.listHeight, last + nav:GetHeight()))
+    nav:SetVerticalScroll(target)
+    nav:SetContentHeight(nav.child:GetHeight()) -- moves the thumb
+end
+
 --- Scrolls the page list so the page's entry is in view (it may be opened from elsewhere).
 ---@param page table
 function Window.RevealNav(page)
@@ -55,14 +91,16 @@ function Window.RevealNav(page)
     local top, bottom = page.navTop, page.navTop + page.nav:GetHeight()
     local offset = nav:GetVerticalScroll()
     if top < offset then
-        offset = top
+        Window.ScrollNav(top)
     elseif bottom > offset + height then
-        offset = bottom - height
-    else
-        return
+        -- The first stop that shows the entry's bottom.
+        for _, stop in ipairs(nav.stops) do
+            if stop + height >= bottom then
+                Window.ScrollNav(stop)
+                return
+            end
+        end
     end
-    nav:SetVerticalScroll(offset)
-    nav:SetContentHeight(nav.child:GetHeight()) -- clamps the offset and moves the thumb
 end
 
 --- Updates what the window shows from the current state.
@@ -97,8 +135,12 @@ local function buildSidebar(frame)
     chrome.nav = nav
 
     local y = 0
+    nav.stops = { 0 }
     for _, page in ipairs(Window.pages) do
         if page.module and not chrome.section then
+            if y ~= 0 then
+                nav.stops[#nav.stops + 1] = -y
+            end
             chrome.section = Widgets.Text(nav.child, 13, "muted")
             chrome.section:SetPoint("TOPLEFT", 22, y - 12)
             chrome.section:SetText(L.MODULES:upper())
@@ -110,9 +152,28 @@ local function buildSidebar(frame)
         page.nav:SetPoint("TOPLEFT", 12, y)
         page.nav:SetWidth(SIDEBAR - 24)
         page.navTop = -y
+        if y ~= 0 and nav.stops[#nav.stops] ~= -y then
+            nav.stops[#nav.stops + 1] = -y
+        end
         y = y - 36
     end
+    nav.listHeight = -y
     nav:SetContentHeight(-y)
+    -- One entry per wheel step, always stopping at an entry's top.
+    nav:SetScript("OnMouseWheel", function(self, delta)
+        local offset = self:GetVerticalScroll()
+        local index = 1
+        for i, stop in ipairs(self.stops) do
+            if stop <= offset + 0.5 then
+                index = i
+            end
+        end
+        index = math.max(1, math.min(#self.stops, index - delta))
+        Window.ScrollNav(self.stops[index])
+    end)
+    nav:HookScript("OnSizeChanged", function()
+        Window.ScrollNav(nav:GetVerticalScroll())
+    end)
 
     local line = Widgets.Rect(frame, Theme.colors.line)
     line:SetPoint("TOPLEFT", SIDEBAR, 0)
