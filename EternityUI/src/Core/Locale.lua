@@ -17,6 +17,9 @@ local enUS = {
     PIXEL_HINT = "All four lines should look thin and even. /et pixel closes this.",
     YES = "yes",
     NO = "no",
+    SETTINGS_NOTES = "Eternity's options live in their own window: modules, look, profiles and the Mover.",
+    SETTINGS_OPEN = "Open Eternity",
+    SETTINGS_HINT = "You can also type /et.",
 }
 
 local esES = {
@@ -32,6 +35,9 @@ local esES = {
     PIXEL_HINT = "Las cuatro líneas deben verse finas y uniformes. /et pixel la cierra.",
     YES = "sí",
     NO = "no",
+    SETTINGS_NOTES = "Las opciones de Eternity están en su propia ventana: módulos, aspecto, perfiles y el Mover.",
+    SETTINGS_OPEN = "Abrir Eternity",
+    SETTINGS_HINT = "También puedes escribir /et.",
 }
 
 --- A text table for this client: esES where it has the text, otherwise enUS.
