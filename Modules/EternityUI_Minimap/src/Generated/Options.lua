@@ -223,8 +223,8 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = true,
                     label = {
-                        enUS = "Calendar",
-                        esES = "Calendario",
+                        enUS = "Calendar (sun and moon)",
+                        esES = "Calendario (sol y luna)",
                     },
                 },
                 {
@@ -709,24 +709,24 @@ ns.OptionsSchema = {
                 esES = "Botones de Blizzard",
             },
             description = {
-                enUS = "Calendar, tracking, mail, difficulty, addon compartment, expansion summary and clock. Hidden ones (Blizzard elements) stay hidden.",
-                esES = "Calendario, rastreo, correo, dificultad, compartimento de addons, resumen de la expansión y reloj. Los ocultos (Elementos de Blizzard) siguen ocultos.",
+                enUS = "Each button where Blizzard puts it or on the map's edge, always above the map. Hidden ones (Blizzard elements) stay hidden.",
+                esES = "Cada botón donde lo pone Blizzard o en el borde del mapa, siempre por encima del mapa. Los ocultos (Elementos de Blizzard) siguen ocultos.",
             },
             options = {
                 {
-                    id = "mode",
+                    id = "calendar",
                     type = "select",
                     default = "blizzard",
                     label = {
-                        enUS = "Placement",
-                        esES = "Colocación",
+                        enUS = "Calendar (sun and moon)",
+                        esES = "Calendario (sol y luna)",
                     },
                     values = {
                         {
                             value = "blizzard",
                             label = {
-                                enUS = "Where Blizzard puts them",
-                                esES = "Donde los pone Blizzard",
+                                enUS = "Where Blizzard puts it",
+                                esES = "Donde lo pone Blizzard",
                             },
                         },
                         {
@@ -736,6 +736,289 @@ ns.OptionsSchema = {
                                 esES = "En el borde del mapa",
                             },
                         },
+                    },
+                },
+                {
+                    id = "calendarAngle",
+                    type = "range",
+                    default = 30,
+                    min = 0,
+                    max = 359,
+                    step = 1,
+                    label = {
+                        enUS = "Calendar: angle (degrees)",
+                        esES = "Calendario: ángulo (grados)",
+                    },
+                    description = {
+                        enUS = "0 right, 90 top, 180 left, 270 bottom.",
+                        esES = "0 derecha, 90 arriba, 180 izquierda, 270 abajo.",
+                    },
+                    visibleWhen = {
+                        ["placement.calendar"] = "edge",
+                    },
+                },
+                {
+                    id = "tracking",
+                    type = "select",
+                    default = "blizzard",
+                    label = {
+                        enUS = "Tracking",
+                        esES = "Rastreo",
+                    },
+                    values = {
+                        {
+                            value = "blizzard",
+                            label = {
+                                enUS = "Where Blizzard puts it",
+                                esES = "Donde lo pone Blizzard",
+                            },
+                        },
+                        {
+                            value = "edge",
+                            label = {
+                                enUS = "On the map's edge",
+                                esES = "En el borde del mapa",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "trackingAngle",
+                    type = "range",
+                    default = 150,
+                    min = 0,
+                    max = 359,
+                    step = 1,
+                    label = {
+                        enUS = "Tracking: angle (degrees)",
+                        esES = "Rastreo: ángulo (grados)",
+                    },
+                    description = {
+                        enUS = "0 right, 90 top, 180 left, 270 bottom.",
+                        esES = "0 derecha, 90 arriba, 180 izquierda, 270 abajo.",
+                    },
+                    visibleWhen = {
+                        ["placement.tracking"] = "edge",
+                    },
+                },
+                {
+                    id = "mail",
+                    type = "select",
+                    default = "blizzard",
+                    label = {
+                        enUS = "Mail and orders",
+                        esES = "Correo y pedidos",
+                    },
+                    values = {
+                        {
+                            value = "blizzard",
+                            label = {
+                                enUS = "Where Blizzard puts it",
+                                esES = "Donde lo pone Blizzard",
+                            },
+                        },
+                        {
+                            value = "edge",
+                            label = {
+                                enUS = "On the map's edge",
+                                esES = "En el borde del mapa",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "mailAngle",
+                    type = "range",
+                    default = 195,
+                    min = 0,
+                    max = 359,
+                    step = 1,
+                    label = {
+                        enUS = "Mail and orders: angle (degrees)",
+                        esES = "Correo y pedidos: ángulo (grados)",
+                    },
+                    description = {
+                        enUS = "0 right, 90 top, 180 left, 270 bottom.",
+                        esES = "0 derecha, 90 arriba, 180 izquierda, 270 abajo.",
+                    },
+                    visibleWhen = {
+                        ["placement.mail"] = "edge",
+                    },
+                },
+                {
+                    id = "difficulty",
+                    type = "select",
+                    default = "blizzard",
+                    label = {
+                        enUS = "Instance difficulty",
+                        esES = "Dificultad de la instancia",
+                    },
+                    values = {
+                        {
+                            value = "blizzard",
+                            label = {
+                                enUS = "Where Blizzard puts it",
+                                esES = "Donde lo pone Blizzard",
+                            },
+                        },
+                        {
+                            value = "edge",
+                            label = {
+                                enUS = "On the map's edge",
+                                esES = "En el borde del mapa",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "difficultyAngle",
+                    type = "range",
+                    default = 120,
+                    min = 0,
+                    max = 359,
+                    step = 1,
+                    label = {
+                        enUS = "Instance difficulty: angle (degrees)",
+                        esES = "Dificultad de la instancia: ángulo (grados)",
+                    },
+                    description = {
+                        enUS = "0 right, 90 top, 180 left, 270 bottom.",
+                        esES = "0 derecha, 90 arriba, 180 izquierda, 270 abajo.",
+                    },
+                    visibleWhen = {
+                        ["placement.difficulty"] = "edge",
+                    },
+                },
+                {
+                    id = "compartment",
+                    type = "select",
+                    default = "blizzard",
+                    label = {
+                        enUS = "Addon compartment",
+                        esES = "Compartimento de addons",
+                    },
+                    values = {
+                        {
+                            value = "blizzard",
+                            label = {
+                                enUS = "Where Blizzard puts it",
+                                esES = "Donde lo pone Blizzard",
+                            },
+                        },
+                        {
+                            value = "edge",
+                            label = {
+                                enUS = "On the map's edge",
+                                esES = "En el borde del mapa",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "compartmentAngle",
+                    type = "range",
+                    default = 60,
+                    min = 0,
+                    max = 359,
+                    step = 1,
+                    label = {
+                        enUS = "Addon compartment: angle (degrees)",
+                        esES = "Compartimento de addons: ángulo (grados)",
+                    },
+                    description = {
+                        enUS = "0 right, 90 top, 180 left, 270 bottom.",
+                        esES = "0 derecha, 90 arriba, 180 izquierda, 270 abajo.",
+                    },
+                    visibleWhen = {
+                        ["placement.compartment"] = "edge",
+                    },
+                },
+                {
+                    id = "expansion",
+                    type = "select",
+                    default = "blizzard",
+                    label = {
+                        enUS = "Expansion summary",
+                        esES = "Resumen de la expansión",
+                    },
+                    values = {
+                        {
+                            value = "blizzard",
+                            label = {
+                                enUS = "Where Blizzard puts it",
+                                esES = "Donde lo pone Blizzard",
+                            },
+                        },
+                        {
+                            value = "edge",
+                            label = {
+                                enUS = "On the map's edge",
+                                esES = "En el borde del mapa",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "expansionAngle",
+                    type = "range",
+                    default = 315,
+                    min = 0,
+                    max = 359,
+                    step = 1,
+                    label = {
+                        enUS = "Expansion summary: angle (degrees)",
+                        esES = "Resumen de la expansión: ángulo (grados)",
+                    },
+                    description = {
+                        enUS = "0 right, 90 top, 180 left, 270 bottom.",
+                        esES = "0 derecha, 90 arriba, 180 izquierda, 270 abajo.",
+                    },
+                    visibleWhen = {
+                        ["placement.expansion"] = "edge",
+                    },
+                },
+                {
+                    id = "clock",
+                    type = "select",
+                    default = "blizzard",
+                    label = {
+                        enUS = "Clock",
+                        esES = "Reloj",
+                    },
+                    values = {
+                        {
+                            value = "blizzard",
+                            label = {
+                                enUS = "Where Blizzard puts it",
+                                esES = "Donde lo pone Blizzard",
+                            },
+                        },
+                        {
+                            value = "edge",
+                            label = {
+                                enUS = "On the map's edge",
+                                esES = "En el borde del mapa",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "clockAngle",
+                    type = "range",
+                    default = 270,
+                    min = 0,
+                    max = 359,
+                    step = 1,
+                    label = {
+                        enUS = "Clock: angle (degrees)",
+                        esES = "Reloj: ángulo (grados)",
+                    },
+                    description = {
+                        enUS = "0 right, 90 top, 180 left, 270 bottom.",
+                        esES = "0 derecha, 90 arriba, 180 izquierda, 270 abajo.",
+                    },
+                    visibleWhen = {
+                        ["placement.clock"] = "edge",
                     },
                 },
                 {
@@ -750,11 +1033,8 @@ ns.OptionsSchema = {
                         esES = "Distancia al borde",
                     },
                     description = {
-                        enUS = "0: centered on the edge. Positive: outside the map; negative: inside.",
-                        esES = "0: centrados en el borde. Positivo: hacia fuera del mapa; negativo: hacia dentro.",
-                    },
-                    visibleWhen = {
-                        ["placement.mode"] = "edge",
+                        enUS = "For the buttons on the edge. 0: centered on it; positive: outside the map; negative: inside.",
+                        esES = "Para los botones en el borde. 0: centrados en él; positivo: hacia fuera del mapa; negativo: hacia dentro.",
                     },
                 },
                 {
@@ -765,116 +1045,8 @@ ns.OptionsSchema = {
                     max = 1.5,
                     step = 0.05,
                     label = {
-                        enUS = "Button size",
-                        esES = "Tamaño de los botones",
-                    },
-                    visibleWhen = {
-                        ["placement.mode"] = "edge",
-                    },
-                },
-                {
-                    id = "calendar",
-                    type = "range",
-                    default = 30,
-                    min = 0,
-                    max = 359,
-                    step = 1,
-                    label = {
-                        enUS = "Calendar (degrees)",
-                        esES = "Calendario (grados)",
-                    },
-                    visibleWhen = {
-                        ["placement.mode"] = "edge",
-                    },
-                },
-                {
-                    id = "tracking",
-                    type = "range",
-                    default = 150,
-                    min = 0,
-                    max = 359,
-                    step = 1,
-                    label = {
-                        enUS = "Tracking (degrees)",
-                        esES = "Rastreo (grados)",
-                    },
-                    visibleWhen = {
-                        ["placement.mode"] = "edge",
-                    },
-                },
-                {
-                    id = "mail",
-                    type = "range",
-                    default = 195,
-                    min = 0,
-                    max = 359,
-                    step = 1,
-                    label = {
-                        enUS = "Mail and orders (degrees)",
-                        esES = "Correo y pedidos (grados)",
-                    },
-                    visibleWhen = {
-                        ["placement.mode"] = "edge",
-                    },
-                },
-                {
-                    id = "difficulty",
-                    type = "range",
-                    default = 120,
-                    min = 0,
-                    max = 359,
-                    step = 1,
-                    label = {
-                        enUS = "Instance difficulty (degrees)",
-                        esES = "Dificultad de la instancia (grados)",
-                    },
-                    visibleWhen = {
-                        ["placement.mode"] = "edge",
-                    },
-                },
-                {
-                    id = "compartment",
-                    type = "range",
-                    default = 60,
-                    min = 0,
-                    max = 359,
-                    step = 1,
-                    label = {
-                        enUS = "Addon compartment (degrees)",
-                        esES = "Compartimento de addons (grados)",
-                    },
-                    visibleWhen = {
-                        ["placement.mode"] = "edge",
-                    },
-                },
-                {
-                    id = "expansion",
-                    type = "range",
-                    default = 315,
-                    min = 0,
-                    max = 359,
-                    step = 1,
-                    label = {
-                        enUS = "Expansion summary (degrees)",
-                        esES = "Resumen de la expansión (grados)",
-                    },
-                    visibleWhen = {
-                        ["placement.mode"] = "edge",
-                    },
-                },
-                {
-                    id = "clock",
-                    type = "range",
-                    default = 270,
-                    min = 0,
-                    max = 359,
-                    step = 1,
-                    label = {
-                        enUS = "Clock (degrees)",
-                        esES = "Reloj (grados)",
-                    },
-                    visibleWhen = {
-                        ["placement.mode"] = "edge",
+                        enUS = "Size of the buttons on the edge",
+                        esES = "Tamaño de los botones en el borde",
                     },
                 },
             },

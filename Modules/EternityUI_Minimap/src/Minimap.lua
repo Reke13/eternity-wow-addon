@@ -147,7 +147,8 @@ local Module = {
     schema = ns.OptionsSchema,
     captured = {},
     buttonHooks = {},
-    placed = {}, -- Blizzard button -> { points, scale, key } while it sits on the edge
+    placed = {}, -- Blizzard button -> { points, scale } while it sits on the edge
+    raised = {}, -- Blizzard button -> { strata, level } while it's drawn above the map
     placeHooks = {},
 }
 
@@ -329,6 +330,10 @@ end
 -- Placement of Blizzard's buttons on the map's edge ----------------------------------------------
 -- Each button keeps its parent; only its point (and scale) change, and both come back as they were.
 -- Blizzard's layout code may place a button again: it goes back to the edge on the next frame.
+-- While the module runs every one of these buttons is drawn above the map and our decor (border,
+-- glow, texts): otherwise the map, raised by its skin, covers them.
+
+local ABOVE_MAP = 10 -- frame levels over the map
 
 local PLACEABLE = { "calendar", "tracking", "mail", "difficulty", "compartment", "expansion", "clock" }
 
@@ -357,7 +362,6 @@ function Module:PlaceButton(key, frame)
         placed = { points = points, scale = frame:GetScale() }
         self.placed[frame] = placed
     end
-    placed.key = key
     if not self.placeHooks[frame] then
         self.placeHooks[frame] = true
         hooksecurefunc(frame, "SetPoint", function(button)
@@ -368,7 +372,7 @@ function Module:PlaceButton(key, frame)
     end
     self.placing = true
     frame:SetScale(placed.scale * opt("placement.size"))
-    local x, y = self:EdgePoint(opt("placement." .. key), opt("placement.offset"))
+    local x, y = self:EdgePoint(opt("placement." .. key .. "Angle"), opt("placement.offset"))
     -- Offsets go in the button's units: its scale may not be the map's.
     local ratio = Minimap:GetEffectiveScale() / frame:GetEffectiveScale()
     frame:ClearAllPoints()
@@ -391,18 +395,41 @@ function Module:RestoreButton(frame)
     self.placing = false
 end
 
---- Puts each Blizzard button on the edge, or back where it was.
+--- Above the map while the module runs; its own strata and level again otherwise.
+function Module:RaiseButton(frame)
+    local saved = self.raised[frame]
+    if not self.running then
+        if saved then
+            frame:SetFrameStrata(saved.strata)
+            frame:SetFrameLevel(saved.level)
+            self.raised[frame] = nil
+        end
+        return
+    end
+    if not saved then
+        self.raised[frame] = { strata = frame:GetFrameStrata(), level = frame:GetFrameLevel() }
+    end
+    if frame:GetFrameStrata() ~= Minimap:GetFrameStrata() then
+        frame:SetFrameStrata(Minimap:GetFrameStrata())
+    end
+    local level = Minimap:GetFrameLevel() + ABOVE_MAP
+    if frame:GetFrameLevel() < level then
+        frame:SetFrameLevel(level)
+    end
+end
+
+--- Puts each Blizzard button on the edge or back where it was, and above the map.
 function Module:ApplyPlacement()
-    local edge = self.running and opt("placement.mode") == "edge"
     E.Combat.Run(self.placed, function()
         for _, key in ipairs(PLACEABLE) do
             local frame = (BLIZZARD[key]())
             if frame and not (frame.IsForbidden and frame:IsForbidden()) then
-                if edge then
+                if self.running and opt("placement." .. key) == "edge" then
                     self:PlaceButton(key, frame)
                 else
                     self:RestoreButton(frame)
                 end
+                self:RaiseButton(frame)
             end
         end
     end)
