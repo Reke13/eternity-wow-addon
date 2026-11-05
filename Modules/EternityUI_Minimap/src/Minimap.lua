@@ -649,7 +649,23 @@ function Module:SaveOriginal()
         points = points,
         wheel = Minimap:IsMouseWheelEnabled(),
         clamped = c:IsClampedToScreen(),
+        width = Minimap:GetWidth(),
+        height = Minimap:GetHeight(),
     }
+end
+
+--- Resizes only the map (its children, our texts, keep their scale and follow its edges). The map
+--- draws its terrain again for the new size after a zoom nudge.
+function Module:SetMapSize(width, height)
+    if math.abs(Minimap:GetWidth() - width) < 0.5 and math.abs(Minimap:GetHeight() - height) < 0.5 then
+        return
+    end
+    Minimap:SetSize(width, height)
+    local zoom = Minimap:GetZoom()
+    self.resizing = true
+    Minimap:SetZoom(zoom > 0 and zoom - 1 or zoom + 1)
+    Minimap:SetZoom(zoom)
+    self.resizing = false
 end
 
 -- The Mover doesn't move MinimapCluster itself: the cluster is much bigger than the map (room for
@@ -698,6 +714,7 @@ function Module:ApplyMap()
         c:SetScale(original.scale)
         c:SetAlpha(original.alpha)
         c:SetClampedToScreen(original.clamped)
+        self:SetMapSize(original.width, original.height)
         if self.moved then
             c:ClearAllPoints()
             for _, p in ipairs(original.points) do
@@ -717,6 +734,8 @@ function Module:ApplyMap()
     end
     local holder = self.holder
     holder:Show()
+    local size = opt("map.size")
+    self:SetMapSize(original.width * size, original.height * size)
     local ratio = Minimap:GetEffectiveScale() / c:GetEffectiveScale()
     holder:SetSize(Minimap:GetWidth() * ratio, Minimap:GetHeight() * ratio)
     holder:SetScale(original.scale * opt("map.scale"))
@@ -1188,7 +1207,9 @@ function Module:InstallHooks()
         end)
     end
     hooksecurefunc(Minimap, "SetZoom", function()
-        self:OnZoom()
+        if not self.resizing then
+            self:OnZoom()
+        end
     end)
     -- GetMinimapShape protocol (LibDBIcon and others), if nobody has defined it yet.
     if _G.GetMinimapShape == nil then
@@ -1235,8 +1256,9 @@ end
 --- Applies every option (or undoes everything if the module isn't running).
 function Module:ApplyAll()
     self:ApplyBlizzard()
-    self:ApplyLook()
+    -- The map's size first: the look (glow) and the buttons on the edge measure it.
     self:ApplyMap()
+    self:ApplyLook()
     self:ApplyPlacement()
     self:UpdateInfo()
     self:Scan()
