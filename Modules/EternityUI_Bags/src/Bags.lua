@@ -19,6 +19,7 @@ local L, Inventory = ns.L, ns.Inventory
 
 local QUALITY_FROM = { poor = 0, common = 1, uncommon = 2, rare = 3, epic = 4 }
 local QUEST_COLOR = { 1, 0.82, 0.2, 1 }
+local FOOTER_TEXT = 12 -- size of the gold and free slots texts
 local SECTION_TITLE = 18
 local ITEM_CLASS_WEAPON, ITEM_CLASS_ARMOR = 2, 4 -- Enum.ItemClass
 local EVENTS = {
@@ -477,7 +478,10 @@ function Grid:LayoutChrome(width, height)
     self.search:SetPoint("RIGHT", self.sort, "LEFT", -8, 0)
     self.content:ClearAllPoints()
     self.content:SetPoint("TOPLEFT", toolbar, "BOTTOMLEFT", 0, -pad)
-    w:SetSize(width + 2 * pad, control + height + 3 * pad + 1 + w.footer:GetHeight())
+    -- The footer's text is centered in it: the space up to that text sets the gap below the items.
+    local footer = w.footer:GetHeight()
+    local below = opt("window.footerSpace") - (footer - FOOTER_TEXT) / 2
+    w:SetSize(width + 2 * pad, control + height + 2 * pad + below + footer)
     self:UpdateFooter()
 end
 
@@ -699,7 +703,7 @@ function Grid.New(module, kind)
     self.empty:Hide()
 
     local pad = 12
-    self.free = Widgets.Text(w.footer, 12, "muted")
+    self.free = Widgets.Text(w.footer, FOOTER_TEXT, "muted")
     self.free:SetPoint("RIGHT", w.footer, "RIGHT", -pad, 0)
     if bank then
         local character, account = bankTypes()
@@ -728,7 +732,7 @@ function Grid.New(module, kind)
         self.blizzard:SetPoint("LEFT", self.deposit, "RIGHT", 4, 0)
         hint(self.blizzard, L.BLIZZARD_BANK, L.BLIZZARD_BANK_HINT)
     else
-        self.money = Widgets.Text(w.footer, 12, "text")
+        self.money = Widgets.Text(w.footer, FOOTER_TEXT, "text")
         self.money:SetPoint("LEFT", w.footer, "LEFT", pad, 0)
     end
     self.dirty = true

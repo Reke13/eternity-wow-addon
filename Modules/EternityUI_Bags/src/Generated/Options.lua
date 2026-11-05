@@ -661,6 +661,22 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "footerSpace",
+                    type = "range",
+                    default = 27,
+                    min = 4,
+                    max = 40,
+                    step = 1,
+                    label = {
+                        enUS = "Space above the gold row",
+                        esES = "Espacio sobre la fila de monedas",
+                    },
+                    description = {
+                        enUS = "From the last row of items to the gold and free slots line.",
+                        esES = "Desde la última fila de objetos hasta la línea del oro y los huecos libres.",
+                    },
+                },
+                {
                     id = "sectionTitles",
                     type = "toggle",
                     default = true,
