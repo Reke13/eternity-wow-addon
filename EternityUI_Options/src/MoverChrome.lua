@@ -68,14 +68,34 @@ local function setCoordinate(axis, text)
     session().Set(key, entry)
 end
 
-local function coordinate(parent, name, axis, x)
+-- Scale typed in the panel, kept between the Mover's limits; 1 removes it.
+local function setScale(text)
+    local key = session().selected
+    local value = tonumber(text)
+    if not key or not value or not Mover.IsScalable(key) then
+        ns.MoverScene.Refresh()
+        return
+    end
+    value = math.floor(math.min(math.max(value, Mover.MIN_SCALE), Mover.MAX_SCALE) * 100 + 0.5) / 100
+    session().Checkpoint()
+    local entry = E.DeepCopy(session().Entry(key))
+    entry.scale = value ~= 1 and value or nil
+    session().Set(key, entry)
+end
+
+local function coordinate(parent, name, axis, x, y)
+    y = y or -62
     local label = Widgets.Text(parent, 13, "muted")
-    label:SetPoint("TOPLEFT", x, -62)
+    label:SetPoint("TOPLEFT", x, y)
     label:SetText(name)
     local box = Widgets.Input(parent, function(text)
-        setCoordinate(axis, text)
+        if axis == "scale" then
+            setScale(text)
+        else
+            setCoordinate(axis, text)
+        end
     end)
-    box:SetPoint("TOPLEFT", x, -78)
+    box:SetPoint("TOPLEFT", x, y - 16)
     box:SetWidth(102)
     return box
 end
@@ -83,7 +103,7 @@ end
 local function buildPanel(root)
     panel = CreateFrame("Frame", nil, root)
     panel:SetPoint("TOPRIGHT", -16, -76)
-    panel:SetSize(244, 262)
+    panel:SetSize(244, 286)
     panel:SetFrameLevel(root:GetFrameLevel() + 20)
     surface(panel)
 
@@ -95,6 +115,12 @@ local function buildPanel(root)
     panel.anchor:SetJustifyH("LEFT")
     panel.x = coordinate(panel, "X", "x", 14)
     panel.y = coordinate(panel, "Y", "y", 128)
+    panel.scale = coordinate(panel, L.MOVER_SCALE, "scale", 14, -116)
+    panel.scaleHint = Widgets.Text(panel, 12, "muted")
+    panel.scaleHint:SetPoint("LEFT", panel.scale, "RIGHT", 10, 0)
+    panel.scaleHint:SetPoint("RIGHT", -14, 0)
+    panel.scaleHint:SetJustifyH("LEFT")
+    panel.scaleHint:SetText(L.MOVER_SCALE_HINT)
 
     local function action(text, y, onClick)
         local button = Widgets.Button(panel, text, "ghost", onClick)
@@ -102,17 +128,17 @@ local function buildPanel(root)
         button:SetPoint("TOPRIGHT", -14, y)
         return button
     end
-    panel.lock = action(L.MOVER_LOCK, -118, function()
+    panel.lock = action(L.MOVER_LOCK, -172, function()
         local key = session().selected
         session().Checkpoint()
         local entry = E.DeepCopy(session().Entry(key))
         entry.locked = not entry.locked or nil
         session().Set(key, entry)
     end)
-    panel.options = action(L.MOVER_OPTIONS, -152, function()
+    panel.options = action(L.MOVER_OPTIONS, -206, function()
         Mover.elements[session().selected].openOptions()
     end)
-    panel.reset = action(L.MOVER_RESET, -186, function()
+    panel.reset = action(L.MOVER_RESET, -240, function()
         session().Checkpoint()
         session().Set(session().selected, nil)
     end)
@@ -157,6 +183,12 @@ function Chrome.Refresh()
     if not panel.y:HasFocus() then
         panel.y:SetText(string.format("%.1f", entry.y))
     end
+    if not panel.scale:HasFocus() then
+        panel.scale:SetText(string.format("%.2f", entry.scale or 1))
+    end
+    local scalable = Mover.IsScalable(key)
+    panel.scale:SetEnabled(scalable and not entry.locked)
+    panel.scale:SetAlpha(scalable and 1 or 0.4)
     panel.lock.label:SetText(entry.locked and L.MOVER_UNLOCK or L.MOVER_LOCK)
     panel.options:SetShown(element.openOptions ~= nil)
 end

@@ -290,6 +290,8 @@ function Tooltip:UpdateAnchor()
                 point = "BOTTOMRIGHT",
                 x = -60,
                 y = 120,
+                -- Only a place for tooltips: their size is the Scale option of this module.
+                scalable = false,
             })
         end
     else
