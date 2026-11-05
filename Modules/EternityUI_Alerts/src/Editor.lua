@@ -66,7 +66,8 @@ local function currentBuffs()
             break
         end
         local name = aura.name
-        if not (issecretvalue and issecretvalue(name)) and not seen[name] and #list < MAX_PICKS then
+        local readable = type(name) == "string" and not (issecretvalue and issecretvalue(name)) and name ~= ""
+        if readable and not seen[name] and #list < MAX_PICKS then
             seen[name] = true
             list[#list + 1] = aura
         end

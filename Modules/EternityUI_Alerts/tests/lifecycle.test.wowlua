@@ -102,6 +102,33 @@ local function buffClears()
     C_UnitAuras.GetAuraDataByIndex = read
 end
 
+@test("a buff without a name or an ID doesn't stop the check")
+local function oddAuras()
+    local Checks = EternityUI:GetModule(NAME).Checks
+    local read = C_UnitAuras.GetAuraDataByIndex
+    local auras = { { spellId = 1 }, { name = "Thorns" } }
+    C_UnitAuras.GetAuraDataByIndex = function(_, index)
+        return auras[index]
+    end
+    expect((Checks.Run({ kind = "buff", spells = "Thorns" }))).toBe(false)
+    expect((Checks.Run({ kind = "buff", spells = "Mark of the Wild" }))).toBe(true)
+    C_UnitAuras.GetAuraDataByIndex = read
+end
+
+@test("a spell ID matches any rank of the buff by its name")
+local function ranks()
+    local Checks = EternityUI:GetModule(NAME).Checks
+    local read, name = C_UnitAuras.GetAuraDataByIndex, C_Spell.GetSpellName
+    C_UnitAuras.GetAuraDataByIndex = function(_, index)
+        return index == 1 and { name = "Thorns", spellId = 782 } or nil
+    end
+    C_Spell.GetSpellName = function(id)
+        return id == 467 and "Thorns" or nil
+    end
+    expect((Checks.Run({ kind = "buff", spells = "467" }))).toBe(false)
+    C_UnitAuras.GetAuraDataByIndex, C_Spell.GetSpellName = read, name
+end
+
 @test("disabling hides the row and leaves the Mover")
 local function stops()
     local module = EternityUI:GetModule(NAME)

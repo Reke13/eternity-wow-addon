@@ -32,11 +32,11 @@ end
 
 -- The buffs on the player, by spell ID and by lower case name. Read by index, the same call the
 -- Rules tab lists them with: rules with Thorns or Mark of the Wild never cleared on the client with
--- the lookups by name and ID. The second result says some buff couldn't be read.
+-- the lookups by name and ID. A buff without a name or an ID (some zone and system auras) only
+-- adds what it has; a secret one is skipped.
 ---@return table<number|string, boolean>?
----@return boolean? partial
 local function playerBuffs()
-    local buffs, partial = {}, false
+    local buffs = {}
     for i = 1, MAX_AURAS do
         local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL")
         if not ok then
@@ -45,18 +45,30 @@ local function playerBuffs()
         if not aura then
             break
         end
-        if secret(aura.name) or secret(aura.spellId) then
-            partial = true
-        else
-            buffs[aura.spellId] = true
-            buffs[aura.name:lower()] = true
+        local id, name = aura.spellId, aura.name
+        if type(id) == "number" and not secret(id) then
+            buffs[id] = true
+        end
+        if type(name) == "string" and not secret(name) and name ~= "" then
+            buffs[name:lower()] = true
         end
     end
-    return buffs, partial
+    return buffs
+end
+
+-- A spell's name, to match an ID with any rank of the same buff (Forever's spells have ranks).
+local function spellName(id)
+    local ok, name = pcall(C_Spell.GetSpellName, id)
+    if ok and type(name) == "string" and not secret(name) and name ~= "" then
+        return name:lower()
+    end
+    return nil
 end
 
 local kinds = {}
 
+-- Out of combat: an unreadable buff counts as not the one wanted. A rule that waited for every buff
+-- to be readable could stay stuck for good on an aura the game always hides.
 function kinds.buff(rule)
     local entries = Rules.Entries(rule.spells)
     if #entries == 0 then
@@ -65,17 +77,23 @@ function kinds.buff(rule)
     if Checks.AurasRestricted() then
         return nil
     end
-    local buffs, partial = playerBuffs()
+    local buffs = playerBuffs()
     if not buffs then
         return nil
     end
     for _, entry in ipairs(entries) do
-        if buffs[type(entry) == "string" and entry:lower() or entry] then
+        if type(entry) == "string" then
+            if buffs[entry:lower()] then
+                return false
+            end
+        elseif buffs[entry] then
             return false
+        else
+            local name = spellName(entry)
+            if name and buffs[name] then
+                return false
+            end
         end
-    end
-    if partial then
-        return nil
     end
     return true
 end
