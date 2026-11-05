@@ -106,7 +106,9 @@ end
 local function oddAuras()
     local Checks = EternityUI:GetModule(NAME).Checks
     local read = C_UnitAuras.GetAuraDataByIndex
-    local auras = { { spellId = 1 }, { name = "Thorns" } }
+    local auras = {}
+    auras[1] = { spellId = 1 }
+    auras[2] = { name = "Thorns" }
     C_UnitAuras.GetAuraDataByIndex = function(_, index)
         return auras[index]
     end
@@ -119,11 +121,14 @@ end
 local function ranks()
     local Checks = EternityUI:GetModule(NAME).Checks
     local read, name = C_UnitAuras.GetAuraDataByIndex, C_Spell.GetSpellName
+    local auras = {}
+    auras[1] = { name = "Thorns", spellId = 782 }
     C_UnitAuras.GetAuraDataByIndex = function(_, index)
-        return index == 1 and { name = "Thorns", spellId = 782 } or nil
+        return auras[index]
     end
-    C_Spell.GetSpellName = function(id)
-        return id == 467 and "Thorns" or nil
+    -- Rank 1 (467) and the rank on the player (782) share the name.
+    C_Spell.GetSpellName = function()
+        return "Thorns"
     end
     expect((Checks.Run({ kind = "buff", spells = "467" }))).toBe(false)
     C_UnitAuras.GetAuraDataByIndex, C_Spell.GetSpellName = read, name
