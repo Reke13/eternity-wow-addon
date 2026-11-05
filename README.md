@@ -20,6 +20,7 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_Alerts` | Your own alerts for missing buffs, weapon enchants, durability, bag space and items |
 | `EternityUI_Automation` | Small one-switch automations |
 | `EternityUI_Bags` | Bags and bank |
+| `EternityUI_Buffs` | Blizzard's buff and debuff frames in the Mover |
 | `EternityUI_CastBars` | Cast bars, plus GCD, swing and mirror timers |
 | `EternityUI_Chat` | Chat look and tools |
 | `EternityUI_Discs` | Radial discs of spells, items, toys and macros, opened with a key (`/etdiscs`) |
@@ -27,7 +28,7 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_InfoBar` | Information bar |
 | `EternityUI_Map` | World map |
 | `EternityUI_Minimap` | Minimap and button collector |
-| `EternityUI_Objectives` | Objective tracker |
+| `EternityUI_Objectives` | Quest tracker |
 | `EternityUI_Stats` | Detailed stats panel |
 | `EternityUI_Tooltip` | Tooltips |
 

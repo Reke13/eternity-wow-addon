@@ -26,7 +26,7 @@ local L = ns.L
 ---@field place string "any", "instance" or "world"
 ---@field hideResting boolean
 ---@field hideMounted boolean
----@field hideCombat boolean
+---@field combat string "out" (only out of combat), "in" (only in combat) or "any"
 
 ---@class EternityUIAlertsRules
 ---@field db table? EternityUIAlertsDB once bound
@@ -56,12 +56,17 @@ local DEFAULTS = {
     place = "any",
     hideResting = false,
     hideMounted = false,
-    hideCombat = true,
+    combat = "out",
 }
 
 local THRESHOLDS = { buff = 0, enchant = 0, durability = 20, slots = 5, item = 5 }
 
 local function fill(rule)
+    -- Rules saved before "combat": the old "Hide in combat" switch.
+    if rule.combat == nil and rule.hideCombat ~= nil then
+        rule.combat = rule.hideCombat and "out" or "any"
+    end
+    rule.hideCombat = nil
     for key, value in pairs(DEFAULTS) do
         if rule[key] == nil then
             rule[key] = value

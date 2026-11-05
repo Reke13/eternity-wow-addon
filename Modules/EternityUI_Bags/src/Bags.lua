@@ -16,10 +16,10 @@ local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
 local L, Inventory = ns.L, ns.Inventory
 
-local CONTROL_HEIGHT = 32
 
 local QUALITY_FROM = { poor = 0, common = 1, uncommon = 2, rare = 3, epic = 4 }
 local QUEST_COLOR = { 1, 0.82, 0.2, 1 }
+local FOOTER_TEXT = 12 -- size of the gold and free slots texts
 local SECTION_TITLE = 18
 local ITEM_CLASS_WEAPON, ITEM_CLASS_ARMOR = 2, 4 -- Enum.ItemClass
 local EVENTS = {
@@ -385,8 +385,9 @@ function Grid:Layout()
     local size, gap = opt("slots.size"), opt("slots.spacing")
     local columns = opt(self.kind == "bank" and "slots.bankColumns" or "slots.columns")
     local used, y, titleIndex = {}, 0, 0
+    local showTitles = opt("window.sectionTitles")
     for _, section in ipairs(self:Sections()) do
-        if section.title then
+        if section.title and showTitles then
             titleIndex = titleIndex + 1
             local title = self:SectionTitle(titleIndex)
             title:SetText(section.title)
@@ -444,31 +445,43 @@ function Grid:CountSlots()
     return total
 end
 
---- Header, toolbar and footer around the content; the window's size.
+--- Toolbar and footer around the content; the window's size. There is no header: the menu and
+--- close buttons sit at the end of the toolbar.
 function Grid:LayoutChrome(width, height)
-    local w, pad = self.frame, opt("window.padding")
-    local header = opt("window.compact") and 40 or 56
-    w.header:SetHeight(header)
-    w.title:SetShown(opt("window.title"))
+    local w, pad, control = self.frame, opt("window.padding"), opt("window.toolbarHeight")
     local toolbar = self.toolbar
     toolbar:ClearAllPoints()
     toolbar:SetPoint("TOPLEFT", w.body, "TOPLEFT", pad, -pad)
-    toolbar:SetSize(width, CONTROL_HEIGHT)
+    toolbar:SetSize(width, control)
+    self.search:SetHeight(control)
+    self.sort:SetHeight(control)
+    self.menu:SetSize(control, control)
+    w.close:SetSize(control, control)
     local left = 0
     if self.tabs then
+        self.tabs.buttonHeight = control
+        self.tabs:SetHeight(control)
+        self.tabs:Paint()
         self.tabs:SetShown(self.tabs.count > 1)
         if self.tabs.count > 1 then
             left = self.tabs:GetWidth() + 8
         end
     end
+    w.close:ClearAllPoints()
+    w.close:SetPoint("RIGHT", toolbar, "RIGHT", 0, 0)
+    self.menu:ClearAllPoints()
+    self.menu:SetPoint("RIGHT", w.close, "LEFT", -4, 0)
     self.sort:ClearAllPoints()
-    self.sort:SetPoint("RIGHT", toolbar, "RIGHT", 0, 0)
+    self.sort:SetPoint("RIGHT", self.menu, "LEFT", -8, 0)
     self.search:ClearAllPoints()
     self.search:SetPoint("LEFT", toolbar, "LEFT", left, 0)
     self.search:SetPoint("RIGHT", self.sort, "LEFT", -8, 0)
     self.content:ClearAllPoints()
     self.content:SetPoint("TOPLEFT", toolbar, "BOTTOMLEFT", 0, -pad)
-    w:SetSize(width + 2 * pad, header + 1 + CONTROL_HEIGHT + height + 3 * pad + 1 + w.footer:GetHeight())
+    -- The footer's text is centered in it: the space up to that text sets the gap below the items.
+    local footer = w.footer:GetHeight()
+    local below = opt("window.footerSpace") - (footer - FOOTER_TEXT) / 2
+    w:SetSize(width + 2 * pad, control + height + 2 * pad + below + footer)
     self:UpdateFooter()
 end
 
@@ -657,14 +670,19 @@ function Grid.New(module, kind)
     end
     w:Paint()
 
-    self.menu = Widgets.Button(w.header, "...", "ghost", function()
+    -- No header: the body starts at the top and the close button joins the toolbar.
+    w.header:Hide()
+    w.body:ClearAllPoints()
+    w.body:SetPoint("TOPLEFT")
+    w.body:SetPoint("BOTTOMRIGHT", w.footer, "TOPRIGHT")
+    self.toolbar = CreateFrame("Frame", nil, w.body)
+    w.close:SetParent(self.toolbar)
+
+    self.menu = Widgets.Button(self.toolbar, "...", "ghost", function()
         self:OpenMenu(self.menu)
     end)
-    self.menu:SetSize(26, 26)
-    self.menu:SetPoint("RIGHT", w.close, "LEFT", -4, 0)
     hint(self.menu, L.CHARACTERS, L.CHARACTERS_HINT)
 
-    self.toolbar = CreateFrame("Frame", nil, w.body)
     self.search = Widgets.Input(self.toolbar, nil, L.SEARCH)
     self.search:SetMaxLetters(60)
     self.search:HookScript("OnTextChanged", function(box, userInput)
@@ -675,6 +693,7 @@ function Grid.New(module, kind)
     self.sort = Widgets.Button(self.toolbar, L.SORT, "ghost", function()
         self:Sort()
     end)
+    self.sort:SetWidth(math.max(70, self.sort.label:GetStringWidth() + 24))
     hint(self.sort, L.SORT, L.SORT_HINT)
 
     self.content = CreateFrame("Frame", nil, w.body)
@@ -684,7 +703,7 @@ function Grid.New(module, kind)
     self.empty:Hide()
 
     local pad = 12
-    self.free = Widgets.Text(w.footer, 12, "muted")
+    self.free = Widgets.Text(w.footer, FOOTER_TEXT, "muted")
     self.free:SetPoint("RIGHT", w.footer, "RIGHT", -pad, 0)
     if bank then
         local character, account = bankTypes()
@@ -713,7 +732,7 @@ function Grid.New(module, kind)
         self.blizzard:SetPoint("LEFT", self.deposit, "RIGHT", 4, 0)
         hint(self.blizzard, L.BLIZZARD_BANK, L.BLIZZARD_BANK_HINT)
     else
-        self.money = Widgets.Text(w.footer, 12, "text")
+        self.money = Widgets.Text(w.footer, FOOTER_TEXT, "text")
         self.money:SetPoint("LEFT", w.footer, "LEFT", pad, 0)
     end
     self.dirty = true

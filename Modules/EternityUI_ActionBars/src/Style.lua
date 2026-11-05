@@ -25,11 +25,27 @@ local SQUARE = "Interface\\Buttons\\WHITE8X8"
 -- Template art made transparent while skinned.
 local ART = { "NormalTexture", "SlotArt", "SlotBackground", "Border", "FlyoutBorderShadow" }
 -- Regions whose anchors change (saved to restore them).
-local MOVED = { "icon", "cooldown", "HotKey", "Count", "Name" }
+local MOVED = { "icon", "cooldown", "Icon", "Cooldown", "HotKey", "Count", "Name" }
 -- The button's state textures, recolored in place.
 local STATES = { highlight = "GetHighlightTexture", pushed = "GetPushedTexture", checked = "GetCheckedTexture" }
 -- Vertex color FrameXML and LibActionButton give an icon that can't be used now.
 local UNUSABLE = 0.4
+-- Action buttons call them icon and cooldown; Blizzard's zone ability buttons, Icon and Cooldown.
+local function iconOf(button)
+    return button.icon or button.Icon
+end
+
+local function cooldownOf(button)
+    return button.cooldown or button.Cooldown
+end
+
+--- True if Style can skin the button (it has an icon).
+---@param button table
+---@return boolean
+function Style.CanSkin(button)
+    return iconOf(button) ~= nil
+end
+
 local POINTS = {
     topleft = "TOPLEFT",
     top = "TOP",
@@ -179,7 +195,7 @@ end
 -- Desaturation the options ask for, from the icon's last vertex color (unusable = 0.4).
 local function refreshIcon(button)
     local skin = button.eternitySkin
-    local icon = button.icon
+    local icon = iconOf(button)
     local shown = skin.active and icon:IsShown()
     for _, overlay in ipairs(skin.overlays) do
         overlay:SetShown(shown and overlay.wanted)
@@ -197,7 +213,7 @@ end
 
 -- Follows what the button does to its icon (show, hide, usable color, desaturation).
 local function hookIcon(button, skin)
-    local icon = button.icon
+    local icon = iconOf(button)
     hooksecurefunc(icon, "SetVertexColor", function(_, r)
         skin.unusable = r == UNUSABLE
         refreshIcon(button)
@@ -292,7 +308,7 @@ end
 
 -- Brightness, tint, inner shadow and glass shine over the icon.
 local function applyIcon(button, skin, inset, size, path)
-    local icon = button.icon
+    local icon = iconOf(button)
     local brightness = opt("icons.brightness")
     skin.shade.wanted = brightness ~= 0
     if brightness > 0 then
@@ -409,7 +425,7 @@ function Style:Apply(button, size)
     skin.backdrop:SetShown(opt("buttons.backdrop"))
     setMask(skin.backdrop, skin.innerMask, path)
 
-    local icon = button.icon
+    local icon = iconOf(button)
     if button.IconMask then
         icon:RemoveMaskTexture(button.IconMask)
     end
@@ -421,7 +437,7 @@ function Style:Apply(button, size)
     applyStates(button, skin, inset, path)
     applyIcon(button, skin, inset, size, path)
 
-    local cooldown = button.cooldown
+    local cooldown = cooldownOf(button)
     if cooldown then
         inside(cooldown, inset)
         cooldown:SetSwipeTexture(path or SQUARE)
@@ -474,7 +490,7 @@ function Style:Remove(button)
     end
     skin.border:Hide()
     skin.backdrop:Hide()
-    local icon = button.icon
+    local icon = iconOf(button)
     icon:RemoveMaskTexture(skin.innerMask)
     if button.IconMask then
         icon:AddMaskTexture(button.IconMask)
@@ -496,10 +512,11 @@ function Style:Remove(button)
         restorePoints(texture, saved.points)
     end
     refreshIcon(button)
-    if button.cooldown then
-        button.cooldown:SetSwipeTexture(SQUARE)
-        button.cooldown:SetSwipeColor(0, 0, 0, 0.8)
-        button.cooldown:SetDrawEdge(true)
-        button.cooldown:SetUseCircularEdge(false)
+    local cooldown = cooldownOf(button)
+    if cooldown then
+        cooldown:SetSwipeTexture(SQUARE)
+        cooldown:SetSwipeColor(0, 0, 0, 0.8)
+        cooldown:SetDrawEdge(true)
+        cooldown:SetUseCircularEdge(false)
     end
 end

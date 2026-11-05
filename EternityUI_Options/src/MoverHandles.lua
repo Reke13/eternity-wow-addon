@@ -1,5 +1,6 @@
 -- The handle over each element: click to select, drag to move, arrows to nudge one pixel (ten
--- with Shift). Alt frees a drag from the snap.
+-- with Shift). Alt frees a drag from the snap. The selected element has a grip in its bottom right
+-- corner: dragging it scales the element, keeping its top left corner in place.
 ---@type string, table
 local _, ns = ...
 local E = EternityUI
@@ -14,7 +15,9 @@ local Handles = {}
 ns.MoverHandles = Handles
 
 local handles = {}
-local drag
+local drag, resize
+
+local GRIP = 14
 
 local function session()
     return ns.MoverSession
@@ -44,7 +47,9 @@ local function entryFor(key, rect)
     local pixel = E.Pixel.Size(UIParent)
     entry.x = Geometry.Round(entry.x, pixel)
     entry.y = Geometry.Round(entry.y, pixel)
-    entry.locked = session().Entry(key).locked
+    local current = session().Entry(key)
+    entry.locked = current.locked
+    entry.scale = current.scale
     return entry
 end
 
@@ -104,6 +109,57 @@ local function stopDrag(handle)
     ns.MoverScene.SetGuides(nil)
 end
 
+-- Scale from the grip: the cursor's travel over the element's size, kept to 0.01 steps.
+local function onResize()
+    local x, y = cursor()
+    local start = resize.rect
+    local grow = ((start.w + x - resize.x) / start.w + (start.h + resize.y - y) / start.h) / 2
+    local scale = resize.scale * math.max(grow, 0.01)
+    scale = math.floor(math.min(math.max(scale, Mover.MIN_SCALE), Mover.MAX_SCALE) * 100 + 0.5) / 100
+    local k = scale / resize.scale
+    local top = start.b + start.h
+    local rect = { l = start.l, w = start.w * k, h = start.h * k }
+    rect.b = top - rect.h
+    Geometry.Clamp(rect, UIParent:GetWidth(), UIParent:GetHeight())
+    local entry = entryFor(resize.key, rect)
+    entry.scale = scale ~= 1 and scale or nil
+    session().Set(resize.key, entry)
+end
+
+local function startResize(grip)
+    local key = grip:GetParent().key
+    if session().Entry(key).locked then
+        return
+    end
+    session().Checkpoint()
+    local x, y = cursor()
+    resize = {
+        key = key,
+        x = x,
+        y = y,
+        rect = Mover.Rect(Mover.elements[key], session().Entry(key)),
+        scale = session().Entry(key).scale or 1,
+    }
+    grip:SetScript("OnUpdate", onResize)
+end
+
+local function stopResize(grip)
+    grip:SetScript("OnUpdate", nil)
+    resize = nil
+end
+
+local function gripFor(handle)
+    local grip = CreateFrame("Button", nil, handle)
+    grip:SetSize(GRIP, GRIP)
+    grip:SetPoint("BOTTOMRIGHT", -2, 2)
+    grip:SetFrameLevel(handle:GetFrameLevel() + 2)
+    grip.texture = grip:CreateTexture(nil, "OVERLAY")
+    grip.texture:SetAllPoints()
+    grip:SetScript("OnMouseDown", startResize)
+    grip:SetScript("OnMouseUp", stopResize)
+    return grip
+end
+
 local function handleFor(element)
     local handle = handles[element.key]
     if handle then
@@ -120,6 +176,7 @@ local function handleFor(element)
     handle:RegisterForClicks("AnyUp")
     handle:SetScript("OnMouseDown", startDrag)
     handle:SetScript("OnMouseUp", stopDrag)
+    handle.grip = gripFor(handle)
     handles[element.key] = handle
     return handle
 end
@@ -137,9 +194,16 @@ function Handles.Refresh()
         handle:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", rect.l, rect.b)
         handle:SetSize(rect.w, rect.h)
         handle.label:SetText(element.label)
-        handle.size:SetText(string.format("%d × %d", math.floor(rect.w + 0.5), math.floor(rect.h + 0.5)))
+        local entry = session().Entry(element.key)
+        local size = string.format("%d × %d", math.floor(rect.w + 0.5), math.floor(rect.h + 0.5))
+        if entry.scale then
+            size = size .. string.format(" · x%.2f", entry.scale)
+        end
+        handle.size:SetText(size)
         local on = session().selected == element.key
         local a = Theme.accent
+        handle.grip:SetShown(on and not entry.locked and Mover.IsScalable(element.key))
+        handle.grip.texture:SetColorTexture(a[1], a[2], a[3], 1)
         local edge = on and { a[1], a[2], a[3], 1 } or { a[1], a[2], a[3], 0.45 }
         Shape.Paint(handle.shape, 5, { a[1], a[2], a[3], on and 0.34 or 0.14 }, edge)
         if on then

@@ -30,7 +30,9 @@ local EVENTS = {
     "UPDATE_INVENTORY_DURABILITY",
     "BAG_UPDATE_DELAYED",
 }
-local UNIT_EVENTS = { "UNIT_AURA", "UNIT_INVENTORY_CHANGED" }
+local UNIT_EVENTS = { "UNIT_AURA", "UNIT_INVENTORY_CHANGED", "UNIT_SPELLCAST_SUCCEEDED" }
+-- In combat buff rules run on an estimate that changes with time: checked every second.
+local COMBAT_TICK = 1
 
 ---@class EternityUIAlertsModule: EternityUIModuleDefinition
 ---@field events table? event frame (created the first time it's enabled)
@@ -109,9 +111,25 @@ function Module:Schedule()
     end)
 end
 
-function Module:OnEvent(event)
-    if event == "PLAYER_REGEN_DISABLED" then
+function Module:OnEvent(event, ...)
+    if event == "UNIT_SPELLCAST_SUCCEEDED" then
+        local _, _, spellID = ...
+        if not Checks.OnCast(spellID) and not Checks.AurasRestricted() then
+            -- Out of combat UNIT_AURA follows anyway; not one of the rules' buffs: nothing to do.
+            return
+        end
+    elseif event == "PLAYER_REGEN_DISABLED" then
         Display.ClearClicks()
+        if not self.combatTicker then
+            self.combatTicker = C_Timer.NewTicker(COMBAT_TICK, function()
+                if self.running then
+                    self:Evaluate()
+                end
+            end)
+        end
+    elseif event == "PLAYER_REGEN_ENABLED" and self.combatTicker then
+        self.combatTicker:Cancel()
+        self.combatTicker = nil
     end
     self:Schedule()
 end
@@ -125,8 +143,8 @@ function Module:OnEnable()
     end
     if not self.events then
         self.events = CreateFrame("Frame")
-        self.events:SetScript("OnEvent", function(_, event)
-            self:OnEvent(event)
+        self.events:SetScript("OnEvent", function(_, event, ...)
+            self:OnEvent(event, ...)
         end)
     end
     for _, event in ipairs(EVENTS) do
@@ -158,6 +176,10 @@ function Module:OnDisable()
         self.ticker:Cancel()
         self.ticker = nil
     end
+    if self.combatTicker then
+        self.combatTicker:Cancel()
+        self.combatTicker = nil
+    end
     if self.events then
         self.events:UnregisterAllEvents()
     end
@@ -169,6 +191,48 @@ function Module:OnConfigChanged()
     if self.running then
         Display.Draw()
     end
+end
+
+--- /etavisos: what the module believes about each buff rule now (to find out why one doesn't show).
+function Module:Report()
+    local context = Conditions.Context()
+    print(L.DEBUG_HEADER:format(
+        tostring(context.combat),
+        tostring(Checks.AurasRestricted()),
+        Checks.known and L.YES or L.NO
+    ))
+    local now = GetTime()
+    for _, rule in ipairs(Rules.List()) do
+        if rule.kind == "buff" then
+            local state = self.state[rule.id] or {}
+            local left = {}
+            for _, entry in ipairs(Rules.Entries(rule.spells)) do
+                local key = type(entry) == "string" and entry:lower() or entry
+                local expires = Checks.known and Checks.known[key]
+                if expires == nil then
+                    left[#left + 1] = tostring(entry) .. ": -"
+                elseif expires == 0 then
+                    left[#left + 1] = tostring(entry) .. ": " .. L.DEBUG_FOREVER
+                else
+                    left[#left + 1] = tostring(entry) .. ": " .. math.floor(expires - now) .. " s"
+                end
+            end
+            print(L.DEBUG_RULE:format(
+                rule.name,
+                tostring(rule.enabled),
+                L["COMBAT_" .. tostring(rule.combat)] or tostring(rule.combat),
+                tostring(state.firing),
+                tostring(state.showing),
+                table.concat(left, ", ")
+            ))
+        end
+    end
+end
+
+SLASH_ETERNITYALERTS1 = "/etavisos"
+SLASH_ETERNITYALERTS2 = "/etalerts"
+SlashCmdList.ETERNITYALERTS = function()
+    Module:Report()
 end
 
 E:RegisterModule(addonName, Module)

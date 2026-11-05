@@ -118,7 +118,8 @@ function Widgets.Button(parent, text, style, onClick)
     return Widgets.Track(button)
 end
 
---- Mutually exclusive choices in a row. choices = { { value, text } }.
+--- Mutually exclusive choices in a row. choices = { { value, text } }. Set group.buttonHeight
+--- (30 by default) and call Paint to change the buttons' height.
 ---@param parent table
 ---@param choices table[]
 ---@param onSelect fun(value: any)
@@ -150,7 +151,7 @@ function Widgets.Segmented(parent, choices, onSelect)
         for _, button in ipairs(self.buttons) do
             local on = button.value == self.value
             local width = button.label:GetStringWidth() + 28
-            button:SetSize(width, 30)
+            button:SetSize(width, self.buttonHeight or 30)
             button:SetPoint("LEFT", x, 0)
             x = x + width + 6
             local radius = math.min(Theme.radius, 5)

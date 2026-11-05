@@ -345,8 +345,20 @@ function ChatSkin:ApplyEditBox(box, frame)
     decor:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", right, 3)
     local focused = box:HasFocus()
     local r, g, b = Theme.Color("window")
-    -- The field sits on the window color, so it reads the same over any background.
-    decor.shape:SetColors({ r, g, b, 0.92 }, focused and "focus" or "borderStrong")
+    -- While typing the field sits on the window color, so it reads the same over any background.
+    -- Otherwise it follows the chat's background: Eternity's opacity and border, nothing at all
+    -- without a background, and the solid field over Blizzard's.
+    local background = opt("background.style")
+    local alpha, border = 0.92, "borderStrong"
+    if focused then
+        border = "focus"
+    elseif background == "eternity" then
+        alpha = opt("background.opacity")
+        border = opt("background.border") and "borderStrong" or nil
+    elseif background == "none" then
+        alpha, border = 0, nil
+    end
+    decor.shape:SetColors({ r, g, b, alpha }, border)
 end
 
 -- Buttons and modes -------------------------------------------------------------------------

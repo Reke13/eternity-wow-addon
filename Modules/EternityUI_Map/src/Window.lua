@@ -100,9 +100,12 @@ function Window:Layout()
             self.scaled = false
             map:SetScale(1)
         end
+        ns.Skin:SetPadding(0)
         self:UpdateHandle()
         return
     end
+    -- The windowed map's Margin: room between the map and the edge of our window around it.
+    ns.Skin:SetPadding(tonumber(opt("window.margin")) or 0)
     local scale = Window.Scale()
     if map:GetScale() ~= scale then
         map:SetScale(scale)
@@ -292,8 +295,9 @@ function Window:Apply()
         self:Layout()
         return
     end
-    -- Off: scale 1 and Blizzard's spot. The next open is placed by Blizzard anyway.
+    -- Off: scale 1, no margin and Blizzard's spot. The next open is placed by Blizzard anyway.
     self.dragging = nil
+    ns.Skin:SetPadding(0)
     if self.scaled or map:GetScale() ~= 1 then
         self.scaled = false
         map:SetScale(1)

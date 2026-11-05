@@ -69,7 +69,50 @@ local INFO_SLOTS = { "above", "top", "bottom", "below" }
 local function cluster()
     return _G.MinimapCluster
 end
+-- Forever's day and night cycle (the sun and moon on the map's ring) has no name: it's the frame
+-- in MinimapContainer that holds the "UI-HUD-Minimap-Frame-Cycle" texture (Blizzard_Minimap,
+-- Camelot/Diel.lua). Searched once, two levels down.
+local CYCLE_ATLAS = "UI-HUD-Minimap-Frame-Cycle"
+local dayNightFrame
+
+local function hasCycleAtlas(frame, depth)
+    for _, region in ipairs({ frame:GetRegions() }) do
+        if region.GetAtlas and region:GetAtlas() == CYCLE_ATLAS then
+            return true
+        end
+    end
+    if depth > 0 then
+        for _, child in ipairs({ frame:GetChildren() }) do
+            if hasCycleAtlas(child, depth - 1) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function findDayNight()
+    if dayNightFrame then
+        return dayNightFrame
+    end
+    local c = _G.MinimapCluster
+    local container = c and c.MinimapContainer
+    if not container then
+        return nil
+    end
+    for _, child in ipairs({ container:GetChildren() }) do
+        if child ~= Minimap and hasCycleAtlas(child, 1) then
+            dayNightFrame = child
+            return child
+        end
+    end
+    return nil
+end
+
 local BLIZZARD = {
+    dayNight = function()
+        return findDayNight()
+    end,
     zoneText = function()
         -- BorderTop: the header background in Retail.
         local c = cluster()
@@ -147,6 +190,9 @@ local Module = {
     schema = ns.OptionsSchema,
     captured = {},
     buttonHooks = {},
+    placed = {}, -- Blizzard button -> { points, scale } while it sits on the edge
+    raised = {}, -- Blizzard button -> { strata, level } while it's drawn above the map
+    placeHooks = {},
 }
 
 local function opt(path)
@@ -173,9 +219,13 @@ function Module:RestoreFrame(frame)
 end
 
 --- Hides or restores each element according to the options (all visible if the module isn't running).
+--- Blizzard's coordinates also hide while ours are shown: both sit inside the map and would overlap.
 function Module:ApplyBlizzard()
     for key, frames in pairs(BLIZZARD) do
         local show = not self.running or opt("blizzard." .. key)
+        if key == "coords" and self.running and opt("info.coords") then
+            show = false
+        end
         for _, frame in ipairs({ frames() }) do
             if show then
                 self:RestoreFrame(frame)
@@ -320,6 +370,127 @@ function Module:ApplyLook()
     end
 end
 
+-- Placement of Blizzard's buttons on the map's edge ----------------------------------------------
+-- Each button keeps its parent; only its point (and scale) change, and both come back as they were.
+-- Blizzard's layout code may place a button again: it goes back to the edge on the next frame.
+-- While the module runs every one of these buttons is drawn above the map and our decor (border,
+-- glow, texts): otherwise the map, raised by its skin, covers them.
+
+local ABOVE_MAP = 10 -- frame levels over the map
+
+local PLACEABLE = { "dayNight", "calendar", "tracking", "mail", "difficulty", "compartment", "expansion", "clock" }
+
+--- A point on the map's edge for an angle (0 = right, 90 = up), in the map's units from its center.
+---@param angle number degrees
+---@param outward number? distance past the edge
+---@return number, number
+function Module:EdgePoint(angle, outward)
+    local rad = math.rad(angle)
+    local x, y = math.cos(rad), math.sin(rad)
+    if minimapShape() == "SQUARE" then
+        local m = math.max(math.abs(x), math.abs(y))
+        x, y = x / m, y / m
+    end
+    local radius = Minimap:GetWidth() / 2 + (outward or 0)
+    return x * radius, y * radius
+end
+
+function Module:PlaceButton(key, frame)
+    local placed = self.placed[frame]
+    if not placed then
+        local points = {}
+        for i = 1, frame:GetNumPoints() do
+            points[i] = { frame:GetPoint(i) }
+        end
+        placed = { points = points, scale = frame:GetScale() }
+        self.placed[frame] = placed
+    end
+    if not self.placeHooks[frame] then
+        self.placeHooks[frame] = true
+        hooksecurefunc(frame, "SetPoint", function(button)
+            if not self.placing and self.placed[button] then
+                self:SchedulePlacement()
+            end
+        end)
+    end
+    self.placing = true
+    frame:SetScale(placed.scale * opt("placement.size"))
+    local x, y = self:EdgePoint(opt("placement." .. key .. "Angle"), opt("placement.offset"))
+    -- Offsets go in the button's units: its scale may not be the map's.
+    local ratio = Minimap:GetEffectiveScale() / frame:GetEffectiveScale()
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER", Minimap, "CENTER", x * ratio, y * ratio)
+    self.placing = false
+end
+
+function Module:RestoreButton(frame)
+    local placed = self.placed[frame]
+    if not placed then
+        return
+    end
+    self.placed[frame] = nil
+    self.placing = true
+    frame:SetScale(placed.scale)
+    frame:ClearAllPoints()
+    for _, p in ipairs(placed.points) do
+        frame:SetPoint(unpack(p))
+    end
+    self.placing = false
+end
+
+--- Above the map while the module runs; its own strata and level again otherwise.
+function Module:RaiseButton(frame)
+    local saved = self.raised[frame]
+    if not self.running then
+        if saved then
+            frame:SetFrameStrata(saved.strata)
+            frame:SetFrameLevel(saved.level)
+            self.raised[frame] = nil
+        end
+        return
+    end
+    if not saved then
+        self.raised[frame] = { strata = frame:GetFrameStrata(), level = frame:GetFrameLevel() }
+    end
+    if frame:GetFrameStrata() ~= Minimap:GetFrameStrata() then
+        frame:SetFrameStrata(Minimap:GetFrameStrata())
+    end
+    local level = Minimap:GetFrameLevel() + ABOVE_MAP
+    if frame:GetFrameLevel() < level then
+        frame:SetFrameLevel(level)
+    end
+end
+
+--- Puts each Blizzard button on the edge or back where it was, and above the map.
+function Module:ApplyPlacement()
+    E.Combat.Run(self.placed, function()
+        for _, key in ipairs(PLACEABLE) do
+            local frame = (BLIZZARD[key]())
+            if frame and not (frame.IsForbidden and frame:IsForbidden()) then
+                if self.running and opt("placement." .. key) == "edge" then
+                    self:PlaceButton(key, frame)
+                else
+                    self:RestoreButton(frame)
+                end
+                self:RaiseButton(frame)
+            end
+        end
+    end)
+end
+
+function Module:SchedulePlacement()
+    if self.placementPending then
+        return
+    end
+    self.placementPending = true
+    C_Timer.After(0, function()
+        self.placementPending = false
+        if self.running then
+            self:ApplyPlacement()
+        end
+    end)
+end
+
 -- Information (zone, time, coordinates) -----------------------------------------------------------
 
 local function createInfo(self)
@@ -390,9 +561,18 @@ function Module:UpdateInfo()
     local style = opt("text.style")
     local background = opt("text.background")
     local stacks = { above = {}, top = {}, bottom = {}, below = {} }
+    local texts = {}
+    for _, key in ipairs(INFO_ITEMS) do
+        texts[key] = self.running and opt("info." .. key) and TEXTS[key]() or ""
+    end
+    -- Time and coordinates in one box, in the time's slot.
+    if opt("text.joinClockCoords") and texts.clock ~= "" and texts.coords ~= "" then
+        texts.clock = texts.clock .. "  ·  " .. texts.coords
+        texts.coords = ""
+    end
     for _, key in ipairs(INFO_ITEMS) do
         local item = self.info[key]
-        local text = self.running and opt("info." .. key) and TEXTS[key]() or ""
+        local text = texts[key]
         Widgets.SetTextSize(item.text, TEXT_SIZES[style] or TEXT_SIZES.small)
         item.text:SetTextColor(Theme.Color("text"))
         item.text:SetText(text)
@@ -468,7 +648,55 @@ function Module:SaveOriginal()
         alpha = c:GetAlpha(),
         points = points,
         wheel = Minimap:IsMouseWheelEnabled(),
+        clamped = c:IsClampedToScreen(),
+        width = Minimap:GetWidth(),
+        height = Minimap:GetHeight(),
     }
+end
+
+--- Resizes only the map (its children, our texts, keep their scale and follow its edges). The map
+--- draws its terrain again for the new size after a zoom nudge.
+function Module:SetMapSize(width, height)
+    if math.abs(Minimap:GetWidth() - width) < 0.5 and math.abs(Minimap:GetHeight() - height) < 0.5 then
+        return
+    end
+    Minimap:SetSize(width, height)
+    local zoom = Minimap:GetZoom()
+    self.resizing = true
+    Minimap:SetZoom(zoom > 0 and zoom - 1 or zoom + 1)
+    Minimap:SetZoom(zoom)
+    self.resizing = false
+end
+
+-- The Mover doesn't move MinimapCluster itself: the cluster is much bigger than the map (room for
+-- Blizzard's header and buttons), so its handle covered empty space. It moves a holder the size of
+-- the map, and the cluster follows it so the map sits exactly on the holder, with its scale.
+
+--- Anchors the cluster so the map lands on the holder, at the holder's scale.
+function Module:FollowHolder()
+    local c, holder = cluster(), self.holder
+    if not (self.running and c and holder and holder:IsShown()) then
+        return
+    end
+    E.Combat.Run(holder, function()
+        if not self.running then
+            return
+        end
+        -- The cluster has empty room around the map: clamped to the screen, it would be pushed off
+        -- the holder near the edges. The holder (the map's size) is what stays on screen.
+        c:SetClampedToScreen(false)
+        c:SetScale(holder:GetScale())
+        local left, top = Minimap:GetLeft(), Minimap:GetTop()
+        local cLeft, cTop = c:GetLeft(), c:GetTop()
+        if not (left and top and cLeft and cTop) then
+            return
+        end
+        -- The map's top left corner inside the cluster, in the cluster's units.
+        local ratio = Minimap:GetEffectiveScale() / c:GetEffectiveScale()
+        local dx, dy = left * ratio - cLeft, top * ratio - cTop
+        c:ClearAllPoints()
+        c:SetPoint("TOPLEFT", holder, "TOPLEFT", -dx, -dy)
+    end)
 end
 
 function Module:ApplyMap()
@@ -480,8 +708,13 @@ function Module:ApplyMap()
     local original = self.original
     if not self.running then
         E.Mover.Unregister(addonName)
+        if self.holder then
+            self.holder:Hide()
+        end
         c:SetScale(original.scale)
         c:SetAlpha(original.alpha)
+        c:SetClampedToScreen(original.clamped)
+        self:SetMapSize(original.width, original.height)
         if self.moved then
             c:ClearAllPoints()
             for _, p in ipairs(original.points) do
@@ -492,8 +725,20 @@ function Module:ApplyMap()
         Minimap:EnableMouseWheel(original.wheel)
         return
     end
-    local scale = original.scale * opt("map.scale")
-    c:SetScale(scale)
+    if not self.holder then
+        self.holder = CreateFrame("Frame", nil, UIParent)
+        -- The Mover's scale factor lands on the holder: the cluster takes it from there.
+        hooksecurefunc(self.holder, "SetScale", function()
+            self:FollowHolder()
+        end)
+    end
+    local holder = self.holder
+    holder:Show()
+    local size = opt("map.size")
+    self:SetMapSize(original.width * size, original.height * size)
+    local ratio = Minimap:GetEffectiveScale() / c:GetEffectiveScale()
+    holder:SetSize(Minimap:GetWidth() * ratio, Minimap:GetHeight() * ratio)
+    holder:SetScale(original.scale * opt("map.scale"))
     local inCombat = self.inCombat or InCombatLockdown()
     c:SetAlpha(inCombat and opt("effects.combatAlpha") or opt("effects.alpha"))
     -- Forever has no Edit Mode for the minimap: the Mover places it, top right by default.
@@ -502,14 +747,17 @@ function Module:ApplyMap()
             key = addonName,
             owner = addonName,
             label = L.MOVER,
-            frame = c,
+            frame = holder,
             point = "TOPRIGHT",
+            x = -16,
+            y = -16,
             openOptions = function()
                 E:OpenOptions(addonName)
             end,
         })
         self.moved = true
     end
+    self:FollowHolder()
     Minimap:EnableMouseWheel(opt("behavior.wheelZoom"))
 end
 
@@ -823,15 +1071,9 @@ end
 
 --- Button position on the edge: angle in degrees (0 = right, 90 = up).
 function Module:PlaceToggle(angle)
-    local rad = math.rad(angle or opt("collector.angle"))
-    local x, y = math.cos(rad), math.sin(rad)
-    if minimapShape() == "SQUARE" then
-        local m = math.max(math.abs(x), math.abs(y))
-        x, y = x / m, y / m
-    end
-    local radius = Minimap:GetWidth() / 2
+    local x, y = self:EdgePoint(angle or opt("collector.angle"))
     self.toggle:ClearAllPoints()
-    self.toggle:SetPoint("CENTER", Minimap, "CENTER", x * radius, y * radius)
+    self.toggle:SetPoint("CENTER", Minimap, "CENTER", x, y)
 end
 
 function Module:DragUpdate()
@@ -965,7 +1207,9 @@ function Module:InstallHooks()
         end)
     end
     hooksecurefunc(Minimap, "SetZoom", function()
-        self:OnZoom()
+        if not self.resizing then
+            self:OnZoom()
+        end
     end)
     -- GetMinimapShape protocol (LibDBIcon and others), if nobody has defined it yet.
     if _G.GetMinimapShape == nil then
@@ -1012,8 +1256,10 @@ end
 --- Applies every option (or undoes everything if the module isn't running).
 function Module:ApplyAll()
     self:ApplyBlizzard()
-    self:ApplyLook()
+    -- The map's size first: the look (glow) and the buttons on the edge measure it.
     self:ApplyMap()
+    self:ApplyLook()
+    self:ApplyPlacement()
     self:UpdateInfo()
     self:Scan()
 end

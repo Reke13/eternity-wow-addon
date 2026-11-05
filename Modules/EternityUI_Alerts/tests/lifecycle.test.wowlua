@@ -29,7 +29,7 @@ local function rule(fields)
         place = "any",
         hideResting = false,
         hideMounted = false,
-        hideCombat = false,
+        combat = "any",
     }
     for key, value in pairs(fields or {}) do
         base[key] = value
@@ -64,7 +64,9 @@ local function conditions()
     expect(passes(rule({ group = "solo" }), context())).toBe(true)
     expect(passes(rule({ place = "instance" }), context())).toBe(false)
     expect(passes(rule({ place = "world" }), context({ instance = true }))).toBe(false)
-    expect(passes(rule({ hideCombat = true }), context({ combat = true }))).toBe(false)
+    expect(passes(rule({ combat = "out" }), context({ combat = true }))).toBe(false)
+    expect(passes(rule({ combat = "in" }), context())).toBe(false)
+    expect(passes(rule({ combat = "in" }), context({ combat = true }))).toBe(true)
     expect(passes(rule({ hideMounted = true }), context({ mounted = true }))).toBe(false)
     expect(passes(rule({ hideResting = true }), context({ resting = true }))).toBe(false)
 end
@@ -98,6 +100,51 @@ local function buffClears()
     expect((Checks.Run({ kind = "buff", spells = "467" }))).toBe(false)
     expect((Checks.Run({ kind = "buff", spells = "Mark of the Wild" }))).toBe(true)
     C_UnitAuras.GetAuraDataByIndex = read
+end
+
+@test("a buff without a name or an ID doesn't stop the check")
+local function oddAuras()
+    local Checks = EternityUI:GetModule(NAME).Checks
+    local read = C_UnitAuras.GetAuraDataByIndex
+    local auras = {}
+    auras[1] = { spellId = 1 }
+    auras[2] = { name = "Thorns" }
+    C_UnitAuras.GetAuraDataByIndex = function(_, index)
+        return auras[index]
+    end
+    expect((Checks.Run({ kind = "buff", spells = "Thorns" }))).toBe(false)
+    expect((Checks.Run({ kind = "buff", spells = "Mark of the Wild" }))).toBe(true)
+    C_UnitAuras.GetAuraDataByIndex = read
+end
+
+@test("a spell ID matches any rank of the buff by its name")
+local function ranks()
+    local Checks = EternityUI:GetModule(NAME).Checks
+    local read, name = C_UnitAuras.GetAuraDataByIndex, C_Spell.GetSpellName
+    local auras = {}
+    auras[1] = { name = "Thorns", spellId = 782 }
+    C_UnitAuras.GetAuraDataByIndex = function(_, index)
+        return auras[index]
+    end
+    -- Rank 1 (467) and the rank on the player (782) share the name.
+    C_Spell.GetSpellName = function()
+        return "Thorns"
+    end
+    expect((Checks.Run({ kind = "buff", spells = "467" }))).toBe(false)
+    C_UnitAuras.GetAuraDataByIndex, C_Spell.GetSpellName = read, name
+end
+
+@test("in combat a buff rule follows the estimate")
+local function estimate()
+    local Checks = EternityUI:GetModule(NAME).Checks
+    local restricted, known = Checks.AurasRestricted, Checks.known
+    Checks.AurasRestricted = function()
+        return true
+    end
+    Checks.known = { ["battle shout"] = GetTime() + 60, ["thorns"] = GetTime() - 1 }
+    expect((Checks.Run({ kind = "buff", spells = "Battle Shout" }))).toBe(false)
+    expect((Checks.Run({ kind = "buff", spells = "Thorns" }))).toBe(true)
+    Checks.AurasRestricted, Checks.known = restricted, known
 end
 
 @test("disabling hides the row and leaves the Mover")

@@ -378,18 +378,6 @@
           "label": { "enUS": "Shadow", "esES": "Sombra" }
         },
         {
-          "id": "compact",
-          "type": "toggle",
-          "default": true,
-          "label": { "enUS": "Compact header", "esES": "Cabecera compacta" }
-        },
-        {
-          "id": "title",
-          "type": "toggle",
-          "default": true,
-          "label": { "enUS": "Show the title", "esES": "Mostrar el título" }
-        },
-        {
           "id": "padding",
           "type": "range",
           "default": 12,
@@ -397,6 +385,42 @@
           "max": 24,
           "step": 1,
           "label": { "enUS": "Inner margin", "esES": "Margen interior" }
+        },
+        {
+          "id": "toolbarHeight",
+          "type": "range",
+          "default": 30,
+          "min": 18,
+          "max": 40,
+          "step": 1,
+          "label": { "enUS": "Toolbar height", "esES": "Alto de la barra superior" },
+          "description": {
+            "enUS": "Height of Search, Sort, ... and ×. Lower it for a more compact window.",
+            "esES": "Altura de Buscar, Ordenar, ... y ×. Bájala para una ventana más compacta."
+          }
+        },
+        {
+          "id": "footerSpace",
+          "type": "range",
+          "default": 27,
+          "min": 4,
+          "max": 40,
+          "step": 1,
+          "label": { "enUS": "Space above the gold row", "esES": "Espacio sobre la fila de monedas" },
+          "description": {
+            "enUS": "From the last row of items to the gold and free slots line.",
+            "esES": "Desde la última fila de objetos hasta la línea del oro y los huecos libres."
+          }
+        },
+        {
+          "id": "sectionTitles",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Section names (Keyring, Reagents...)", "esES": "Nombres de sección (Llavero, Componentes...)" },
+          "description": {
+            "enUS": "The name above each section: bags, reagents, keyring, bank tabs. Off: the sections stay apart, without a name.",
+            "esES": "El nombre encima de cada sección: bolsas, componentes, llavero, pestañas del banco. Desactivado: las secciones siguen separadas, sin nombre."
+          }
         }
       ]
     }
