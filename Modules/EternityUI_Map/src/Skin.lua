@@ -24,7 +24,8 @@ local HEADER_HEIGHT = 26
 ---@field header table? our title bar (inside Blizzard's BorderFrame, which is over the map)
 ---@field questBackdrop table?
 ---@field overlays table<table, table> Blizzard button -> our icon drawn on it
-local MapSkin = { stash = Core.NewStash(), overlays = {} }
+---@field padding number room around the map inside our window (windowed map only)
+local MapSkin = { stash = Core.NewStash(), overlays = {}, padding = 0 }
 ns.Skin = MapSkin
 
 -- Blizzard's buttons and the icon each one gets (seen in Forever FrameXML 1.60.1.70532).
@@ -86,21 +87,37 @@ function MapSkin:Create(map)
         return
     end
     local backdrop = W.Panel(map, { role = "window", fill = "window", border = "border" })
-    backdrop:SetAllPoints(map)
     backdrop:SetFrameLevel(map:GetFrameLevel())
     backdrop:Hide()
     self.backdrop = backdrop
 
     -- Inside BorderFrame (HIGH strata) so it's drawn over the map like Blizzard's title.
     local header = CreateFrame("Frame", nil, map.BorderFrame or map)
-    header:SetPoint("TOPLEFT", map, "TOPLEFT", 0, 0)
-    header:SetPoint("TOPRIGHT", map, "TOPRIGHT", 0, 0)
     header:SetHeight(HEADER_HEIGHT)
     header:EnableMouse(false)
     header.title = W.Text(header, "", "heading")
     header.title:SetPoint("LEFT", header, "LEFT", 14, -1)
     header:Hide()
     self.header = header
+    self:SetPadding(self.padding)
+end
+
+--- Room between the map and the edge of our window: the window (and its title bar) grow outwards
+--- by that much on every side. 0: the window is the map's size.
+---@param padding number
+function MapSkin:SetPadding(padding)
+    self.padding = padding or 0
+    local map = Core.Map()
+    if not (map and self.backdrop) then
+        return
+    end
+    local p = self.padding
+    self.backdrop:ClearAllPoints()
+    self.backdrop:SetPoint("TOPLEFT", map, "TOPLEFT", -p, p)
+    self.backdrop:SetPoint("BOTTOMRIGHT", map, "BOTTOMRIGHT", p, -p)
+    self.header:ClearAllPoints()
+    self.header:SetPoint("TOPLEFT", map, "TOPLEFT", -p, p)
+    self.header:SetPoint("TOPRIGHT", map, "TOPRIGHT", p, p)
 end
 
 function MapSkin:CreateQuestBackdrop()

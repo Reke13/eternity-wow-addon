@@ -56,21 +56,14 @@ function Window.Corner(map)
     return left * scale, top * scale - UIParent:GetHeight()
 end
 
---- Anchors the map's top left corner at this spot (UIParent units), kept on screen. With a Margin
---- the whole map stays that far from every edge (Blizzard's spot, a remembered one or a drag).
+--- Anchors the map's top left corner at this spot (UIParent units), kept on screen.
 function Window.Place(map, left, top)
     local scale = map:GetScale()
-    local width, height = map:GetWidth() * scale, map:GetHeight() * scale
+    local width = map:GetWidth() * scale
     local screenW, screenH = UIParent:GetWidth(), UIParent:GetHeight()
-    local margin = tonumber(opt("window.margin")) or 0
-    if margin > 0 then
-        left = math.max(margin, math.min(screenW - margin - width, left))
-        top = math.min(-margin, math.max(margin + height - screenH, top))
-    else
-        left = math.max(KEEP_ON_SCREEN - width, math.min(screenW - KEEP_ON_SCREEN, left))
-        -- The header stays reachable: never above the screen, never below its bottom edge.
-        top = math.min(0, math.max(KEEP_ON_SCREEN - screenH, top))
-    end
+    left = math.max(KEEP_ON_SCREEN - width, math.min(screenW - KEEP_ON_SCREEN, left))
+    -- The header stays reachable: never above the screen, never below its bottom edge.
+    top = math.min(0, math.max(KEEP_ON_SCREEN - screenH, top))
     map:ClearAllPoints()
     map:SetPoint("TOPLEFT", UIParent, "TOPLEFT", left / scale, top / scale)
 end
@@ -85,19 +78,13 @@ local function rememberHome(map)
     end
 end
 
---- Anchors the map in Blizzard's spot for its current scale, at least the Margin option away from
---- the screen's edges.
+--- Anchors the map in Blizzard's spot for its current scale.
 local function goHome(map)
     local home = Window.home
-    if not home then
-        return
-    end
-    local scale = map:GetScale()
-    map:ClearAllPoints()
-    map:SetPoint(home[1], home[2], home[3], home[4] / scale, home[5] / scale)
-    local left, top = Window.Corner(map)
-    if (tonumber(opt("window.margin")) or 0) > 0 and left then
-        Window.Place(map, left, top)
+    if home then
+        local scale = map:GetScale()
+        map:ClearAllPoints()
+        map:SetPoint(home[1], home[2], home[3], home[4] / scale, home[5] / scale)
     end
 end
 
@@ -113,9 +100,12 @@ function Window:Layout()
             self.scaled = false
             map:SetScale(1)
         end
+        ns.Skin:SetPadding(0)
         self:UpdateHandle()
         return
     end
+    -- The windowed map's Margin: room between the map and the edge of our window around it.
+    ns.Skin:SetPadding(tonumber(opt("window.margin")) or 0)
     local scale = Window.Scale()
     if map:GetScale() ~= scale then
         map:SetScale(scale)
@@ -305,8 +295,9 @@ function Window:Apply()
         self:Layout()
         return
     end
-    -- Off: scale 1 and Blizzard's spot. The next open is placed by Blizzard anyway.
+    -- Off: scale 1, no margin and Blizzard's spot. The next open is placed by Blizzard anyway.
     self.dragging = nil
+    ns.Skin:SetPadding(0)
     if self.scaled or map:GetScale() ~= 1 then
         self.scaled = false
         map:SetScale(1)

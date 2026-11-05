@@ -173,15 +173,18 @@ ns.OptionsSchema = {
                     type = "range",
                     default = 0,
                     min = 0,
-                    max = 100,
+                    max = 40,
                     step = 1,
                     label = {
-                        enUS = "Margin of the windowed map",
-                        esES = "Margen del mapa en ventana",
+                        enUS = "Margin around the windowed map",
+                        esES = "Margen alrededor del mapa en ventana",
                     },
                     description = {
-                        enUS = "The whole windowed map keeps this space from the screen's edges, in Blizzard's spot or where you dragged it. 0: it can go partly off screen.",
-                        esES = "Todo el mapa en ventana se mantiene a esta distancia de los bordes de la pantalla, en el sitio de Blizzard o donde lo hayas arrastrado. 0: puede salirse en parte.",
+                        enUS = "Room between the map and the edge of its window. With the Eternity style; the maximized map has none.",
+                        esES = "Espacio entre el mapa y el borde de su ventana. Con el estilo de Eternity; el mapa maximizado no lo lleva.",
+                    },
+                    visibleWhen = {
+                        ["look.skin"] = true,
                     },
                 },
                 {
