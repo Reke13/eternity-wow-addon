@@ -385,8 +385,9 @@ function Grid:Layout()
     local size, gap = opt("slots.size"), opt("slots.spacing")
     local columns = opt(self.kind == "bank" and "slots.bankColumns" or "slots.columns")
     local used, y, titleIndex = {}, 0, 0
+    local showTitles = opt("windows.sectionTitles")
     for _, section in ipairs(self:Sections()) do
-        if section.title then
+        if section.title and showTitles then
             titleIndex = titleIndex + 1
             local title = self:SectionTitle(titleIndex)
             title:SetText(section.title)

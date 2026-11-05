@@ -85,6 +85,19 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "sectionTitles",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Section titles",
+                        esES = "Títulos de sección",
+                    },
+                    description = {
+                        enUS = "The name above each section: bags, reagents, keyring, bank tabs. Off: the sections stay apart, without a name.",
+                        esES = "El nombre encima de cada sección: bolsas, componentes, llavero, pestañas del banco. Desactivado: las secciones siguen separadas, sin nombre.",
+                    },
+                },
+                {
                     id = "sortReverse",
                     type = "toggle",
                     default = false,
