@@ -1,0 +1,27 @@
+-- The module puts the buff and debuff frames in the Mover and gives them back.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Buffs"
+
+@test("the module starts and registers its frames in the Mover")
+local function starts()
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+    expect(EternityUI.Mover.elements[NAME .. ".buffs"] ~= nil).toBe(BuffFrame ~= nil)
+    expect(EternityUI.Mover.elements[NAME .. ".debuffs"] ~= nil).toBe(DebuffFrame ~= nil)
+end
+
+@test("an option takes one frame out of the Mover")
+local function option()
+    local store = EternityUI.store
+    store:Set(NAME, "frames.debuffs", false)
+    expect(EternityUI.Mover.elements[NAME .. ".debuffs"] == nil).toBe(true)
+    store:Reset(NAME)
+    expect(EternityUI.Mover.elements[NAME .. ".debuffs"] ~= nil).toBe(DebuffFrame ~= nil)
+end
+
+@test("disabling leaves the Mover")
+local function stops()
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(EternityUI.Mover.elements[NAME .. ".buffs"] == nil).toBe(true)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+end
