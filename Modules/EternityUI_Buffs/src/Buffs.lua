@@ -99,6 +99,15 @@ local function opt(path)
     return E.store:Get(addonName, path)
 end
 
+-- A size that may be secret (a frame showing secret values returns secret geometry): the fallback
+-- then, since doing math on a secret errors.
+local function plain(value, fallback)
+    if value == nil or (issecretvalue ~= nil and issecretvalue(value)) then
+        return fallback
+    end
+    return value
+end
+
 local function keyOf(item)
     return addonName .. "." .. item.id
 end
@@ -112,7 +121,11 @@ end
 local function syncSize(item)
     local frame = _G[item.global]
     if frame and item.holder then
-        item.holder:SetSize(math.max(frame:GetWidth(), MIN_SIZE), math.max(frame:GetHeight(), MIN_SIZE))
+        local width, height = plain(frame:GetWidth(), nil), plain(frame:GetHeight(), nil)
+        -- Secret in combat: the holder keeps its size until the frame can be measured again.
+        if width and height then
+            item.holder:SetSize(math.max(width, MIN_SIZE), math.max(height, MIN_SIZE))
+        end
     end
 end
 
@@ -278,9 +291,9 @@ local function updatePreview(item)
     local right, top = c.addIconsToRight == true, c.addIconsToTop == true
     local stride, pad, scale = c.iconStride or 10, c.iconPadding or 5, c.iconScale or 1
     local first = frame.auraFrames and frame.auraFrames[1]
-    local width = first and first:GetWidth() or 30
-    local height = first and first:GetHeight() or 40
-    local iconSize = first and first.Icon and first.Icon:GetWidth() or width
+    local width = plain(first and first:GetWidth(), 30)
+    local height = plain(first and first:GetHeight(), 40)
+    local iconSize = plain(first and first.Icon and first.Icon:GetWidth(), width)
     local corner = (top and "BOTTOM" or "TOP") .. (right and "LEFT" or "RIGHT")
     preview:SetScale(frame:GetScale())
     preview:ClearAllPoints()
