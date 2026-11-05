@@ -322,19 +322,30 @@
           "min": 0,
           "max": 1,
           "step": 0.05,
-          "label": { "enUS": "Opacity", "esES": "Opacidad" }
+          "label": { "enUS": "Opacity", "esES": "Opacidad" },
+          "description": {
+            "enUS": "Of the chat's background and of the input box while you're not typing. 0: only the text is left.",
+            "esES": "Del fondo del chat y de la caja de texto mientras no escribes. 0: solo queda el texto."
+          },
+          "visibleWhen": { "background.style": "eternity" }
         },
         {
           "id": "border",
           "type": "toggle",
           "default": true,
-          "label": { "enUS": "Border", "esES": "Borde" }
+          "label": { "enUS": "Border", "esES": "Borde" },
+          "visibleWhen": { "background.style": "eternity" }
         },
         {
           "id": "shadow",
           "type": "toggle",
           "default": true,
-          "label": { "enUS": "Shadow", "esES": "Sombra" }
+          "label": { "enUS": "Window shadow", "esES": "Sombra de la ventana" },
+          "description": {
+            "enUS": "The soft shadow around the chat. The text's shadow is under Text.",
+            "esES": "La sombra difuminada alrededor del chat. La sombra de las letras está en Texto."
+          },
+          "visibleWhen": { "background.style": "eternity" }
         },
         {
           "id": "padding",
@@ -343,7 +354,8 @@
           "min": 0,
           "max": 16,
           "step": 1,
-          "label": { "enUS": "Margin around the text", "esES": "Margen alrededor del texto" }
+          "label": { "enUS": "Margin around the text", "esES": "Margen alrededor del texto" },
+          "visibleWhen": { "background.style": "eternity" }
         }
       ]
     },
@@ -386,7 +398,8 @@
           "label": { "enUS": "Style", "esES": "Estilo" },
           "values": [
             { "value": "eternity", "label": { "enUS": "Eternity", "esES": "Eternity" } },
-            { "value": "blizzard", "label": { "enUS": "Blizzard's", "esES": "La de Blizzard" } }
+            { "value": "blizzard", "label": { "enUS": "Blizzard's", "esES": "La de Blizzard" } },
+            { "value": "none", "label": { "enUS": "None (text only)", "esES": "Ninguna (solo el texto)" } }
           ]
         },
         {

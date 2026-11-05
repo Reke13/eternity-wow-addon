@@ -566,6 +566,13 @@ ns.OptionsSchema = {
                         enUS = "Opacity",
                         esES = "Opacidad",
                     },
+                    description = {
+                        enUS = "Of the chat's background and of the input box while you're not typing. 0: only the text is left.",
+                        esES = "Del fondo del chat y de la caja de texto mientras no escribes. 0: solo queda el texto.",
+                    },
+                    visibleWhen = {
+                        ["background.style"] = "eternity",
+                    },
                 },
                 {
                     id = "border",
@@ -575,14 +582,24 @@ ns.OptionsSchema = {
                         enUS = "Border",
                         esES = "Borde",
                     },
+                    visibleWhen = {
+                        ["background.style"] = "eternity",
+                    },
                 },
                 {
                     id = "shadow",
                     type = "toggle",
                     default = true,
                     label = {
-                        enUS = "Shadow",
-                        esES = "Sombra",
+                        enUS = "Window shadow",
+                        esES = "Sombra de la ventana",
+                    },
+                    description = {
+                        enUS = "The soft shadow around the chat. The text's shadow is under Text.",
+                        esES = "La sombra difuminada alrededor del chat. La sombra de las letras está en Texto.",
+                    },
+                    visibleWhen = {
+                        ["background.style"] = "eternity",
                     },
                 },
                 {
@@ -595,6 +612,9 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Margin around the text",
                         esES = "Margen alrededor del texto",
+                    },
+                    visibleWhen = {
+                        ["background.style"] = "eternity",
                     },
                 },
             },
@@ -682,6 +702,13 @@ ns.OptionsSchema = {
                             label = {
                                 enUS = "Blizzard's",
                                 esES = "La de Blizzard",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "None (text only)",
+                                esES = "Ninguna (solo el texto)",
                             },
                         },
                     },
