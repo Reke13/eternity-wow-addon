@@ -432,9 +432,12 @@ function ChatSkin:ApplyPlacements()
     for _, frame in ipairs(chatFrames()) do
         local button = frame.ScrollToBottomButton
         if aligned then
-            local inset = math.min(backgroundPadding(), 4)
+            -- In the scroll bar's column: Blizzard anchors the bar's left edge to the button's top
+            -- left and the bar's top to the frame's top right, so the button's left edge stays on the
+            -- frame's right edge. Only its height changes: down to our background's bottom edge.
+            local inset = math.min(backgroundPadding(), 2)
             self:Place(button, function(scroll)
-                scroll:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", backgroundPadding() - inset, inset - backgroundPadding())
+                scroll:SetPoint("BOTTOMLEFT", frame, "BOTTOMRIGHT", 0, inset - backgroundPadding())
             end)
         else
             self:Place(button, nil)
