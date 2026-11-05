@@ -89,8 +89,8 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = true,
                     label = {
-                        enUS = "Section titles",
-                        esES = "Títulos de sección",
+                        enUS = "Section names (Keyring, Reagents...)",
+                        esES = "Nombres de sección (Llavero, Componentes...)",
                     },
                     description = {
                         enUS = "The name above each section: bags, reagents, keyring, bank tabs. Off: the sections stay apart, without a name.",
@@ -643,24 +643,6 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Shadow",
                         esES = "Sombra",
-                    },
-                },
-                {
-                    id = "compact",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Compact header",
-                        esES = "Cabecera compacta",
-                    },
-                },
-                {
-                    id = "title",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Show the title",
-                        esES = "Mostrar el título",
                     },
                 },
                 {
