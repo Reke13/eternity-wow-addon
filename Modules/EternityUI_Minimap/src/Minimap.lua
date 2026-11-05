@@ -561,9 +561,18 @@ function Module:UpdateInfo()
     local style = opt("text.style")
     local background = opt("text.background")
     local stacks = { above = {}, top = {}, bottom = {}, below = {} }
+    local texts = {}
+    for _, key in ipairs(INFO_ITEMS) do
+        texts[key] = self.running and opt("info." .. key) and TEXTS[key]() or ""
+    end
+    -- Time and coordinates in one box, in the time's slot.
+    if opt("text.joinClockCoords") and texts.clock ~= "" and texts.coords ~= "" then
+        texts.clock = texts.clock .. "  ·  " .. texts.coords
+        texts.coords = ""
+    end
     for _, key in ipairs(INFO_ITEMS) do
         local item = self.info[key]
-        local text = self.running and opt("info." .. key) and TEXTS[key]() or ""
+        local text = texts[key]
         Widgets.SetTextSize(item.text, TEXT_SIZES[style] or TEXT_SIZES.small)
         item.text:SetTextColor(Theme.Color("text"))
         item.text:SetText(text)
@@ -642,6 +651,34 @@ function Module:SaveOriginal()
     }
 end
 
+-- The Mover doesn't move MinimapCluster itself: the cluster is much bigger than the map (room for
+-- Blizzard's header and buttons), so its handle covered empty space. It moves a holder the size of
+-- the map, and the cluster follows it so the map sits exactly on the holder, with its scale.
+
+--- Anchors the cluster so the map lands on the holder, at the holder's scale.
+function Module:FollowHolder()
+    local c, holder = cluster(), self.holder
+    if not (self.running and c and holder and holder:IsShown()) then
+        return
+    end
+    E.Combat.Run(holder, function()
+        if not self.running then
+            return
+        end
+        c:SetScale(holder:GetScale())
+        local left, top = Minimap:GetLeft(), Minimap:GetTop()
+        local cLeft, cTop = c:GetLeft(), c:GetTop()
+        if not (left and top and cLeft and cTop) then
+            return
+        end
+        -- The map's top left corner inside the cluster, in the cluster's units.
+        local ratio = Minimap:GetEffectiveScale() / c:GetEffectiveScale()
+        local dx, dy = left * ratio - cLeft, top * ratio - cTop
+        c:ClearAllPoints()
+        c:SetPoint("TOPLEFT", holder, "TOPLEFT", -dx, -dy)
+    end)
+end
+
 function Module:ApplyMap()
     local c = cluster()
     if not c then
@@ -651,6 +688,9 @@ function Module:ApplyMap()
     local original = self.original
     if not self.running then
         E.Mover.Unregister(addonName)
+        if self.holder then
+            self.holder:Hide()
+        end
         c:SetScale(original.scale)
         c:SetAlpha(original.alpha)
         if self.moved then
@@ -663,8 +703,18 @@ function Module:ApplyMap()
         Minimap:EnableMouseWheel(original.wheel)
         return
     end
-    local scale = original.scale * opt("map.scale")
-    c:SetScale(scale)
+    if not self.holder then
+        self.holder = CreateFrame("Frame", nil, UIParent)
+        -- The Mover's scale factor lands on the holder: the cluster takes it from there.
+        hooksecurefunc(self.holder, "SetScale", function()
+            self:FollowHolder()
+        end)
+    end
+    local holder = self.holder
+    holder:Show()
+    local ratio = Minimap:GetEffectiveScale() / c:GetEffectiveScale()
+    holder:SetSize(Minimap:GetWidth() * ratio, Minimap:GetHeight() * ratio)
+    holder:SetScale(original.scale * opt("map.scale"))
     local inCombat = self.inCombat or InCombatLockdown()
     c:SetAlpha(inCombat and opt("effects.combatAlpha") or opt("effects.alpha"))
     -- Forever has no Edit Mode for the minimap: the Mover places it, top right by default.
@@ -673,14 +723,17 @@ function Module:ApplyMap()
             key = addonName,
             owner = addonName,
             label = L.MOVER,
-            frame = c,
+            frame = holder,
             point = "TOPRIGHT",
+            x = -16,
+            y = -16,
             openOptions = function()
                 E:OpenOptions(addonName)
             end,
         })
         self.moved = true
     end
+    self:FollowHolder()
     Minimap:EnableMouseWheel(opt("behavior.wheelZoom"))
 end
 

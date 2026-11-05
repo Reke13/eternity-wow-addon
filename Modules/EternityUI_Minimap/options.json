@@ -370,10 +370,21 @@
           ]
         },
         {
+          "id": "joinClockCoords",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Time and coordinates together", "esES": "Hora y coordenadas juntas" },
+          "description": {
+            "enUS": "In one box where the time goes: 21:08 · 48, 63.",
+            "esES": "En una sola caja, en el sitio de la hora: 21:08 · 48, 63."
+          }
+        },
+        {
           "id": "coords",
           "type": "select",
           "default": "bottom",
           "label": { "enUS": "Coordinates position", "esES": "Posición de las coordenadas" },
+          "visibleWhen": { "text.joinClockCoords": false },
           "values": [
             { "value": "above", "label": { "enUS": "Above the map", "esES": "Encima del mapa" } },
             { "value": "top", "label": { "enUS": "Inside, top", "esES": "Dentro, arriba" } },
