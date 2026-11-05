@@ -1,0 +1,103 @@
+-- EternityUIDiscsDB in the EMULATED Forever client: discs, slots, loops between discs, keys per
+-- character and the general disc. Its own file: the store's state is shared by the tests in a file.
+import test, beforeEach, expect from "wowlua:test"
+
+local function store(): any
+    local m: any = EternityUI:GetModule("EternityUI_Discs")
+    return m.Store
+end
+
+@beforeEach
+local function reset()
+    _G.EternityUIDiscsDB = nil
+    store():Unbind()
+end
+
+@test("starts empty and creates discs in order")
+local function create()
+    local S = store()
+    expect(#S:List()).toBe(0)
+    local a = S:Create("A")
+    local b = S:Create("B")
+    local list = S:List()
+    expect(#list).toBe(2)
+    expect(list[1].id).toBe(a.id)
+    expect(list[2].id).toBe(b.id)
+    expect(EternityUIDiscsDB.discs[a.id].name).toBe("A")
+end
+
+@test("drops malformed data when binding")
+local function sanitize()
+    local S = store()
+    _G.EternityUIDiscsDB = {
+        discs = { [3] = { name = "Ok", slots = { { kind = "spell", id = 8690 }, { kind = "nope" }, "junk" } }, x = "junk" },
+        order = { 3, 3, 99 },
+    }
+    S:Unbind()
+    local list = S:List()
+    expect(#list).toBe(1)
+    expect(#list[1].slots).toBe(1)
+    expect(EternityUIDiscsDB.nextId).toBe(4)
+end
+
+@test("a disc can't end up inside itself")
+local function cycles()
+    local S = store()
+    local a = S:Create("A")
+    local b = S:Create("B")
+    expect(S:AddSlot(a.id, { kind = "disc", disc = b.id })).toBe(true)
+    local ok, reason = S:AddSlot(b.id, { kind = "disc", disc = a.id })
+    expect(ok).toBe(false)
+    expect(reason).toBe("cycle")
+    expect((S:AddSlot(a.id, { kind = "disc", disc = a.id }))).toBe(false)
+end
+
+@test("moves and removes slots")
+local function slots()
+    local S = store()
+    local a = S:Create("A")
+    S:AddSlot(a.id, { kind = "spell", id = 1 })
+    S:AddSlot(a.id, { kind = "spell", id = 2 })
+    S:MoveSlot(a.id, 2, -1)
+    expect(a.slots[1].id).toBe(2)
+    S:RemoveSlot(a.id, 1)
+    expect(#a.slots).toBe(1)
+    expect(a.slots[1].id).toBe(1)
+end
+
+@test("deleting a disc removes the slots that open it and its keys")
+local function delete()
+    local S = store()
+    local a = S:Create("A")
+    local b = S:Create("B")
+    S:AddSlot(a.id, { kind = "disc", disc = b.id })
+    S:SetKey(b.id, "CTRL-B")
+    S:Delete(b.id)
+    expect(#a.slots).toBe(0)
+    expect(S:Keys()[b.id]).toBe(nil)
+    expect(#S:List()).toBe(1)
+end
+
+@test("a key belongs to one disc only")
+local function keys()
+    local S = store()
+    local a = S:Create("A")
+    local b = S:Create("B")
+    S:SetKey(a.id, "ALT-Q")
+    S:SetKey(b.id, "ALT-Q")
+    expect(S:Keys()[a.id]).toBe(nil)
+    expect(S:Keys()[b.id]).toBe("ALT-Q")
+end
+
+@test("the general disc is created once and rebuilt after")
+local function general()
+    local S = store()
+    local first = S:Generate()
+    first.slots[#first.slots + 1] = { kind = "spell", id = 1 }
+    local second = S:Generate()
+    expect(second.id).toBe(first.id)
+    expect(#second.slots).toBe(2)
+    expect(second.slots[1].kind).toBe("hearthstone")
+    expect(second.slots[2].kind).toBe("professions")
+    expect(S:List()[1].id).toBe(first.id)
+end

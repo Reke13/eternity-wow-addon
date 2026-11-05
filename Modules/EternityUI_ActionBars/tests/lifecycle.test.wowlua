@@ -1,0 +1,31 @@
+-- The module registers, starts and gives everything back.
+import test, expect from "wowlua:test"
+
+local function module()
+    return EternityUI:GetModule("EternityUI_ActionBars")
+end
+
+@test("the module registers and starts")
+local function starts()
+    expect(module() ~= nil).toBe(true)
+    expect(module().active).toBe(true)
+end
+
+@test("disabling gives Blizzard's main bar back")
+local function givesBack()
+    EternityUI.store:SetModuleEnabled("EternityUI_ActionBars", false)
+    expect(module().active).toBe(false)
+    if MainActionBar then
+        expect(EternityUI.Hider.IsHidden(MainActionBar)).toBe(false)
+    end
+    EternityUI.store:SetModuleEnabled("EternityUI_ActionBars", true)
+end
+
+@test("binding mode shows the bars and ends with them back")
+local function bindingMode()
+    local bars = module().Bars
+    module():ToggleKeys()
+    expect(bars.binding).toBe(true)
+    module():ToggleKeys()
+    expect(bars.binding).toBe(false)
+end

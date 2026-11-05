@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-chat",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Chat",
+    "title": "Eternity Chat",
+    "notes": "Eternity module: chat look, modes, messenger, sender info and history.",
+    "saved-variables": ["EternityUIChatDB"]
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Ui.lua",
+      "src/Players.lua",
+      "src/History.lua",
+      "src/Skin.lua",
+      "src/Messenger.lua",
+      "src/Chat.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": ["EternityUI", "EternityUIChatDB", "SlashCmdList", "ChatFrameUtil", "ChatTypeInfo", "CHAT_FRAMES"]
+  }
+}

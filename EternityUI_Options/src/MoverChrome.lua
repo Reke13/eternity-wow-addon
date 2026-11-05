@@ -1,0 +1,162 @@
+-- The Mover's toolbar and the panel of the selected element.
+---@type string, table
+local _, ns = ...
+local L = ns.L
+local E = EternityUI
+local Mover = E.Mover
+local Shape = E.Shape
+local Theme = E.Theme
+local Widgets = E.Widgets
+
+local Chrome = {}
+ns.MoverChrome = Chrome
+
+local toolbar, panel, gridButton, snapButton
+
+local function session()
+    return ns.MoverSession
+end
+
+local function surface(frame)
+    frame.shape = Shape.New(frame)
+    frame:EnableMouse(true)
+    function frame:Paint()
+        Theme.PaintWindow(self.shape)
+    end
+    Widgets.Track(frame)
+end
+
+local function buildToolbar(root)
+    toolbar = CreateFrame("Frame", nil, root)
+    toolbar:SetPoint("TOP", 0, -14)
+    toolbar:SetHeight(46)
+    toolbar:SetFrameLevel(root:GetFrameLevel() + 20)
+    surface(toolbar)
+
+    local x = 8
+    local function add(button, width)
+        button:SetWidth(width or math.max(button.label:GetStringWidth() + 24, 70))
+        button:SetPoint("LEFT", x, 0)
+        x = x + button:GetWidth() + 6
+        return button
+    end
+    gridButton = add(Widgets.Button(toolbar, L.MOVER_GRID, "nav", function()
+        ns.MoverScene.showGrid = not ns.MoverScene.showGrid
+        ns.MoverScene.Refresh()
+    end))
+    snapButton = add(Widgets.Button(toolbar, L.MOVER_MAGNET, "nav", function()
+        ns.MoverScene.snap = not ns.MoverScene.snap
+        ns.MoverScene.Refresh()
+    end))
+    add(Widgets.Button(toolbar, L.MOVER_UNDO, "ghost", session().Undo))
+    add(Widgets.Button(toolbar, L.MOVER_REDO, "ghost", session().Redo))
+    add(Widgets.Button(toolbar, L.MOVER_DISCARD, "ghost", session().Discard))
+    add(Widgets.Button(toolbar, L.MOVER_SAVE, "primary", session().Save))
+    toolbar:SetWidth(x + 2)
+end
+
+local function setCoordinate(axis, text)
+    local key = session().selected
+    local value = tonumber(text)
+    if not key or not value then
+        ns.MoverScene.Refresh()
+        return
+    end
+    session().Checkpoint()
+    local entry = E.DeepCopy(session().Entry(key))
+    entry[axis] = value
+    session().Set(key, entry)
+end
+
+local function coordinate(parent, name, axis, x)
+    local label = Widgets.Text(parent, 13, "muted")
+    label:SetPoint("TOPLEFT", x, -62)
+    label:SetText(name)
+    local box = Widgets.Input(parent, function(text)
+        setCoordinate(axis, text)
+    end)
+    box:SetPoint("TOPLEFT", x, -78)
+    box:SetWidth(102)
+    return box
+end
+
+local function buildPanel(root)
+    panel = CreateFrame("Frame", nil, root)
+    panel:SetPoint("TOPRIGHT", -16, -76)
+    panel:SetSize(244, 262)
+    panel:SetFrameLevel(root:GetFrameLevel() + 20)
+    surface(panel)
+
+    panel.title = Widgets.Text(panel, 18, "text")
+    panel.title:SetPoint("TOPLEFT", 14, -14)
+    panel.anchor = Widgets.Text(panel, 13, "muted")
+    panel.anchor:SetPoint("TOPLEFT", 14, -38)
+    panel.anchor:SetPoint("TOPRIGHT", -14, -38)
+    panel.anchor:SetJustifyH("LEFT")
+    panel.x = coordinate(panel, "X", "x", 14)
+    panel.y = coordinate(panel, "Y", "y", 128)
+
+    local function action(text, y, onClick)
+        local button = Widgets.Button(panel, text, "ghost", onClick)
+        button:SetPoint("TOPLEFT", 14, y)
+        button:SetPoint("TOPRIGHT", -14, y)
+        return button
+    end
+    panel.lock = action(L.MOVER_LOCK, -118, function()
+        local key = session().selected
+        session().Checkpoint()
+        local entry = E.DeepCopy(session().Entry(key))
+        entry.locked = not entry.locked or nil
+        session().Set(key, entry)
+    end)
+    panel.options = action(L.MOVER_OPTIONS, -152, function()
+        Mover.elements[session().selected].openOptions()
+    end)
+    panel.reset = action(L.MOVER_RESET, -186, function()
+        session().Checkpoint()
+        session().Set(session().selected, nil)
+    end)
+end
+
+--- Builds the toolbar and the panel.
+---@param root table
+function Chrome.Build(root)
+    buildToolbar(root)
+    buildPanel(root)
+
+    -- Arrows nudge; every other key goes on to the game. The Mover hides in combat.
+    root:EnableKeyboard(true)
+    root:SetScript("OnKeyDown", function(self, key)
+        local step = IsShiftKeyDown() and 10 or 1
+        local moves = { UP = { 0, step }, DOWN = { 0, -step }, LEFT = { -step, 0 }, RIGHT = { step, 0 } }
+        local move = moves[key]
+        local focused = GetCurrentKeyBoardFocus()
+        self:SetPropagateKeyboardInput(not (move and session().selected and not focused))
+        if move and session().selected and not focused then
+            ns.MoverHandles.Nudge(move[1], move[2])
+        end
+    end)
+end
+
+--- Updates the toolbar's switches and the panel from the session.
+function Chrome.Refresh()
+    gridButton:SetActive(ns.MoverScene.showGrid)
+    snapButton:SetActive(ns.MoverScene.snap)
+    local key = session().selected
+    local element = key and Mover.elements[key]
+    panel:SetShown(element ~= nil)
+    if not element then
+        return
+    end
+    local entry = session().Entry(key)
+    panel.title:SetText(element.label)
+    panel.anchor:SetText(L.MOVER_ANCHOR:format(L["POINT_" .. entry.point]))
+    if not panel.x:HasFocus() then
+        panel.x:SetText(string.format("%.1f", entry.x))
+    end
+    if not panel.y:HasFocus() then
+        panel.y:SetText(string.format("%.1f", entry.y))
+    end
+    panel.lock.label:SetText(entry.locked and L.MOVER_UNLOCK or L.MOVER_LOCK)
+    panel.options:SetShown(element.openOptions ~= nil)
+end

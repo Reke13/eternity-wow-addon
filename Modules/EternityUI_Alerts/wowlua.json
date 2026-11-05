@@ -1,0 +1,45 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-alerts",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Alerts",
+    "title": "Eternity Alerts",
+    "notes": "Eternity module: your own alert rules for missing buffs, weapon enchants, durability, bag space and items.",
+    "saved-variables": ["EternityUIAlertsDB"]
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Rules.lua",
+      "src/Conditions.lua",
+      "src/Checks.lua",
+      "src/Display.lua",
+      "src/Editor.lua",
+      "src/Alerts.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "EternityUIAlertsDB",
+      "SOUNDKIT"
+    ]
+  }
+}

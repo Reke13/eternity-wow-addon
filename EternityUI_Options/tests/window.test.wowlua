@@ -1,0 +1,31 @@
+-- The options window opens, switches pages and follows the options.
+import test, expect from "wowlua:test"
+
+@test("the window opens on the first page and closes")
+local function opens()
+    EternityUI:ToggleOptions()
+    local window = EternityUI.OptionsWindow
+    expect(window.frame:IsShown()).toBe(true)
+    expect(window.current.key).toBe("look")
+    window.Toggle()
+    expect(window.frame:IsShown()).toBe(false)
+end
+
+@test("every page builds")
+local function pages()
+    local window = EternityUI.OptionsWindow
+    window.Toggle()
+    for _, page in ipairs(window.pages) do
+        window.Show(page)
+        expect(page.frame:IsShown()).toBe(true)
+    end
+    window.Toggle()
+end
+
+@test("a changed option reaches the theme")
+local function theme()
+    EternityUI.store:Set("EternityUI", "appearance.corners", "sharp")
+    expect(EternityUI.Theme.radius).toBe(0)
+    EternityUI.store:Set("EternityUI", "appearance.corners", "round")
+    expect(EternityUI.Theme.radius).toBe(12)
+end

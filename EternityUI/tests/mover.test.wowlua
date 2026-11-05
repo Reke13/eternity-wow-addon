@@ -1,0 +1,34 @@
+-- Positions of registered frames: defaults, saved layouts and pixel math.
+import test, expect from "wowlua:test"
+
+local Mover = EternityUI.Mover
+local Geometry = EternityUI.MoverGeometry
+
+@test("an element starts on its default position")
+local function defaults()
+    local frame = CreateFrame("Frame", nil, UIParent)
+    frame:SetSize(100, 40)
+    Mover.Register({ key = "test.default", label = "A", frame = frame, point = "TOP", x = 0, y = -10 })
+    expect(Mover.Entry("test.default").point).toBe("TOP")
+    expect(Mover.Register({ key = "test.default", label = "B", frame = frame })).toBe(false)
+end
+
+@test("a saved layout wins over the default")
+local function saved()
+    local frame = CreateFrame("Frame", nil, UIParent)
+    frame:SetSize(100, 40)
+    Mover.Register({ key = "test.saved", label = "C", frame = frame })
+    Mover.Save({ ["test.saved"] = { point = "LEFT", x = 5, y = 6 } })
+    expect(Mover.Entry("test.saved").point).toBe("LEFT")
+    Mover.Save({})
+    expect(Mover.Entry("test.saved").point).toBe("CENTER")
+end
+
+@test("a rect and its free entry round trip")
+local function roundTrip()
+    local rect = { l = 100, b = 50, w = 200, h = 40 }
+    local entry = Geometry.FreeFromRect("BOTTOM", rect, 1280, 720)
+    local back = Geometry.RectFromFree(entry, 200, 40, 1280, 720)
+    expect(back.l).toBe(100)
+    expect(back.b).toBe(50)
+end

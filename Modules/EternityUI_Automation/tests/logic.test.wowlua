@@ -1,0 +1,133 @@
+-- EternityUI_Automation decisions in the EMULATED Forever client: repair source, invite filter,
+-- whisper keyword, quest picking, safe gossip, cinematics already seen and the chat report.
+import test, beforeEach, expect from "wowlua:test"
+
+local NAME = "EternityUI_Automation"
+local Config = EternityUI.store
+
+local function core(): any
+    return EternityUI:GetModule(NAME).Core
+end
+
+-- Replaces client globals during fn and restores them even if it fails.
+local function withGlobals(values, fn)
+    local originals = {}
+    for name, value in pairs(values) do
+        originals[name] = _G[name]
+        _G[name] = value
+    end
+    local ok, err = pcall(fn)
+    for name in pairs(values) do
+        _G[name] = originals[name]
+    end
+    if not ok then
+        error(err, 0)
+    end
+end
+
+@beforeEach
+local function reset()
+    Config:UseProfile("Default")
+    Config:SetModuleEnabled(NAME, true)
+    Config:Reset(NAME)
+end
+
+@test("repair uses guild funds first and falls back to your gold")
+local function repairSource()
+    local pick = core().Merchant.RepairSource
+    expect(pick("guild", 100, true, 500, 0)).toBe("guild")
+    expect(pick("guild", 100, true, -1, 0)).toBe("guild")
+    expect(pick("guild", 100, true, 50, 200)).toBe("player")
+    expect(pick("guild", 100, false, 0, 200)).toBe("player")
+    expect(pick("player", 100, true, 500, 200)).toBe("player")
+    expect(pick("player", 100, true, 500, 50)).toBe(nil)
+    expect(pick("off", 100, true, 500, 500)).toBe(nil)
+    expect(pick("guild", 0, true, 500, 500)).toBe(nil)
+end
+
+@test("invites are accepted only from who the mode allows")
+local function inviter()
+    local allowed = core().Social.InviterAllowed
+    local friends = { ["Player-1-FRIEND"] = true }
+    local guild = { ["Player-1-GUILD"] = true }
+    withGlobals({
+        C_FriendList = { IsFriend = function(guid) return friends[guid] == true end },
+        C_BattleNet = { GetGameAccountInfoByGUID = function() return nil end },
+        IsInGuild = function() return true end,
+        IsGuildMember = function(guid) return guild[guid] == true end,
+    }, function()
+        expect(allowed("friends", "Player-1-FRIEND")).toBe(true)
+        expect(allowed("friends", "Player-1-GUILD")).toBe(false)
+        expect(allowed("friendsGuild", "Player-1-GUILD")).toBe(true)
+        expect(allowed("friendsGuild", "Player-1-STRANGER")).toBe(false)
+        expect(allowed("anyone", "Player-1-STRANGER")).toBe(true)
+        expect(allowed("off", "Player-1-FRIEND")).toBe(false)
+        expect(allowed("friends", nil)).toBe(false)
+    end)
+end
+
+@test("the whisper must be exactly the keyword")
+local function keyword()
+    local isKeyword = core().Social.IsKeyword
+    expect(isKeyword("inv", "inv")).toBe(true)
+    expect(isKeyword("  INV ", "inv")).toBe(true)
+    expect(isKeyword("inv please", "inv")).toBe(false)
+    expect(isKeyword("inv", "")).toBe(false)
+    expect(isKeyword(nil, "inv")).toBe(false)
+end
+
+@test("quest givers: completed quests first, then non-trivial ones")
+local function pickQuest()
+    local pick = core().Quests.Pick
+    local active = { { questID = 1, isComplete = false }, { questID = 2, isComplete = true } }
+    local available = { { questID = 3, isTrivial = true }, { questID = 4, isTrivial = false } }
+    local action, quest = pick(active, available, true, true)
+    expect(action).toBe("turnIn")
+    expect(quest.questID).toBe(2)
+    action, quest = pick(active, available, true, false)
+    expect(action).toBe("accept")
+    expect(quest.questID).toBe(4)
+    expect(pick(active, { available[1] }, true, false)).toBe(nil)
+    expect(pick(active, available, false, false)).toBe(nil)
+end
+
+@test("gossip: only a single option with a safe icon")
+local function safeGossip()
+    local safe = core().Quests.SafeOption
+    local vendor = { icon = 132060, orderIndex = 0 }
+    expect(safe({ vendor })).toBe(vendor)
+    expect(safe({ vendor, { icon = 132058, orderIndex = 1 } })).toBe(nil)
+    expect(safe({ { icon = 132053, orderIndex = 0 } })).toBe(nil)
+    expect(safe({ { icon = 132060, orderIndex = 0, selectOptionWhenOnlyOption = true } })).toBe(nil)
+    expect(safe({})).toBe(nil)
+end
+
+@test("cinematics: 'seen' skips only the second time at the same place")
+local function cinematics()
+    local C = core().Cinematics
+    local saved = _G.EternityUIAutomationDB
+    _G.EternityUIAutomationDB = nil
+    local first = C.ShouldSkip("seen", "1:Somewhere")
+    local second = C.ShouldSkip("seen", "1:Somewhere")
+    local other = C.ShouldSkip("seen", "2:Elsewhere")
+    local all = C.ShouldSkip("all", "3:New")
+    local off = C.ShouldSkip("off", "1:Somewhere")
+    _G.EternityUIAutomationDB = saved
+    expect(first).toBe(false)
+    expect(second).toBe(true)
+    expect(other).toBe(false)
+    expect(all).toBe(true)
+    expect(off).toBe(false)
+end
+
+@test("the chat report follows the Messages options")
+local function report()
+    local Core = core()
+    -- @accentText of Midnight: #8B5CF6 mixed 40 % with white.
+    expect(Core.FormatReport("Hi")).toBe("|cffB99DFAEternity: Hi|r")
+    Config:Set(NAME, "messages.prefix", false)
+    Config:Set(NAME, "messages.color", "#FF000080")
+    expect(Core.FormatReport("Hi")).toBe("|cffFF0000Hi|r")
+    Config:Set(NAME, "messages.report", false)
+    expect(Core.FormatReport("Hi")).toBe(nil)
+end

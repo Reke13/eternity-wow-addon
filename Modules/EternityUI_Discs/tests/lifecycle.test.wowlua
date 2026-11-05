@@ -1,0 +1,125 @@
+-- Life cycle of EternityUI_Discs in the EMULATED Forever client: registration, the Discs tab, secure
+-- rings built from the store, sub-discs, keys and disabling. Keys and real casts are checked by hand
+-- in the client.
+import test, beforeEach, expect from "wowlua:test"
+
+local NAME = "EternityUI_Discs"
+
+local function module(): any
+    return EternityUI:GetModule(NAME)
+end
+
+-- A keyed disc with a spell, a macro text and a sub-disc with an item.
+local function sample(): any
+    local S = module().Store
+    local inner = S:Create("Inner")
+    S:AddSlot(inner.id, { kind = "item", id = 6948 })
+    local outer = S:Create("Outer")
+    S:AddSlot(outer.id, { kind = "spell", id = 8690 })
+    S:AddSlot(outer.id, { kind = "text", text = "/dance" })
+    S:AddSlot(outer.id, { kind = "disc", disc = inner.id })
+    S:SetKey(outer.id, "CTRL-F12")
+    module().Ring:Build()
+    return outer
+end
+
+@beforeEach
+local function reset()
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    EternityUI.store:Reset(NAME)
+    _G.EternityUIDiscsDB = nil
+    module().Store:Unbind()
+    module().Ring:Build()
+end
+
+@test("registers and starts enabled")
+local function registered()
+    local m = module()
+    expect(m ~= nil).toBe(true)
+    expect(m.active).toBe(true)
+    expect(m.lastError).toBe(nil)
+    expect(EternityUIDiscsHeader ~= nil).toBe(true)
+    expect(EternityUIDiscsClose ~= nil).toBe(true)
+end
+
+@test("the Discs tab creates a disc and lists its slots")
+local function editor()
+    local holder = CreateFrame("Frame", nil, UIParent)
+    holder:SetSize(800, 600)
+    local view: any = module().tabs[1].build(holder, function() end)
+    view.new:Click()
+    local list = module().Store:List()
+    expect(#list).toBe(1)
+    module().Store:AddSlot(list[1].id, { kind = "spell", id = 8690 })
+    expect(view.slotRows[1]:IsVisible()).toBe(true)
+    expect(view.slotsEmpty:IsShown()).toBe(false)
+end
+
+@test("a keyed disc gets an opener and a ring with one secure button per slot")
+local function rings()
+    sample()
+    local Ring = module().Ring
+    expect(Ring.used).toBe(2)
+    expect(Ring.openers[1]:GetAttribute("ring")).toBe(1)
+    local ring = Ring.rings[1]
+    expect(ring:GetAttribute("count")).toBe(3)
+    expect(ring.slices[1]:GetAttribute("kind")).toBe("action")
+    expect(ring.slices[1]:GetAttribute("type")).toBe("spell")
+    expect(ring.slices[1]:GetAttribute("spell")).toBe(8690)
+    expect(ring.slices[1]:GetAttribute("useOnKeyDown")).toBe(false)
+    expect(ring.slices[2]:GetAttribute("macrotext")).toBe("/dance")
+    expect(ring.slices[3]:GetAttribute("kind")).toBe("disc")
+    expect(ring.slices[3]:GetAttribute("child")).toBe(2)
+    expect(Ring.rings[2]:GetAttribute("parent")).toBe(1)
+    expect(Ring.rings[2].slices[1]:GetAttribute("item")).toBe("item:6948")
+end
+
+@test("opening and closing a disc")
+local function openClose()
+    sample()
+    local Ring = module().Ring
+    local ring = Ring:Open(1)
+    expect(ring).toBeShown()
+    expect(Ring:IsOpen()).toBe(true)
+    Ring:Close()
+    expect(ring).never.toBeShown()
+    expect(Ring:IsOpen()).toBe(false)
+end
+
+@test("the center of a sub-disc goes back to its parent on the release")
+local function back()
+    sample()
+    local Ring = module().Ring
+    Ring:Open(1)
+    EternityUIDiscsHeader:Execute([[ self:RunAttribute("Open", 2, true) ]])
+    expect(Ring.rings[2]).toBeShown()
+    expect(Ring.rings[1]).never.toBeShown()
+    Ring.rings[2].center:Click("LeftButton", true)
+    expect(Ring.rings[2]).toBeShown()
+    Ring.rings[2].center:Click("LeftButton", false)
+    expect(Ring.rings[1]).toBeShown()
+    Ring.rings[1].center:Click("LeftButton", false)
+    expect(Ring:IsOpen()).toBe(false)
+end
+
+@test("disabling closes the discs and frees the openers")
+local function disable()
+    sample()
+    local Ring = module().Ring
+    Ring:Open(1)
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(Ring:IsOpen()).toBe(false)
+    expect(Ring.used).toBe(0)
+    expect(Ring.openers[1]:GetAttribute("ring")).toBe(nil)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+end
+
+@test("hearthstone and professions resolve on the character")
+local function resolve()
+    local R = module().Resolve
+    local stone: any = R.Node({ kind = "hearthstone" })
+    expect(stone ~= nil).toBe(true)
+    expect(stone.attrs ~= nil).toBe(true)
+    local professions: any = R.Professions()
+    expect(type(professions)).toBe("table")
+end

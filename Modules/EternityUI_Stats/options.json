@@ -1,0 +1,328 @@
+{
+  "format": 1,
+  "module": "EternityUI_Stats",
+  "title": { "enUS": "Stats", "esES": "Estadísticas" },
+  "description": {
+    "enUS": "A detailed stats panel next to the character window. /etstats shows or hides it.",
+    "esES": "Un panel de estadísticas detalladas junto a la ventana del personaje. /etstats lo muestra u oculta."
+  },
+  "groups": [
+    {
+      "id": "panel",
+      "label": { "enUS": "Panel", "esES": "Panel" },
+      "options": [
+        {
+          "id": "enabled",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Stats panel", "esES": "Panel de estadísticas" }
+        },
+        {
+          "id": "attach",
+          "type": "select",
+          "default": "character",
+          "label": { "enUS": "Position", "esES": "Posición" },
+          "description": {
+            "enUS": "Free: placed in Eternity's Edit Mode; it still shows with the character window.",
+            "esES": "Libre: se coloca en el modo edición de Eternity; sigue mostrándose con la ventana del personaje."
+          },
+          "values": [
+            { "value": "character", "label": { "enUS": "Next to the character window", "esES": "Junto a la ventana del personaje" } },
+            { "value": "free", "label": { "enUS": "Free (Edit Mode)", "esES": "Libre (modo edición)" } }
+          ]
+        },
+        {
+          "id": "showWith",
+          "type": "select",
+          "default": "paperdoll",
+          "label": { "enUS": "Show with", "esES": "Mostrar con" },
+          "values": [
+            { "value": "paperdoll", "label": { "enUS": "The equipment tab only", "esES": "Solo la pestaña de equipo" } },
+            { "value": "character", "label": { "enUS": "Any character tab", "esES": "Cualquier pestaña del personaje" } }
+          ]
+        },
+        {
+          "id": "toggleButton",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Button on the character window", "esES": "Botón en la ventana del personaje" },
+          "description": {
+            "enUS": "Shows or hides the panel, remembered per character.",
+            "esES": "Muestra u oculta el panel; se recuerda por personaje."
+          }
+        },
+        {
+          "id": "startShown",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Shown for new characters", "esES": "Visible en personajes nuevos" }
+        }
+      ]
+    },
+    {
+      "id": "categories",
+      "label": { "enUS": "Categories", "esES": "Categorías" },
+      "options": [
+        { "id": "general", "type": "toggle", "default": true, "label": { "enUS": "General", "esES": "General" } },
+        { "id": "attributes", "type": "toggle", "default": true, "label": { "enUS": "Attributes", "esES": "Atributos" } },
+        { "id": "melee", "type": "toggle", "default": true, "label": { "enUS": "Melee", "esES": "Cuerpo a cuerpo" } },
+        { "id": "ranged", "type": "toggle", "default": true, "label": { "enUS": "Ranged", "esES": "A distancia" } },
+        { "id": "spell", "type": "toggle", "default": true, "label": { "enUS": "Spell", "esES": "Hechizos" } },
+        { "id": "defense", "type": "toggle", "default": true, "label": { "enUS": "Defense", "esES": "Defensa" } },
+        { "id": "resistances", "type": "toggle", "default": true, "label": { "enUS": "Resistances", "esES": "Resistencias" } },
+        { "id": "enhancements", "type": "toggle", "default": true, "label": { "enUS": "Enhancements", "esES": "Mejoras" } },
+        {
+          "id": "byClass",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Class categories first", "esES": "Categorías de la clase primero" },
+          "description": {
+            "enUS": "Puts the categories that matter to your class right after the attributes.",
+            "esES": "Pone las categorías que importan a tu clase justo después de los atributos."
+          }
+        },
+        {
+          "id": "hideIrrelevant",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Hide what your class doesn't use", "esES": "Ocultar lo que tu clase no usa" },
+          "description": {
+            "enUS": "Melee and ranged for mages, priests and warlocks; spell for warriors and rogues.",
+            "esES": "Cuerpo a cuerpo y distancia para magos, sacerdotes y brujos; hechizos para guerreros y pícaros."
+          }
+        },
+        {
+          "id": "hideZero",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Hide stats at zero", "esES": "Ocultar estadísticas a cero" },
+          "description": {
+            "enUS": "Block without a shield, resistances you don't have, enhancements you don't have.",
+            "esES": "Bloqueo sin escudo, resistencias que no tienes, mejoras que no tienes."
+          }
+        },
+        {
+          "id": "collapsible",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Collapsible sections", "esES": "Secciones plegables" },
+          "description": {
+            "enUS": "Click a header to fold its section; remembered per character.",
+            "esES": "Haz clic en una cabecera para plegar su sección; se recuerda por personaje."
+          }
+        }
+      ]
+    },
+    {
+      "id": "values",
+      "label": { "enUS": "Values", "esES": "Valores" },
+      "options": [
+        {
+          "id": "decimals",
+          "type": "range",
+          "default": 2,
+          "min": 0,
+          "max": 2,
+          "step": 1,
+          "label": { "enUS": "Decimals in percentages", "esES": "Decimales en porcentajes" }
+        },
+        {
+          "id": "ratings",
+          "type": "select",
+          "default": "percent",
+          "label": { "enUS": "Combat ratings", "esES": "Índices de combate" },
+          "values": [
+            { "value": "percent", "label": { "enUS": "Percentage", "esES": "Porcentaje" } },
+            { "value": "rating", "label": { "enUS": "Rating", "esES": "Índice" } },
+            { "value": "both", "label": { "enUS": "Both", "esES": "Ambos" } }
+          ]
+        },
+        {
+          "id": "spellSchool",
+          "type": "select",
+          "default": "highest",
+          "label": { "enUS": "Spell power", "esES": "Poder con hechizos" },
+          "values": [
+            { "value": "highest", "label": { "enUS": "Highest school", "esES": "Escuela más alta" } },
+            { "value": "lowest", "label": { "enUS": "Lowest school (like Blizzard)", "esES": "Escuela más baja (como Blizzard)" } },
+            { "value": "each", "label": { "enUS": "One row per school", "esES": "Una fila por escuela" } }
+          ]
+        },
+        {
+          "id": "colorBuffs",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Color buffed and debuffed values", "esES": "Colorear valores con beneficios y perjuicios" }
+        },
+        {
+          "id": "showMods",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Show buffs next to the value", "esES": "Mostrar beneficios junto al valor" },
+          "description": { "enUS": "Like 55 (+10 -3).", "esES": "Como 55 (+10 -3)." }
+        },
+        {
+          "id": "largeNumbers",
+          "type": "select",
+          "default": "full",
+          "label": { "enUS": "Large numbers", "esES": "Números grandes" },
+          "values": [
+            { "value": "full", "label": { "enUS": "Full (12,345)", "esES": "Completos (12.345)" } },
+            { "value": "short", "label": { "enUS": "Abbreviated (12.3K)", "esES": "Abreviados (12,3K)" } }
+          ]
+        },
+        {
+          "id": "secretMode",
+          "type": "select",
+          "default": "raw",
+          "label": { "enUS": "Hidden values", "esES": "Valores ocultos" },
+          "description": {
+            "enUS": "When the game hides your stats: as it gives them where possible, or the last known value in grey.",
+            "esES": "Cuando el juego oculta tus estadísticas: tal como las da cuando se pueda, o el último valor conocido en gris."
+          },
+          "values": [
+            { "value": "raw", "label": { "enUS": "As the game gives them", "esES": "Tal como las da el juego" } },
+            { "value": "last", "label": { "enUS": "Last known value", "esES": "Último valor conocido" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tooltips",
+      "label": { "enUS": "Tooltips", "esES": "Tooltips" },
+      "options": [
+        { "id": "enabled", "type": "toggle", "default": true, "label": { "enUS": "Tooltips", "esES": "Tooltips" } },
+        {
+          "id": "detail",
+          "type": "select",
+          "default": "full",
+          "label": { "enUS": "Detail", "esES": "Detalle" },
+          "values": [
+            { "value": "basic", "label": { "enUS": "Basic", "esES": "Básico" } },
+            { "value": "full", "label": { "enUS": "Full breakdown", "esES": "Desglose completo" } }
+          ]
+        },
+        {
+          "id": "anchor",
+          "type": "select",
+          "default": "row",
+          "label": { "enUS": "Position", "esES": "Posición" },
+          "values": [
+            { "value": "row", "label": { "enUS": "Next to the row", "esES": "Junto a la fila" } },
+            { "value": "cursor", "label": { "enUS": "At the cursor", "esES": "En el cursor" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "window",
+      "tab": "appearance",
+      "label": { "enUS": "Panel", "esES": "Panel" },
+      "options": [
+        {
+          "id": "side",
+          "type": "select",
+          "default": "right",
+          "label": { "enUS": "Side of the character window", "esES": "Lado de la ventana del personaje" },
+          "values": [
+            { "value": "right", "label": { "enUS": "Right", "esES": "Derecha" } },
+            { "value": "left", "label": { "enUS": "Left", "esES": "Izquierda" } }
+          ]
+        },
+        { "id": "gap", "type": "range", "default": 4, "min": 0, "max": 40, "step": 1, "label": { "enUS": "Gap", "esES": "Separación" } },
+        { "id": "offsetY", "type": "range", "default": 0, "min": -100, "max": 100, "step": 1, "label": { "enUS": "Vertical offset", "esES": "Desplazamiento vertical" } },
+        {
+          "id": "matchHeight",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Match the character window's height", "esES": "Igualar la altura de la ventana del personaje" },
+          "description": { "enUS": "It still grows when the stats need more room.", "esES": "Sigue creciendo si las estadísticas necesitan más espacio." }
+        },
+        { "id": "scale", "type": "range", "default": 1, "min": 0.5, "max": 2, "step": 0.05, "label": { "enUS": "Scale", "esES": "Escala" } },
+        { "id": "opacity", "type": "range", "default": 1, "min": 0.2, "max": 1, "step": 0.05, "label": { "enUS": "Opacity", "esES": "Opacidad" } },
+        { "id": "background", "type": "toggle", "default": true, "label": { "enUS": "Background", "esES": "Fondo" } },
+        { "id": "title", "type": "toggle", "default": true, "label": { "enUS": "Title", "esES": "Título" } },
+        { "id": "padding", "type": "range", "default": 12, "min": 4, "max": 24, "step": 1, "label": { "enUS": "Padding", "esES": "Margen interior" } }
+      ]
+    },
+    {
+      "id": "layout",
+      "tab": "appearance",
+      "label": { "enUS": "Layout", "esES": "Disposición" },
+      "options": [
+        { "id": "columns", "type": "range", "default": 1, "min": 1, "max": 4, "step": 1, "label": { "enUS": "Columns", "esES": "Columnas" } },
+        {
+          "id": "flow",
+          "type": "select",
+          "default": "balance",
+          "label": { "enUS": "Fill the columns", "esES": "Rellenar las columnas" },
+          "values": [
+            { "value": "balance", "label": { "enUS": "Balance by height", "esES": "Equilibrar por altura" } },
+            { "value": "order", "label": { "enUS": "One category per column, in order", "esES": "Una categoría por columna, en orden" } }
+          ]
+        },
+        { "id": "columnWidth", "type": "range", "default": 180, "min": 120, "max": 280, "step": 5, "label": { "enUS": "Column width", "esES": "Ancho de columna" } },
+        { "id": "rowSpacing", "type": "range", "default": 2, "min": 0, "max": 12, "step": 1, "label": { "enUS": "Row spacing", "esES": "Espacio entre filas" } },
+        { "id": "sectionSpacing", "type": "range", "default": 10, "min": 0, "max": 24, "step": 1, "label": { "enUS": "Section spacing", "esES": "Espacio entre secciones" } },
+        { "id": "headers", "type": "toggle", "default": true, "label": { "enUS": "Section headers", "esES": "Cabeceras de sección" } },
+        {
+          "id": "labels",
+          "type": "select",
+          "default": "name",
+          "label": { "enUS": "Labels", "esES": "Etiquetas" },
+          "values": [
+            { "value": "name", "label": { "enUS": "Name", "esES": "Nombre" } },
+            { "value": "icon", "label": { "enUS": "Icon", "esES": "Icono" } },
+            { "value": "both", "label": { "enUS": "Icon and name", "esES": "Icono y nombre" } }
+          ]
+        },
+        {
+          "id": "valueAlign",
+          "type": "select",
+          "default": "right",
+          "label": { "enUS": "Values", "esES": "Valores" },
+          "values": [
+            { "value": "right", "label": { "enUS": "Aligned right", "esES": "Alineados a la derecha" } },
+            { "value": "left", "label": { "enUS": "After the label", "esES": "Tras la etiqueta" } }
+          ]
+        },
+        { "id": "zebra", "type": "toggle", "default": false, "label": { "enUS": "Alternate row shading", "esES": "Filas alternas sombreadas" } }
+      ]
+    },
+    {
+      "id": "text",
+      "tab": "appearance",
+      "label": { "enUS": "Text", "esES": "Texto" },
+      "options": [
+        {
+          "id": "font",
+          "type": "select",
+          "default": "small",
+          "label": { "enUS": "Text size", "esES": "Tamaño del texto" },
+          "values": [
+            { "value": "caption", "label": { "enUS": "Small", "esES": "Pequeño" } },
+            { "value": "small", "label": { "enUS": "Medium", "esES": "Mediano" } },
+            { "value": "body", "label": { "enUS": "Large", "esES": "Grande" } }
+          ]
+        },
+        {
+          "id": "headerFont",
+          "type": "select",
+          "default": "body",
+          "label": { "enUS": "Header size", "esES": "Tamaño de las cabeceras" },
+          "values": [
+            { "value": "body", "label": { "enUS": "Medium", "esES": "Mediano" } },
+            { "value": "heading", "label": { "enUS": "Large", "esES": "Grande" } },
+            { "value": "title", "label": { "enUS": "Title", "esES": "Título" } }
+          ]
+        },
+        { "id": "headerColor", "type": "color", "default": "@accent", "label": { "enUS": "Header color", "esES": "Color de las cabeceras" } },
+        { "id": "labelColor", "type": "color", "default": "@textMuted", "label": { "enUS": "Label color", "esES": "Color de las etiquetas" } },
+        { "id": "valueColor", "type": "color", "default": "@text", "label": { "enUS": "Value color", "esES": "Color de los valores" } },
+        { "id": "buffColor", "type": "color", "default": "#4ADE80", "label": { "enUS": "Buffed value", "esES": "Valor con beneficios" } },
+        { "id": "debuffColor", "type": "color", "default": "#F87171", "label": { "enUS": "Debuffed value", "esES": "Valor con perjuicios" } },
+        { "id": "secretColor", "type": "color", "default": "@textDisabled", "label": { "enUS": "Last known value", "esES": "Último valor conocido" } }
+      ]
+    }
+  ]
+}

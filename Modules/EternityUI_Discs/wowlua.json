@@ -1,0 +1,60 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-discs",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Discs",
+    "title": "Eternity Discs",
+    "notes": "Eternity module: radial discs of spells, items, toys and macros, nested at will and opened with a key.",
+    "saved-variables": ["EternityUIDiscsDB"]
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Ui.lua",
+      "src/Store.lua",
+      "src/Resolve.lua",
+      "src/Ring.lua",
+      "src/Editor.lua",
+      "src/Discs.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "EternityUIDiscsDB",
+      "EternityUIDiscsHeader",
+      "EternityUIDiscsClose",
+      "SecureHandlerWrapScript",
+      "SecureHandlerSetFrameRef",
+      "SecureHandlerExecute",
+      "C_ToyBox",
+      "C_MountJournal",
+      "SetOverrideBindingClick",
+      "ClearOverrideBindings",
+      "GetProfessions",
+      "GetProfessionInfo",
+      "PlayerHasToy",
+      "GetMacroInfo",
+      "GetBindingText",
+      "GetCursorInfo",
+      "ClearCursor"
+    ]
+  }
+}

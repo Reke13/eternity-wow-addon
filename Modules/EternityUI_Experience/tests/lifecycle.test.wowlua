@@ -1,0 +1,25 @@
+-- The module registers, draws its bar and gives everything back.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Experience"
+
+@test("the module starts and registers in the Mover")
+local function starts()
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+    expect(EternityUI.Mover.elements[NAME] ~= nil).toBe(true)
+end
+
+@test("disabling hides the bar and leaves the Mover")
+local function stops()
+    local module = EternityUI:GetModule(NAME)
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(module.Bar.frame:IsShown()).toBe(false)
+    expect(EternityUI.Mover.elements[NAME] == nil).toBe(true)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+end
+
+@test("session columns follow the bucket size")
+local function columns()
+    local list = EternityUI:GetModule(NAME).Charts.SessionColumns(5)
+    expect(type(list)).toBe("table")
+end

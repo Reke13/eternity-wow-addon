@@ -1,0 +1,52 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-castbars",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_CastBars",
+    "title": "Eternity Cast Bars",
+    "notes": "Eternity module: cast bars for every unit, plus GCD, swing and mirror timers."
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Ui.lua",
+      "src/Cast.lua",
+      "src/Timer.lua",
+      "src/Bar.lua",
+      "src/Group.lua",
+      "src/Gcd.lua",
+      "src/Swing.lua",
+      "src/Mirror.lua",
+      "src/Blizzard.lua",
+      "src/CastBars.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "PlayerCastingBarFrame",
+      "OverlayPlayerCastingBarFrame",
+      "PetCastingBarFrame",
+      "TargetFrameSpellBar",
+      "FocusFrameSpellBar",
+      "MirrorTimerContainer"
+    ]
+  }
+}

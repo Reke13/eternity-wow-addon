@@ -1,0 +1,17 @@
+-- The module registers and can be switched off and on.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Stats"
+
+@test("the module starts")
+local function starts()
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+end
+
+@test("disabling and enabling leaves it running")
+local function toggles()
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(EternityUI:GetModule(NAME).active).toBe(false)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+end

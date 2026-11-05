@@ -1,0 +1,174 @@
+-- EternityUI_Alerts: rules of your own that show an icon while they apply: a missing buff or weapon
+-- enchant, low durability, little bag space, few of an item. It's not WeakAuras: Forever closes
+-- procs, enemy data and the combat log to addons, and buffs can only be read out of combat.
+-- Rules holds them, Conditions says when each may show, Checks reads the game, Display draws the
+-- row and Editor is the Rules tab. Disabling the module hides the row.
+
+---@type string, EternityUIAlertsNamespace
+local addonName, ns = ...
+local E = EternityUI
+local Rules, Conditions, Checks, Display, Editor, L = ns.Rules, ns.Conditions, ns.Checks, ns.Display, ns.Editor, ns.L
+
+-- Events come in bursts (a zone change alone sends dozens of UNIT_AURA).
+local DELAY = 0.3
+-- Enchants run out without any event.
+local TICK = 30
+local MOVER_DELAY = 0.2
+
+local EVENTS = {
+    "PLAYER_ENTERING_WORLD",
+    "PLAYER_REGEN_DISABLED",
+    "PLAYER_REGEN_ENABLED",
+    "PLAYER_LEVEL_UP",
+    "PLAYER_DEAD",
+    "PLAYER_ALIVE",
+    "PLAYER_UNGHOST",
+    "PLAYER_UPDATE_RESTING",
+    "PLAYER_MOUNT_DISPLAY_CHANGED",
+    "GROUP_ROSTER_UPDATE",
+    "ZONE_CHANGED_NEW_AREA",
+    "UPDATE_INVENTORY_DURABILITY",
+    "BAG_UPDATE_DELAYED",
+}
+local UNIT_EVENTS = { "UNIT_AURA", "UNIT_INVENTORY_CHANGED" }
+
+---@class EternityUIAlertsModule: EternityUIModuleDefinition
+---@field events table? event frame (created the first time it's enabled)
+---@field ticker table?
+---@field running boolean?
+---@field armed boolean? sounds may play: the first evaluation is silent
+local Module = {
+    schema = ns.OptionsSchema,
+    state = {},
+    tabs = { { key = "rules", text = L.TAB, build = Editor.Build } },
+    actions = {
+        {
+            text = L.TEST,
+            onClick = function()
+                Display.Test()
+            end,
+        },
+    },
+}
+ns.Module = Module
+-- Internals reachable from the tests.
+Module.Rules, Module.Conditions, Module.Checks, Module.Display = Rules, Conditions, Checks, Display
+
+--- Checks every rule now and redraws the row.
+function Module:Evaluate()
+    local context = Conditions.Context()
+    local items = {}
+    local sound
+    for _, rule in ipairs(Rules.List()) do
+        local state = self.state[rule.id] or {}
+        self.state[rule.id] = state
+        local firing, value, icon = false, nil, nil
+        if rule.enabled then
+            firing, value, icon = Checks.Run(rule)
+        end
+        -- nil: it can't tell now, so it stays as it was.
+        if firing ~= nil then
+            state.firing, state.value, state.icon = firing, value, icon
+        end
+        local showing = state.firing and Conditions.Passes(rule, context) or false
+        if showing then
+            local action, use = Checks.Action(rule)
+            items[#items + 1] = {
+                name = rule.name ~= "" and rule.name or L["KIND_" .. rule.kind],
+                icon = state.icon or Checks.Icon(rule),
+                value = state.value,
+                glow = rule.glow,
+                action = action,
+                use = use,
+            }
+            if not state.showing and rule.sound ~= "none" then
+                sound = sound or rule.sound
+            end
+        end
+        state.showing = showing
+    end
+    Display.Set(items)
+    local kit = sound and SOUNDKIT[Rules.SOUNDS[sound]]
+    if kit and self.armed and E.store:Get(addonName, "display.sounds") then
+        PlaySound(kit)
+    end
+    self.armed = true
+end
+
+--- Evaluates a moment later, once for a burst of changes.
+function Module:Schedule()
+    if self.scheduled then
+        return
+    end
+    self.scheduled = true
+    C_Timer.After(DELAY, function()
+        self.scheduled = false
+        if self.running then
+            self:Evaluate()
+        end
+    end)
+end
+
+function Module:OnEvent(event)
+    if event == "PLAYER_REGEN_DISABLED" then
+        Display.ClearClicks()
+    end
+    self:Schedule()
+end
+
+function Module:OnEnable()
+    self.running = true
+    self.armed = false
+    Rules.Bind()
+    Rules.onChange = function()
+        self:Schedule()
+    end
+    if not self.events then
+        self.events = CreateFrame("Frame")
+        self.events:SetScript("OnEvent", function(_, event)
+            self:OnEvent(event)
+        end)
+    end
+    for _, event in ipairs(EVENTS) do
+        -- An event this client doesn't have errors on RegisterEvent: skip it.
+        pcall(self.events.RegisterEvent, self.events, event)
+    end
+    for _, event in ipairs(UNIT_EVENTS) do
+        pcall(self.events.RegisterUnitEvent, self.events, event, "player")
+    end
+    Display.Start()
+    -- A preview while the Mover is open. The core releases this on disable.
+    E.Events.Listen(E.Mover.TOGGLED, self, function(_, open)
+        Display.SetPreview("mover", open)
+        -- The Mover places the row after it closes.
+        if not open then
+            C_Timer.After(MOVER_DELAY, Display.Draw)
+        end
+    end)
+    self.ticker = C_Timer.NewTicker(TICK, function()
+        self:Evaluate()
+    end)
+    self:Evaluate()
+end
+
+function Module:OnDisable()
+    self.running = false
+    self.state = {}
+    if self.ticker then
+        self.ticker:Cancel()
+        self.ticker = nil
+    end
+    if self.events then
+        self.events:UnregisterAllEvents()
+    end
+    Rules.onChange = nil
+    Display.Stop()
+end
+
+function Module:OnConfigChanged()
+    if self.running then
+        Display.Draw()
+    end
+end
+
+E:RegisterModule(addonName, Module)

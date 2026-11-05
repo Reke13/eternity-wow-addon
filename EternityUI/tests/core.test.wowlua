@@ -1,0 +1,93 @@
+-- The base services: events, combat queue, frame hiding, pixels and module lifecycle.
+import test, expect from "wowlua:test"
+
+local ns = EternityUI.Internal.ns
+
+@test("the store is ready after login")
+local function ready()
+    expect(ns.store ~= nil).toBe(true)
+end
+
+@test("an unknown event is refused without an error")
+local function unknownEvent()
+    expect(ns.Events.On("NOT_AN_EVENT", {}, function() end)).toBe(false)
+end
+
+@test("a message reaches its listener until it's released")
+local function messages()
+    local owner = {}
+    local count = 0
+    ns.Events.Listen("TEST_MESSAGE", owner, function()
+        count = count + 1
+    end)
+    ns.Events.Send("TEST_MESSAGE")
+    ns.Events.Release(owner)
+    ns.Events.Send("TEST_MESSAGE")
+    expect(count).toBe(1)
+end
+
+@test("a plain value passes through the secret kit")
+local function secretKit()
+    expect(ns.Secret.Is(5)).toBe(false)
+    expect(ns.Secret.Plain(5, 0)).toBe(5)
+    expect(ns.Secret.Known(1, "a", nil)).toBe(true)
+end
+
+@test("out of combat a job runs at once")
+local function combatRun()
+    local ran = false
+    ns.Combat.Run("job", function()
+        ran = true
+    end)
+    expect(ran).toBe(true)
+    expect(ns.Combat.Pending()).toBe(0)
+end
+
+@test("a hidden frame returns when its last owner lets go")
+local function hider()
+    local parent = CreateFrame("Frame")
+    local frame = CreateFrame("Frame", nil, parent)
+    ns.Hider.Hide(frame, "a")
+    ns.Hider.Hide(frame, "b")
+    expect(frame:GetParent() == ns.Hider.parking).toBe(true)
+    ns.Hider.Restore(frame, "a")
+    expect(ns.Hider.IsHidden(frame)).toBe(true)
+    ns.Hider.Restore(frame, "b")
+    expect(frame:GetParent() == parent).toBe(true)
+end
+
+@test("a pixel maps to the screen height")
+local function pixel()
+    local _, height = GetPhysicalScreenSize()
+    expect(ns.Pixel.PerfectScale()).toBe(768 / height)
+end
+
+@test("disabling a module releases what it holds")
+local function lifecycle()
+    local enabled, disabled = 0, 0
+    local frame = CreateFrame("Frame", nil, UIParent)
+    local module = EternityUI:RegisterModule("LifecycleTest", {
+        OnEnable = function(self)
+            enabled = enabled + 1
+            ns.Hider.Hide(frame, self)
+        end,
+        OnDisable = function()
+            disabled = disabled + 1
+        end,
+    })
+    expect(module.active).toBe(true)
+    ns.store:SetModuleEnabled("LifecycleTest", false)
+    expect(module.active).toBe(false)
+    expect(disabled).toBe(1)
+    expect(frame:GetParent() == UIParent).toBe(true)
+    ns.store:SetModuleEnabled("LifecycleTest", true)
+    expect(enabled).toBe(2)
+end
+
+@test("a module that needs a reload stays on until then")
+local function needsReload()
+    local module = EternityUI:RegisterModule("ReloadTest", { needsReload = true })
+    ns.store:SetModuleEnabled("ReloadTest", false)
+    expect(module.active).toBe(true)
+    expect(module.reloadPending).toBe(true)
+end

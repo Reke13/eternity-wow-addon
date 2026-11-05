@@ -1,0 +1,122 @@
+{
+  "format": 1,
+  "module": "EternityUI_Tooltip",
+  "title": { "enUS": "Tooltips", "esES": "Tooltips" },
+  "description": {
+    "enUS": "Blizzard's tooltips with the Eternity look. Health bars and auras stay as Blizzard draws them.",
+    "esES": "Los tooltips de Blizzard con el aspecto de Eternity. La salud y las auras se quedan como las dibuja Blizzard."
+  },
+  "groups": [
+    {
+      "id": "look",
+      "tab": "appearance",
+      "label": { "enUS": "Look", "esES": "Aspecto" },
+      "options": [
+        {
+          "id": "scale",
+          "type": "range",
+          "default": 1,
+          "min": 0.5,
+          "max": 2,
+          "step": 0.05,
+          "label": { "enUS": "Scale", "esES": "Escala" }
+        },
+        {
+          "id": "fonts",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Eternity fonts", "esES": "Fuentes de Eternity" },
+          "description": {
+            "enUS": "Use the theme's font and text size in every tooltip.",
+            "esES": "Usa la fuente y el tamaño de texto del tema en todos los tooltips."
+          }
+        },
+        {
+          "id": "qualityBorder",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Border in the item quality color", "esES": "Borde del color de la calidad del objeto" }
+        },
+        {
+          "id": "classBorder",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Border in the player's class color", "esES": "Borde del color de la clase del jugador" }
+        }
+      ]
+    },
+    {
+      "id": "position",
+      "tab": "appearance",
+      "label": { "enUS": "Position", "esES": "Posición" },
+      "options": [
+        {
+          "id": "anchor",
+          "type": "select",
+          "default": "default",
+          "label": { "enUS": "Position", "esES": "Posición" },
+          "description": {
+            "enUS": "For tooltips in Blizzard's default spot (units, bags...). The custom spot is set in Edit Mode.",
+            "esES": "Para los tooltips en el sitio de Blizzard (unidades, bolsas...). El personalizado se fija en el modo edición."
+          },
+          "values": [
+            { "value": "default", "label": { "enUS": "Blizzard's", "esES": "La de Blizzard" } },
+            { "value": "cursor", "label": { "enUS": "Next to the cursor", "esES": "Junto al cursor" } },
+            { "value": "custom", "label": { "enUS": "Custom", "esES": "Personalizada" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "combat",
+      "label": { "enUS": "Combat", "esES": "Combate" },
+      "options": [
+        {
+          "id": "hide",
+          "type": "select",
+          "default": "never",
+          "label": { "enUS": "Hide in combat", "esES": "Ocultar en combate" },
+          "values": [
+            { "value": "never", "label": { "enUS": "Never", "esES": "Nunca" } },
+            { "value": "world", "label": { "enUS": "Units in the world", "esES": "Unidades del mundo" } },
+            { "value": "all", "label": { "enUS": "All tooltips", "esES": "Todos los tooltips" } }
+          ]
+        },
+        {
+          "id": "modifier",
+          "type": "select",
+          "default": "shift",
+          "label": { "enUS": "Show anyway while holding", "esES": "Mostrar igualmente al pulsar" },
+          "values": [
+            { "value": "none", "label": { "enUS": "Nothing", "esES": "Nada" } },
+            { "value": "shift", "label": { "enUS": "Shift", "esES": "Mayúsculas" } },
+            { "value": "ctrl", "label": { "enUS": "Ctrl", "esES": "Ctrl" } },
+            { "value": "alt", "label": { "enUS": "Alt", "esES": "Alt" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "info",
+      "label": { "enUS": "Extra information", "esES": "Información extra" },
+      "options": [
+        {
+          "id": "itemId",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Show the item ID", "esES": "Mostrar el ID del objeto" }
+        },
+        {
+          "id": "spellId",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Show the spell ID", "esES": "Mostrar el ID del hechizo" },
+          "description": {
+            "enUS": "Not on auras: their data can be secret.",
+            "esES": "No en las auras: sus datos pueden ser secretos."
+          }
+        }
+      ]
+    }
+  ]
+}

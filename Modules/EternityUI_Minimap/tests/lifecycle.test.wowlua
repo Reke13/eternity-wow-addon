@@ -1,0 +1,17 @@
+-- The module starts and stops cleanly.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Minimap"
+
+@test("the module starts")
+local function starts()
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+end
+
+@test("the module stops and starts again")
+local function cycle()
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(EternityUI:GetModule(NAME).active).toBe(false)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+end

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-minimap",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Minimap",
+    "title": "Eternity Minimap",
+    "notes": "Eternity module: the look of the minimap."
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": ["src/Generated/Options.lua", "src/Minimap.lua"]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": ["EternityUI", "EternityTooltipAnchor", "EternityMinimapButton", "EternityMinimapPanel", "GetMinimapShape"]
+  }
+}

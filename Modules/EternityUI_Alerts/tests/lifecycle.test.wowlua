@@ -1,0 +1,110 @@
+-- The module registers, judges its rules and gives everything back.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Alerts"
+
+local function context(fields)
+    local base = {
+        class = "WARRIOR",
+        level = 40,
+        dead = false,
+        combat = false,
+        resting = false,
+        mounted = false,
+        raid = false,
+        party = false,
+        instance = false,
+    }
+    for key, value in pairs(fields or {}) do
+        base[key] = value
+    end
+    return base
+end
+
+local function rule(fields)
+    local base = {
+        class = "",
+        minLevel = 0,
+        group = "any",
+        place = "any",
+        hideResting = false,
+        hideMounted = false,
+        hideCombat = false,
+    }
+    for key, value in pairs(fields or {}) do
+        base[key] = value
+    end
+    return base
+end
+
+@test("the module starts with the sample rules and registers in the Mover")
+local function starts()
+    local module = EternityUI:GetModule(NAME)
+    expect(module.active).toBe(true)
+    expect(#module.Rules.List()).toBe(3)
+    expect(EternityUI.Mover.elements[NAME] ~= nil).toBe(true)
+end
+
+@test("entries split by commas, with numbers as numbers")
+local function entries()
+    local list = EternityUI:GetModule(NAME).Rules.Entries(" Well Fed , 1234,")
+    expect(#list).toBe(2)
+    expect(list[1]).toBe("Well Fed")
+    expect(list[2]).toBe(1234)
+end
+
+@test("conditions limit a rule")
+local function conditions()
+    local passes = EternityUI:GetModule(NAME).Conditions.Passes
+    expect(passes(rule(), context())).toBe(true)
+    expect(passes(rule(), context({ dead = true }))).toBe(false)
+    expect(passes(rule({ class = "MAGE" }), context())).toBe(false)
+    expect(passes(rule({ minLevel = 50 }), context())).toBe(false)
+    expect(passes(rule({ group = "raid" }), context({ party = true }))).toBe(false)
+    expect(passes(rule({ group = "solo" }), context())).toBe(true)
+    expect(passes(rule({ place = "instance" }), context())).toBe(false)
+    expect(passes(rule({ place = "world" }), context({ instance = true }))).toBe(false)
+    expect(passes(rule({ hideCombat = true }), context({ combat = true }))).toBe(false)
+    expect(passes(rule({ hideMounted = true }), context({ mounted = true }))).toBe(false)
+    expect(passes(rule({ hideResting = true }), context({ resting = true }))).toBe(false)
+end
+
+@test("a rule that can't tell keeps what it knew")
+local function keeps()
+    local module = EternityUI:GetModule(NAME)
+    local run = module.Checks.Run
+    local added = module.Rules.Add("slots", { threshold = 1 })
+    module.state[added.id] = { firing = true }
+    module.Checks.Run = function()
+        return nil
+    end
+    module:Evaluate()
+    module.Checks.Run = run
+    expect(module.state[added.id].firing).toBe(true)
+    module.Rules.Remove(added)
+end
+
+@test("a buff rule clears once the buff is on, by name or by spell ID")
+local function buffClears()
+    local Checks = EternityUI:GetModule(NAME).Checks
+    local read = C_UnitAuras.GetAuraDataByIndex
+    local auras = {}
+    C_UnitAuras.GetAuraDataByIndex = function(_, index)
+        return auras[index]
+    end
+    expect((Checks.Run({ kind = "buff", spells = "Thorns" }))).toBe(true)
+    auras[1] = { name = "Thorns", spellId = 467 }
+    expect((Checks.Run({ kind = "buff", spells = "thorns" }))).toBe(false)
+    expect((Checks.Run({ kind = "buff", spells = "467" }))).toBe(false)
+    expect((Checks.Run({ kind = "buff", spells = "Mark of the Wild" }))).toBe(true)
+    C_UnitAuras.GetAuraDataByIndex = read
+end
+
+@test("disabling hides the row and leaves the Mover")
+local function stops()
+    local module = EternityUI:GetModule(NAME)
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(module.Display.frame:IsShown()).toBe(false)
+    expect(EternityUI.Mover.elements[NAME] == nil).toBe(true)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+end

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI",
+    "title": "Eternity",
+    "notes": "Core of the Eternity UI suite.",
+    "saved-variables": ["EternityUIDB"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "assets": ["media/**"],
+    "load-order": [
+      "src/Init.lua",
+      "src/Core/Events.lua",
+      "src/Core/Secret.lua",
+      "src/Core/Combat.lua",
+      "src/Core/Hider.lua",
+      "src/Core/Pixel.lua",
+      "src/Core/Locale.lua",
+      "src/Config/Schema.lua",
+      "src/Config/Store.lua",
+      "src/Config/Options.lua",
+      "src/Core/Modules.lua",
+      "src/Core/Boot.lua",
+      "src/Core/Diagnostics.lua",
+      "src/Mover/Geometry.lua",
+      "src/Mover/Snap.lua",
+      "src/Mover/Mover.lua",
+      "src/UI/Theme.lua",
+      "src/UI/Presets.lua",
+      "src/UI/Shape.lua",
+      "src/UI/Widgets.lua",
+      "src/UI/Tooltip.lua",
+      "src/UI/Window.lua",
+      "src/UI/Integration.lua",
+      "src/Main.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true
+  },
+  "check": {
+    "globals": ["EternityUI", "EternityUIDB", "SLASH_ETERNITYUI1", "SLASH_ETERNITYUI2"]
+  }
+}

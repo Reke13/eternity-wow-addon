@@ -1,0 +1,230 @@
+{
+  "format": 1,
+  "module": "EternityUI_Objectives",
+  "title": { "enUS": "Objectives", "esES": "Objetivos" },
+  "description": {
+    "enUS": "Blizzard's quest and objective tracker with the Eternity look. Its position, height and text size stay in Blizzard's Edit Mode.",
+    "esES": "El seguimiento de misiones de Blizzard con el estilo de Eternity. Posición, alto y tamaño de texto: Modo Edición de Blizzard."
+  },
+  "groups": [
+    {
+      "id": "fade",
+      "label": { "enUS": "Auto fade", "esES": "Fundido automático" },
+      "description": {
+        "enUS": "Fades the tracker out instead of collapsing it: collapsing from an addon would block quest items in combat.",
+        "esES": "Funde el seguimiento en vez de plegarlo: plegarlo desde un addon bloquearía los objetos de misión en combate."
+      },
+      "options": [
+        { "id": "combat", "type": "toggle", "default": false, "label": { "enUS": "In combat", "esES": "En combate" } },
+        { "id": "boss", "type": "toggle", "default": true, "label": { "enUS": "During boss encounters", "esES": "Durante encuentros con jefes" } },
+        { "id": "dungeon", "type": "toggle", "default": false, "label": { "enUS": "In dungeons and scenarios", "esES": "En mazmorras y gestas" } },
+        { "id": "raid", "type": "toggle", "default": true, "label": { "enUS": "In raids", "esES": "En bandas" } },
+        { "id": "pvp", "type": "toggle", "default": true, "label": { "enUS": "In arenas and battlegrounds", "esES": "En arenas y campos de batalla" } },
+        {
+          "id": "alpha",
+          "type": "range",
+          "default": 0,
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "label": { "enUS": "Opacity while faded", "esES": "Opacidad al fundirse" }
+        },
+        {
+          "id": "keepHeader",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Keep the main header visible", "esES": "Mantener visible la cabecera principal" }
+        },
+        {
+          "id": "blockMouse",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Ignore clicks while hidden", "esES": "Ignorar los clics mientras está oculto" },
+          "description": {
+            "enUS": "Below 10% opacity, so invisible quest items can't be clicked by accident.",
+            "esES": "Por debajo del 10 % de opacidad, para no pulsar sin querer objetos de misión invisibles."
+          }
+        },
+        {
+          "id": "duration",
+          "type": "range",
+          "default": 0.3,
+          "min": 0,
+          "max": 1.5,
+          "step": 0.05,
+          "label": { "enUS": "Fade time (seconds)", "esES": "Duración del fundido (segundos)" }
+        }
+      ]
+    },
+    {
+      "id": "info",
+      "label": { "enUS": "Quest information", "esES": "Información de las misiones" },
+      "options": [
+        {
+          "id": "level",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Quest level before the title", "esES": "Nivel de la misión antes del título" },
+          "description": {
+            "enUS": "Forever's tracker writes \"[level]\"; turned off, the module removes it.",
+            "esES": "El seguimiento de Forever escribe \"[nivel]\"; si lo desactivas, el módulo lo quita."
+          }
+        },
+        {
+          "id": "tooltip",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Zone and level in the quest tooltip", "esES": "Zona y nivel en el tooltip de la misión" }
+        }
+      ]
+    },
+    {
+      "id": "feedback",
+      "label": { "enUS": "Completion", "esES": "Al completar" },
+      "options": [
+        {
+          "id": "flash",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Flash a finished objective", "esES": "Destello en el objetivo terminado" }
+        },
+        {
+          "id": "objectiveSound",
+          "type": "select",
+          "default": "none",
+          "label": { "enUS": "Sound: objective done", "esES": "Sonido: objetivo terminado" },
+          "values": [
+            { "value": "none", "label": { "enUS": "None", "esES": "Ninguno" } },
+            { "value": "UI_QUEST_ROLLING_FORWARD_01", "label": { "enUS": "Soft chime", "esES": "Campanilla suave" } },
+            { "value": "MAP_PING", "label": { "enUS": "Ping", "esES": "Ping" } },
+            { "value": "IG_QUEST_LIST_COMPLETE", "label": { "enUS": "Quest complete", "esES": "Misión completada" } },
+            { "value": "READY_CHECK", "label": { "enUS": "Ready check", "esES": "Comprobación de listos" } }
+          ]
+        },
+        {
+          "id": "questSound",
+          "type": "select",
+          "default": "IG_QUEST_LIST_COMPLETE",
+          "label": { "enUS": "Sound: quest ready to turn in", "esES": "Sonido: misión lista para entregar" },
+          "values": [
+            { "value": "none", "label": { "enUS": "None", "esES": "Ninguno" } },
+            { "value": "IG_QUEST_LIST_COMPLETE", "label": { "enUS": "Quest complete", "esES": "Misión completada" } },
+            { "value": "UI_QUEST_ROLLING_FORWARD_01", "label": { "enUS": "Soft chime", "esES": "Campanilla suave" } },
+            { "value": "READY_CHECK", "label": { "enUS": "Ready check", "esES": "Comprobación de listos" } },
+            { "value": "RAID_WARNING", "label": { "enUS": "Raid warning", "esES": "Aviso de banda" } }
+          ]
+        },
+        {
+          "id": "chat",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Chat line when a quest is ready", "esES": "Línea en el chat cuando una misión está lista" }
+        }
+      ]
+    },
+    {
+      "id": "sections",
+      "label": { "enUS": "Hidden sections", "esES": "Secciones ocultas" },
+      "description": {
+        "enUS": "Taken out of the tracker (out of combat). Risk: until /reload, quest items may refuse to work in combat, even with the module off.",
+        "esES": "Se sacan fuera de combate. Riesgo: hasta /reload, los objetos de misión pueden fallar en combate, aun con el módulo apagado."
+      },
+      "options": [
+        { "id": "scenario", "type": "toggle", "default": false, "label": { "enUS": "Hide scenarios and dungeons", "esES": "Ocultar gestas y mazmorras" } },
+        { "id": "widgets", "type": "toggle", "default": false, "label": { "enUS": "Hide zone widgets", "esES": "Ocultar widgets de zona" } },
+        { "id": "campaign", "type": "toggle", "default": false, "label": { "enUS": "Hide the campaign", "esES": "Ocultar la campaña" } },
+        { "id": "quests", "type": "toggle", "default": false, "label": { "enUS": "Hide quests", "esES": "Ocultar las misiones" } },
+        { "id": "adventure", "type": "toggle", "default": false, "label": { "enUS": "Hide collections tracking", "esES": "Ocultar el seguimiento de colecciones" } },
+        { "id": "achievements", "type": "toggle", "default": false, "label": { "enUS": "Hide achievements", "esES": "Ocultar los logros" } },
+        { "id": "monthly", "type": "toggle", "default": false, "label": { "enUS": "Hide the Traveler's Log", "esES": "Ocultar el diario del viajero" } },
+        { "id": "initiatives", "type": "toggle", "default": false, "label": { "enUS": "Hide endeavors", "esES": "Ocultar las iniciativas" } },
+        { "id": "professions", "type": "toggle", "default": false, "label": { "enUS": "Hide recipes", "esES": "Ocultar las recetas" } },
+        { "id": "bonus", "type": "toggle", "default": false, "label": { "enUS": "Hide bonus objectives", "esES": "Ocultar los objetivos adicionales" } },
+        { "id": "worldQuests", "type": "toggle", "default": false, "label": { "enUS": "Hide world quests", "esES": "Ocultar las misiones de mundo" } }
+      ]
+    },
+    {
+      "id": "size",
+      "tab": "appearance",
+      "label": { "enUS": "Size", "esES": "Tamaño" },
+      "description": {
+        "enUS": "Position, maximum height and text size: Blizzard's Edit Mode. The width is Blizzard's: changing it would taint the tracker.",
+        "esES": "Posición, alto máximo y tamaño del texto: Modo Edición de Blizzard. El ancho no se cambia: contaminaría el seguimiento."
+      },
+      "options": [
+        {
+          "id": "scale",
+          "type": "range",
+          "default": 1,
+          "min": 0.6,
+          "max": 1.6,
+          "step": 0.05,
+          "label": { "enUS": "Scale (out of combat)", "esES": "Escala (fuera de combate)" }
+        }
+      ]
+    },
+    {
+      "id": "look",
+      "tab": "appearance",
+      "label": { "enUS": "Look", "esES": "Aspecto" },
+      "options": [
+        { "id": "background", "type": "toggle", "default": true, "label": { "enUS": "Background", "esES": "Fondo" } },
+        {
+          "id": "backgroundOpacity",
+          "type": "range",
+          "default": 0.75,
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "label": { "enUS": "Background opacity", "esES": "Opacidad del fondo" },
+          "visibleWhen": { "look.background": true }
+        },
+        { "id": "headers", "type": "toggle", "default": true, "label": { "enUS": "Restyle the section headers", "esES": "Rediseñar las cabeceras de sección" } },
+        { "id": "bars", "type": "toggle", "default": true, "label": { "enUS": "Restyle progress and timer bars", "esES": "Rediseñar las barras de progreso y tiempo" } },
+        { "id": "items", "type": "toggle", "default": true, "label": { "enUS": "Restyle quest item buttons", "esES": "Rediseñar los botones de objeto de misión" } },
+        { "id": "font", "type": "toggle", "default": true, "label": { "enUS": "Theme font", "esES": "Fuente del tema" } },
+        {
+          "id": "outline",
+          "type": "select",
+          "default": "shadow",
+          "label": { "enUS": "Text edge", "esES": "Borde del texto" },
+          "values": [
+            { "value": "none", "label": { "enUS": "None", "esES": "Ninguno" } },
+            { "value": "shadow", "label": { "enUS": "Shadow", "esES": "Sombra" } },
+            { "value": "outline", "label": { "enUS": "Outline", "esES": "Contorno" } },
+            { "value": "thick", "label": { "enUS": "Thick outline", "esES": "Contorno grueso" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "colors",
+      "tab": "appearance",
+      "label": { "enUS": "Colors", "esES": "Colores" },
+      "options": [
+        {
+          "id": "mode",
+          "type": "select",
+          "default": "difficulty",
+          "label": { "enUS": "Text colors", "esES": "Colores del texto" },
+          "values": [
+            { "value": "difficulty", "label": { "enUS": "Theme, titles by quest difficulty", "esES": "Del tema, títulos por dificultad" } },
+            { "value": "theme", "label": { "enUS": "Theme", "esES": "Del tema" } },
+            { "value": "blizzard", "label": { "enUS": "Blizzard's", "esES": "Los de Blizzard" } }
+          ]
+        },
+        { "id": "title", "type": "color", "default": "@text", "label": { "enUS": "Title", "esES": "Título" }, "visibleWhen": { "colors.mode": "theme" } },
+        { "id": "titleHover", "type": "color", "default": "@accent", "label": { "enUS": "Title on hover", "esES": "Título al pasar el ratón" }, "visibleWhen": { "colors.mode": "theme" } },
+        { "id": "objective", "type": "color", "default": "@textMuted", "label": { "enUS": "Objective", "esES": "Objetivo" } },
+        { "id": "objectiveHover", "type": "color", "default": "@text", "label": { "enUS": "Objective on hover", "esES": "Objetivo al pasar el ratón" } },
+        { "id": "complete", "type": "color", "default": "@success", "label": { "enUS": "Objective done", "esES": "Objetivo terminado" } },
+        { "id": "ready", "type": "color", "default": "@success", "label": { "enUS": "Quest ready to turn in", "esES": "Misión lista para entregar" } },
+        { "id": "failed", "type": "color", "default": "@danger", "label": { "enUS": "Failed or running out", "esES": "Fallido o a punto de acabar" } },
+        { "id": "dash", "type": "color", "default": "@accent", "label": { "enUS": "Objective dash", "esES": "Guion del objetivo" } },
+        { "id": "section", "type": "color", "default": "@accent", "label": { "enUS": "Section header", "esES": "Cabecera de sección" } },
+        { "id": "bar", "type": "color", "default": "@accent", "label": { "enUS": "Progress bar", "esES": "Barra de progreso" } },
+        { "id": "flash", "type": "color", "default": "@accent", "label": { "enUS": "Completion flash", "esES": "Destello al completar" } }
+      ]
+    }
+  ]
+}

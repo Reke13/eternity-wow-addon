@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-stats",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Stats",
+    "title": "Eternity Stats",
+    "notes": "Eternity module: a detailed stats panel next to the character window (general, attributes, melee, ranged, spell, defense, resistances and enhancements), secret-safe.",
+    "saved-variables": ["EternityUIStatsDB"]
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Ui.lua",
+      "src/Core.lua",
+      "src/Values.lua",
+      "src/Panel.lua",
+      "src/Character.lua",
+      "src/Stats.lua"
+    ]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "EternityUIStatsDB",
+      "EternityUIStatsPanel",
+      "SLASH_ETERNITYSTATS1",
+      "SlashCmdList"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  }
+}

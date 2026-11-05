@@ -1,0 +1,107 @@
+-- Profiles and values on a fresh in-memory store.
+import test, beforeEach, expect from "wowlua:test"
+
+local ns = EternityUI.Internal.ns
+local store
+local changes
+
+@beforeEach
+local function fresh()
+    ns.Schema.Register({
+        module = "StoreTest",
+        groups = {
+            {
+                id = "g",
+                options = {
+                    { id = "on", type = "toggle", default = true },
+                    { id = "size", type = "range", default = 1, min = 0, max = 2, step = 0.5 },
+                },
+            },
+        },
+    })
+    changes = {}
+    store = ns.Store.New({}, "Player-1-ABC", function(module, path, value)
+        changes[#changes + 1] = { module = module, path = path, value = value }
+    end)
+end
+
+@test("a new store uses the default profile and schema defaults")
+local function defaults()
+    expect(store:GetProfileName()).toBe("Default")
+    expect(store:Get("StoreTest", "g.size")).toBe(1)
+end
+
+@test("a value equal to the default is not stored")
+local function sparse()
+    store:Set("StoreTest", "g.size", 2)
+    expect(store:Get("StoreTest", "g.size")).toBe(2)
+    store:Set("StoreTest", "g.size", 1)
+    expect(store:GetProfile().values.StoreTest).toBe(nil)
+end
+
+@test("an invalid value is refused")
+local function invalid()
+    local ok = store:Set("StoreTest", "g.size", 9)
+    expect(ok).toBe(false)
+    expect(#changes).toBe(0)
+end
+
+@test("profiles are assigned per character and fall back when deleted")
+local function profiles()
+    store:CreateProfile("Raid")
+    store:UseProfile("Raid")
+    expect(store:GetProfileName()).toBe("Raid")
+    store:DeleteProfile("Raid")
+    expect(store:GetProfileName()).toBe("Default")
+end
+
+@test("without a GUID the store refuses to assign a profile")
+local function noCharacter()
+    local anonymous = ns.Store.New({}, nil)
+    anonymous:CreateProfile("Raid")
+    expect(anonymous:UseProfile("Raid")).toBe(false)
+    expect(anonymous:GetProfileName()).toBe("Default")
+end
+
+@test("sanitize drops values the schema no longer accepts")
+local function sanitize()
+    store:GetProfile().values.StoreTest = { ["g.gone"] = 1, ["g.size"] = 2 }
+    expect(store:Sanitize("StoreTest")).toBe(1)
+    expect(store:Get("StoreTest", "g.size")).toBe(2)
+end
+
+@test("layout lives in the profile and notifies")
+local function layout()
+    store:SetLayout("Chat", { x = 1 })
+    expect(store:GetLayout("Chat").x).toBe(1)
+    expect(changes[1].path).toBe("@layout")
+end
+
+@test("version 2 moves the old accent and surface values")
+local function migration()
+    local raw = {
+        schemaVersion = 1,
+        profiles = {
+            Default = {
+                values = { EternityUI = { ["appearance.surface"] = "flat", ["appearance.accent"] = "#F472B6" } },
+                modules = {},
+                layout = {},
+            },
+        },
+    }
+    ns.Store.Migrate(raw)
+    local values = raw.profiles.Default.values.EternityUI
+    expect(raw.schemaVersion).toBe(2)
+    expect(values["appearance.style"]).toBe("flat")
+    expect(values["general.accentColor"]).toBe("#F472B6")
+    expect(values["general.themeAccent"]).toBe(false)
+end
+
+@test("a text option without a default starts empty")
+local function textDefault()
+    ns.Schema.Register({
+        module = "TextTest",
+        groups = { { id = "g", options = { { id = "note", type = "text" } } } },
+    })
+    expect(store:Get("TextTest", "g.note")).toBe("")
+end

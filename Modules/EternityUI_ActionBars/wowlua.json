@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-actionbars",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_ActionBars",
+    "title": "Eternity Action Bars",
+    "notes": "Eternity module: your own action bars."
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/libs/LibStub/LibStub.lua",
+      "src/libs/CallbackHandler-1.0/CallbackHandler-1.0.lua",
+      "src/libs/LibActionButton-1.0/LibActionButton-1.0.lua",
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Style.lua",
+      "src/Paging.lua",
+      "src/Icons.lua",
+      "src/Bars.lua",
+      "src/Sources.lua",
+      "src/Blizzard.lua",
+      "src/Keybind.lua",
+      "src/Mover.lua",
+      "src/Preview.lua",
+      "src/ActionBars.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": [
+      "EternityUI", "LibStub", "MainActionBar", "MainMenuBar", "MultiBarBottomLeft", "MultiBarBottomRight",
+      "MultiBarLeft", "MultiBarRight", "MultiBar5", "MultiBar6", "MultiBar7", "StanceBar", "PetActionBar",
+      "PossessActionBar", "OverrideActionBar", "MainMenuBarVehicleLeaveButton", "RegisterStateDriver",
+      "UnregisterStateDriver", "SetOverrideBindingClick", "ClearOverrideBindings", "GetBindingKey",
+      "CooldownFrame_Set", "C_ClassColor", "SetBinding", "SaveBindings", "LoadBindings", "GetCurrentBindingSet",
+      "GetBindingText", "IsMetaKeyDown", "UpdateMicroButtons"
+    ]
+  }
+}

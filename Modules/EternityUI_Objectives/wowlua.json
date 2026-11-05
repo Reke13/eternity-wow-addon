@@ -1,0 +1,62 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-objectives",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Objectives",
+    "title": "Eternity Objectives",
+    "notes": "Eternity module: Blizzard's quest and objective tracker restyled with the Eternity look, with auto fade, hideable sections and completion feedback."
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Ui.lua",
+      "src/Core.lua",
+      "src/Skin.lua",
+      "src/Fade.lua",
+      "src/Feedback.lua",
+      "src/Sections.lua",
+      "src/Objectives.lua"
+    ]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "EternityUIObjectivesBlocker",
+      "ObjectiveTrackerFrame",
+      "ObjectiveTrackerManager",
+      "ObjectiveTrackerLineFont",
+      "ObjectiveTrackerHeaderFont",
+      "OBJECTIVE_TRACKER_COLOR",
+      "ScenarioObjectiveTracker",
+      "UIWidgetObjectiveTracker",
+      "CampaignQuestObjectiveTracker",
+      "QuestObjectiveTracker",
+      "AdventureObjectiveTracker",
+      "AchievementObjectiveTracker",
+      "MonthlyActivitiesObjectiveTracker",
+      "InitiativeTasksObjectiveTracker",
+      "ProfessionsRecipeTracker",
+      "BonusObjectiveTracker",
+      "WorldQuestObjectiveTracker",
+      "EventRegistry",
+      "SOUNDKIT"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  }
+}

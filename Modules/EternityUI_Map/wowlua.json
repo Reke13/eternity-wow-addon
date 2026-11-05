@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-map",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Map",
+    "title": "Eternity Map",
+    "notes": "Eternity module: the world map with the Eternity look, player and cursor coordinates, scale, fade while moving, a remembered position and the unexplored areas.",
+    "saved-variables": ["EternityUIMapDB"]
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Ui.lua",
+      "src/Core.lua",
+      "src/Data/Overlays.lua",
+      "src/Skin.lua",
+      "src/Coords.lua",
+      "src/Window.lua",
+      "src/Fade.lua",
+      "src/Unexplored.lua",
+      "src/Map.lua"
+    ]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "EternityUIMapDB",
+      "EternityUIMapScreenCoords",
+      "SLASH_ETERNITYMAP1",
+      "SlashCmdList",
+      "WorldMapFrame",
+      "QuestMapFrame",
+      "QuestScrollFrame",
+      "PlayerMovementFrameFader"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  }
+}

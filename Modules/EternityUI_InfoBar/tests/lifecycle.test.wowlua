@@ -1,0 +1,33 @@
+-- The module registers, builds its text and gives everything back.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_InfoBar"
+
+@test("the module starts and registers in the Mover")
+local function starts()
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+    expect(EternityUI.Mover.elements[NAME] ~= nil).toBe(true)
+end
+
+@test("the bar hides with nothing to show")
+local function empty()
+    local store = EternityUI.store
+    local module = EternityUI:GetModule(NAME)
+    for _, id in ipairs({ "clock", "fps", "latency", "gold" }) do
+        store:Set(NAME, "content." .. id, false)
+    end
+    module:Update()
+    expect(module.bar:IsShown()).toBe(false)
+    store:Reset(NAME)
+    module:Update()
+    expect(module.bar:IsShown()).toBe(true)
+end
+
+@test("disabling hides the bar and leaves the Mover")
+local function stops()
+    local module = EternityUI:GetModule(NAME)
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(module.bar:IsShown()).toBe(false)
+    expect(EternityUI.Mover.elements[NAME] == nil).toBe(true)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+end

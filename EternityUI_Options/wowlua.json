@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-options",
+    "version": "0.1.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Options",
+    "title": "Eternity Options",
+    "notes": "The options window of Eternity. Loaded when it's opened.",
+    "load-on-demand": true
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Locale.lua",
+      "src/Window.lua",
+      "src/PageLook.lua",
+      "src/PageMover.lua",
+      "src/PageProfiles.lua",
+      "src/PageModules.lua",
+      "src/ModulePage.lua",
+      "src/MoverSession.lua",
+      "src/MoverScene.lua",
+      "src/MoverHandles.lua",
+      "src/MoverChrome.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": ["EternityUI"]
+  }
+}
