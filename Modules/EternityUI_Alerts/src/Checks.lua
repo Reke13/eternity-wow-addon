@@ -1,6 +1,6 @@
 -- What each kind of rule reads. A check returns firing, value and icon; firing nil means it can't
--- tell now (auras are secret in combat) and the rule keeps what it knew. Nothing here works out
--- what a secret holds: a secret value only makes the check give up.
+-- tell now and the rule keeps what it knew. Buff rules estimate in combat (see Combat below).
+-- Nothing here works out what a secret holds: a secret value only makes the check give up.
 
 ---@type string, EternityUIAlertsNamespace
 local _, ns = ...
@@ -30,11 +30,12 @@ function Checks.AurasRestricted()
     return C_Secrets ~= nil and C_Secrets.ShouldAurasBeSecret() and true or false
 end
 
--- The buffs on the player, by spell ID and by lower case name. Read by index, the same call the
--- Rules tab lists them with: rules with Thorns or Mark of the Wild never cleared on the client with
--- the lookups by name and ID. A buff without a name or an ID (some zone and system auras) only
--- adds what it has; a secret one is skipped.
----@return table<number|string, boolean>?
+-- The buffs on the player, by spell ID and by lower case name, each with when it runs out (0: it
+-- doesn't). Read by index, the same call the Rules tab lists them with: rules with Thorns or Mark
+-- of the Wild never cleared on the client with the lookups by name and ID. A buff without a name or
+-- an ID (some zone and system auras) only adds what it has; a secret one is skipped. The durations
+-- seen are kept for the combat estimate.
+---@return table<number|string, number>?
 local function playerBuffs()
     local buffs = {}
     for i = 1, MAX_AURAS do
@@ -46,11 +47,25 @@ local function playerBuffs()
             break
         end
         local id, name = aura.spellId, aura.name
+        local expires, duration = aura.expirationTime, aura.duration
+        if secret(expires) or type(expires) ~= "number" then
+            expires = 0
+        end
+        if secret(duration) or type(duration) ~= "number" then
+            duration = nil
+        end
+        local keys = {}
         if type(id) == "number" and not secret(id) then
-            buffs[id] = true
+            keys[#keys + 1] = id
         end
         if type(name) == "string" and not secret(name) and name ~= "" then
-            buffs[name:lower()] = true
+            keys[#keys + 1] = name:lower()
+        end
+        for _, key in ipairs(keys) do
+            buffs[key] = expires
+            if duration then
+                Checks.durations[key] = duration
+            end
         end
     end
     return buffs
@@ -65,34 +80,89 @@ local function spellName(id)
     return nil
 end
 
+-- When a rule's entry runs out in a buff table (nil: not there).
+local function find(buffs, entry)
+    if type(entry) == "string" then
+        return buffs[entry:lower()]
+    end
+    if buffs[entry] then
+        return buffs[entry]
+    end
+    local name = spellName(entry)
+    return name and buffs[name] or nil
+end
+
+-- Combat ------------------------------------------------------------------------------------------
+-- In combat the game hides the player's buffs from addons entirely (GetPlayerAuraBySpellID gives
+-- nothing, with or without the buff). The buff rules then work on an estimate: the buffs read just
+-- before combat with when each runs out, plus the buffs the player casts in combat, which last as
+-- long as they lasted the last time they were seen. A buff someone else casts, or one that's
+-- removed, in combat is only known after it.
+
+Checks.durations = {} -- spell ID or lower case name -> duration last seen (seconds, 0: no limit)
+Checks.known = nil -- the last read: spell ID or lower case name -> when it runs out (0: never)
+
+-- A cast that's one of the buffs of a rule: the estimate takes it as on from now. Returns how long
+-- it lasts (seconds), or nil if it isn't a rule's buff.
+---@param spellID any
+---@return number?
+function Checks.OnCast(spellID)
+    if type(spellID) ~= "number" or secret(spellID) then
+        return nil
+    end
+    local name = spellName(spellID)
+    local matched = false
+    for _, rule in ipairs(Rules.List()) do
+        if rule.kind == "buff" and rule.enabled then
+            for _, entry in ipairs(Rules.Entries(rule.spells)) do
+                if entry == spellID or (name and (
+                    (type(entry) == "string" and entry:lower() == name)
+                    or (type(entry) == "number" and spellName(entry) == name)
+                )) then
+                    matched = true
+                end
+            end
+        end
+    end
+    if not matched then
+        return nil
+    end
+    local duration = Checks.durations[spellID] or (name and Checks.durations[name])
+    -- Never seen out of combat: taken as on until combat ends and the buffs can be read again.
+    local expires = (duration and duration > 0) and (GetTime() + duration) or 0
+    Checks.known = Checks.known or {}
+    Checks.known[spellID] = expires
+    if name then
+        Checks.known[name] = expires
+    end
+    return duration
+end
+
 local kinds = {}
 
 -- Out of combat: an unreadable buff counts as not the one wanted. A rule that waited for every buff
--- to be readable could stay stuck for good on an aura the game always hides.
+-- to be readable could stay stuck for good on an aura the game always hides. In combat: the
+-- estimate above.
 function kinds.buff(rule)
     local entries = Rules.Entries(rule.spells)
     if #entries == 0 then
         return false
     end
+    local buffs
     if Checks.AurasRestricted() then
-        return nil
+        buffs = Checks.known
+    else
+        buffs = playerBuffs()
+        Checks.known = buffs
     end
-    local buffs = playerBuffs()
     if not buffs then
         return nil
     end
+    local now = GetTime()
     for _, entry in ipairs(entries) do
-        if type(entry) == "string" then
-            if buffs[entry:lower()] then
-                return false
-            end
-        elseif buffs[entry] then
+        local expires = find(buffs, entry)
+        if expires and (expires == 0 or expires > now) then
             return false
-        else
-            local name = spellName(entry)
-            if name and buffs[name] then
-                return false
-            end
         end
     end
     return true

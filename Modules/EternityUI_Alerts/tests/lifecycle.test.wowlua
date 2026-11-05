@@ -129,6 +129,19 @@ local function ranks()
     C_UnitAuras.GetAuraDataByIndex, C_Spell.GetSpellName = read, name
 end
 
+@test("in combat a buff rule follows the estimate")
+local function estimate()
+    local Checks = EternityUI:GetModule(NAME).Checks
+    local restricted, known = Checks.AurasRestricted, Checks.known
+    Checks.AurasRestricted = function()
+        return true
+    end
+    Checks.known = { ["battle shout"] = GetTime() + 60, ["thorns"] = GetTime() - 1 }
+    expect((Checks.Run({ kind = "buff", spells = "Battle Shout" }))).toBe(false)
+    expect((Checks.Run({ kind = "buff", spells = "Thorns" }))).toBe(true)
+    Checks.AurasRestricted, Checks.known = restricted, known
+end
+
 @test("disabling hides the row and leaves the Mover")
 local function stops()
     local module = EternityUI:GetModule(NAME)
