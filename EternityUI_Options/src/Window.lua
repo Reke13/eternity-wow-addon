@@ -128,6 +128,20 @@ local function buildSidebar(frame)
     chrome.profile:SetJustifyH("RIGHT")
     chrome.profile:SetWordWrap(false)
 
+    -- A thin accent line under the logo, fading out to the right.
+    local divider = CreateFrame("Frame", nil, frame)
+    divider:SetPoint("TOPLEFT", 22, -52)
+    divider:SetPoint("TOPRIGHT", frame, "TOPLEFT", SIDEBAR - 16, -52)
+    divider:SetHeight(E.Pixel.Size(frame) * 2)
+    divider.texture = divider:CreateTexture(nil, "ARTWORK")
+    divider.texture:SetAllPoints()
+    divider.texture:SetTexture("Interface\\Buttons\\WHITE8X8")
+    function divider:Paint()
+        local a = Theme.accent
+        self.texture:SetGradient("HORIZONTAL", CreateColor(a[1], a[2], a[3], 0.9), CreateColor(a[1], a[2], a[3], 0))
+    end
+    Widgets.Track(divider)
+
     -- The page list scrolls when it doesn't fit (many modules, or a small options scale).
     local nav = Widgets.Scroll(frame)
     nav:SetPoint("TOPLEFT", 0, -60)
