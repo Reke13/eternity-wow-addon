@@ -180,8 +180,8 @@ ns.OptionsSchema = {
                         esES = "Margen del mapa en ventana",
                     },
                     description = {
-                        enUS = "Space between Blizzard's spot for the map and the screen's edges. A map you dragged stays where you left it.",
-                        esES = "Separación entre el sitio de Blizzard para el mapa y los bordes de la pantalla. Si lo has arrastrado, se queda donde lo dejaste.",
+                        enUS = "The whole windowed map keeps this space from the screen's edges, in Blizzard's spot or where you dragged it. 0: it can go partly off screen.",
+                        esES = "Todo el mapa en ventana se mantiene a esta distancia de los bordes de la pantalla, en el sitio de Blizzard o donde lo hayas arrastrado. 0: puede salirse en parte.",
                     },
                 },
                 {

@@ -56,14 +56,21 @@ function Window.Corner(map)
     return left * scale, top * scale - UIParent:GetHeight()
 end
 
---- Anchors the map's top left corner at this spot (UIParent units), kept on screen.
+--- Anchors the map's top left corner at this spot (UIParent units), kept on screen. With a Margin
+--- the whole map stays that far from every edge (Blizzard's spot, a remembered one or a drag).
 function Window.Place(map, left, top)
     local scale = map:GetScale()
-    local width = map:GetWidth() * scale
+    local width, height = map:GetWidth() * scale, map:GetHeight() * scale
     local screenW, screenH = UIParent:GetWidth(), UIParent:GetHeight()
-    left = math.max(KEEP_ON_SCREEN - width, math.min(screenW - KEEP_ON_SCREEN, left))
-    -- The header stays reachable: never above the screen, never below its bottom edge.
-    top = math.min(0, math.max(KEEP_ON_SCREEN - screenH, top))
+    local margin = tonumber(opt("window.margin")) or 0
+    if margin > 0 then
+        left = math.max(margin, math.min(screenW - margin - width, left))
+        top = math.min(-margin, math.max(margin + height - screenH, top))
+    else
+        left = math.max(KEEP_ON_SCREEN - width, math.min(screenW - KEEP_ON_SCREEN, left))
+        -- The header stays reachable: never above the screen, never below its bottom edge.
+        top = math.min(0, math.max(KEEP_ON_SCREEN - screenH, top))
+    end
     map:ClearAllPoints()
     map:SetPoint("TOPLEFT", UIParent, "TOPLEFT", left / scale, top / scale)
 end
@@ -88,16 +95,10 @@ local function goHome(map)
     local scale = map:GetScale()
     map:ClearAllPoints()
     map:SetPoint(home[1], home[2], home[3], home[4] / scale, home[5] / scale)
-    local margin = tonumber(opt("window.margin")) or 0
     local left, top = Window.Corner(map)
-    if margin <= 0 or not left then
-        return
+    if (tonumber(opt("window.margin")) or 0) > 0 and left then
+        Window.Place(map, left, top)
     end
-    local width, height = map:GetWidth() * scale, map:GetHeight() * scale
-    local screenW, screenH = UIParent:GetWidth(), UIParent:GetHeight()
-    left = math.max(margin, math.min(screenW - margin - width, left))
-    top = math.min(-margin, math.max(margin + height - screenH, top))
-    Window.Place(map, left, top)
 end
 
 --- Scale and spot for the map's current state (called after Blizzard placed it).
