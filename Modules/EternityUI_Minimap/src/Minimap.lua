@@ -147,6 +147,8 @@ local Module = {
     schema = ns.OptionsSchema,
     captured = {},
     buttonHooks = {},
+    placed = {}, -- Blizzard button -> { points, scale, key } while it sits on the edge
+    placeHooks = {},
 }
 
 local function opt(path)
@@ -173,9 +175,13 @@ function Module:RestoreFrame(frame)
 end
 
 --- Hides or restores each element according to the options (all visible if the module isn't running).
+--- Blizzard's coordinates also hide while ours are shown: both sit inside the map and would overlap.
 function Module:ApplyBlizzard()
     for key, frames in pairs(BLIZZARD) do
         local show = not self.running or opt("blizzard." .. key)
+        if key == "coords" and self.running and opt("info.coords") then
+            show = false
+        end
         for _, frame in ipairs({ frames() }) do
             if show then
                 self:RestoreFrame(frame)
@@ -318,6 +324,101 @@ function Module:ApplyLook()
         local r, g, b = Theme.Color("accent")
         decor.glow:SetVertexColor(r, g, b, 0.9)
     end
+end
+
+-- Placement of Blizzard's buttons on the map's edge ----------------------------------------------
+-- Each button keeps its parent; only its point (and scale) change, and both come back as they were.
+-- Blizzard's layout code may place a button again: it goes back to the edge on the next frame.
+
+local PLACEABLE = { "calendar", "tracking", "mail", "difficulty", "compartment", "expansion", "clock" }
+
+--- A point on the map's edge for an angle (0 = right, 90 = up), in the map's units from its center.
+---@param angle number degrees
+---@param outward number? distance past the edge
+---@return number, number
+function Module:EdgePoint(angle, outward)
+    local rad = math.rad(angle)
+    local x, y = math.cos(rad), math.sin(rad)
+    if minimapShape() == "SQUARE" then
+        local m = math.max(math.abs(x), math.abs(y))
+        x, y = x / m, y / m
+    end
+    local radius = Minimap:GetWidth() / 2 + (outward or 0)
+    return x * radius, y * radius
+end
+
+function Module:PlaceButton(key, frame)
+    local placed = self.placed[frame]
+    if not placed then
+        local points = {}
+        for i = 1, frame:GetNumPoints() do
+            points[i] = { frame:GetPoint(i) }
+        end
+        placed = { points = points, scale = frame:GetScale() }
+        self.placed[frame] = placed
+    end
+    placed.key = key
+    if not self.placeHooks[frame] then
+        self.placeHooks[frame] = true
+        hooksecurefunc(frame, "SetPoint", function(button)
+            if not self.placing and self.placed[button] then
+                self:SchedulePlacement()
+            end
+        end)
+    end
+    self.placing = true
+    frame:SetScale(placed.scale * opt("placement.size"))
+    local x, y = self:EdgePoint(opt("placement." .. key), opt("placement.offset"))
+    -- Offsets go in the button's units: its scale may not be the map's.
+    local ratio = Minimap:GetEffectiveScale() / frame:GetEffectiveScale()
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER", Minimap, "CENTER", x * ratio, y * ratio)
+    self.placing = false
+end
+
+function Module:RestoreButton(frame)
+    local placed = self.placed[frame]
+    if not placed then
+        return
+    end
+    self.placed[frame] = nil
+    self.placing = true
+    frame:SetScale(placed.scale)
+    frame:ClearAllPoints()
+    for _, p in ipairs(placed.points) do
+        frame:SetPoint(unpack(p))
+    end
+    self.placing = false
+end
+
+--- Puts each Blizzard button on the edge, or back where it was.
+function Module:ApplyPlacement()
+    local edge = self.running and opt("placement.mode") == "edge"
+    E.Combat.Run(self.placed, function()
+        for _, key in ipairs(PLACEABLE) do
+            local frame = (BLIZZARD[key]())
+            if frame and not (frame.IsForbidden and frame:IsForbidden()) then
+                if edge then
+                    self:PlaceButton(key, frame)
+                else
+                    self:RestoreButton(frame)
+                end
+            end
+        end
+    end)
+end
+
+function Module:SchedulePlacement()
+    if self.placementPending then
+        return
+    end
+    self.placementPending = true
+    C_Timer.After(0, function()
+        self.placementPending = false
+        if self.running then
+            self:ApplyPlacement()
+        end
+    end)
 end
 
 -- Information (zone, time, coordinates) -----------------------------------------------------------
@@ -823,15 +924,9 @@ end
 
 --- Button position on the edge: angle in degrees (0 = right, 90 = up).
 function Module:PlaceToggle(angle)
-    local rad = math.rad(angle or opt("collector.angle"))
-    local x, y = math.cos(rad), math.sin(rad)
-    if minimapShape() == "SQUARE" then
-        local m = math.max(math.abs(x), math.abs(y))
-        x, y = x / m, y / m
-    end
-    local radius = Minimap:GetWidth() / 2
+    local x, y = self:EdgePoint(angle or opt("collector.angle"))
     self.toggle:ClearAllPoints()
-    self.toggle:SetPoint("CENTER", Minimap, "CENTER", x * radius, y * radius)
+    self.toggle:SetPoint("CENTER", Minimap, "CENTER", x, y)
 end
 
 function Module:DragUpdate()
@@ -1014,6 +1109,7 @@ function Module:ApplyAll()
     self:ApplyBlizzard()
     self:ApplyLook()
     self:ApplyMap()
+    self:ApplyPlacement()
     self:UpdateInfo()
     self:Scan()
 end

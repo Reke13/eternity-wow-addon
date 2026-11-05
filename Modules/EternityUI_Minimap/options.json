@@ -179,8 +179,8 @@
           "default": true,
           "label": { "enUS": "Blizzard coordinates", "esES": "Coordenadas de Blizzard" },
           "description": {
-            "enUS": "Only shown if enabled in the game's options.",
-            "esES": "Solo salen si están activadas en las opciones del juego."
+            "enUS": "Only shown if enabled in the game's options, and hidden while Eternity shows its own (Information).",
+            "esES": "Solo salen si están activadas en las opciones del juego, y se ocultan mientras Eternity muestra las suyas (Información)."
           }
         },
         {
@@ -374,6 +374,121 @@
             { "value": "bottom", "label": { "enUS": "Inside, bottom", "esES": "Dentro, abajo" } },
             { "value": "below", "label": { "enUS": "Below the map", "esES": "Debajo del mapa" } }
           ]
+        }
+      ]
+    },
+    {
+      "id": "placement",
+      "tab": "appearance",
+      "label": { "enUS": "Blizzard buttons", "esES": "Botones de Blizzard" },
+      "description": {
+        "enUS": "Calendar, tracking, mail, difficulty, addon compartment, expansion summary and clock. Hidden ones (Blizzard elements) stay hidden.",
+        "esES": "Calendario, rastreo, correo, dificultad, compartimento de addons, resumen de la expansión y reloj. Los ocultos (Elementos de Blizzard) siguen ocultos."
+      },
+      "options": [
+        {
+          "id": "mode",
+          "type": "select",
+          "default": "blizzard",
+          "label": { "enUS": "Placement", "esES": "Colocación" },
+          "values": [
+            { "value": "blizzard", "label": { "enUS": "Where Blizzard puts them", "esES": "Donde los pone Blizzard" } },
+            { "value": "edge", "label": { "enUS": "On the map's edge", "esES": "En el borde del mapa" } }
+          ]
+        },
+        {
+          "id": "offset",
+          "type": "range",
+          "default": 0,
+          "min": -30,
+          "max": 30,
+          "step": 1,
+          "label": { "enUS": "Distance from the edge", "esES": "Distancia al borde" },
+          "description": {
+            "enUS": "0: centered on the edge. Positive: outside the map; negative: inside.",
+            "esES": "0: centrados en el borde. Positivo: hacia fuera del mapa; negativo: hacia dentro."
+          },
+          "visibleWhen": { "placement.mode": "edge" }
+        },
+        {
+          "id": "size",
+          "type": "range",
+          "default": 1,
+          "min": 0.5,
+          "max": 1.5,
+          "step": 0.05,
+          "label": { "enUS": "Button size", "esES": "Tamaño de los botones" },
+          "visibleWhen": { "placement.mode": "edge" }
+        },
+        {
+          "id": "calendar",
+          "type": "range",
+          "default": 30,
+          "min": 0,
+          "max": 359,
+          "step": 1,
+          "label": { "enUS": "Calendar (degrees)", "esES": "Calendario (grados)" },
+          "visibleWhen": { "placement.mode": "edge" }
+        },
+        {
+          "id": "tracking",
+          "type": "range",
+          "default": 150,
+          "min": 0,
+          "max": 359,
+          "step": 1,
+          "label": { "enUS": "Tracking (degrees)", "esES": "Rastreo (grados)" },
+          "visibleWhen": { "placement.mode": "edge" }
+        },
+        {
+          "id": "mail",
+          "type": "range",
+          "default": 195,
+          "min": 0,
+          "max": 359,
+          "step": 1,
+          "label": { "enUS": "Mail and orders (degrees)", "esES": "Correo y pedidos (grados)" },
+          "visibleWhen": { "placement.mode": "edge" }
+        },
+        {
+          "id": "difficulty",
+          "type": "range",
+          "default": 120,
+          "min": 0,
+          "max": 359,
+          "step": 1,
+          "label": { "enUS": "Instance difficulty (degrees)", "esES": "Dificultad de la instancia (grados)" },
+          "visibleWhen": { "placement.mode": "edge" }
+        },
+        {
+          "id": "compartment",
+          "type": "range",
+          "default": 60,
+          "min": 0,
+          "max": 359,
+          "step": 1,
+          "label": { "enUS": "Addon compartment (degrees)", "esES": "Compartimento de addons (grados)" },
+          "visibleWhen": { "placement.mode": "edge" }
+        },
+        {
+          "id": "expansion",
+          "type": "range",
+          "default": 315,
+          "min": 0,
+          "max": 359,
+          "step": 1,
+          "label": { "enUS": "Expansion summary (degrees)", "esES": "Resumen de la expansión (grados)" },
+          "visibleWhen": { "placement.mode": "edge" }
+        },
+        {
+          "id": "clock",
+          "type": "range",
+          "default": 270,
+          "min": 0,
+          "max": 359,
+          "step": 1,
+          "label": { "enUS": "Clock (degrees)", "esES": "Reloj (grados)" },
+          "visibleWhen": { "placement.mode": "edge" }
         }
       ]
     },
