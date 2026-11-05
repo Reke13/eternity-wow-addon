@@ -793,6 +793,87 @@ ns.OptionsSchema = {
                         esES = "Barra lateral de cada ventana",
                     },
                 },
+                {
+                    id = "socialPosition",
+                    type = "select",
+                    default = "blizzard",
+                    label = {
+                        enUS = "Social button position",
+                        esES = "Posición del botón social",
+                    },
+                    description = {
+                        enUS = "The friends and quick join button, with the chat's other alerts.",
+                        esES = "El botón de amigos y unión rápida, junto con los demás avisos del chat.",
+                    },
+                    values = {
+                        {
+                            value = "blizzard",
+                            label = {
+                                enUS = "Where Blizzard puts it",
+                                esES = "Donde lo pone Blizzard",
+                            },
+                        },
+                        {
+                            value = "above",
+                            label = {
+                                enUS = "Above the chat",
+                                esES = "Encima del chat",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left of the chat",
+                                esES = "A la izquierda del chat",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right of the chat",
+                                esES = "A la derecha del chat",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "socialX",
+                    type = "range",
+                    default = 0,
+                    min = -200,
+                    max = 200,
+                    step = 1,
+                    label = {
+                        enUS = "Social button: horizontal offset",
+                        esES = "Botón social: desplazamiento horizontal",
+                    },
+                    visibleWhen = {
+                        ["buttons.socialPosition"] = {
+                            "above",
+                            "left",
+                            "right",
+                        },
+                    },
+                },
+                {
+                    id = "socialY",
+                    type = "range",
+                    default = 0,
+                    min = -200,
+                    max = 200,
+                    step = 1,
+                    label = {
+                        enUS = "Social button: vertical offset",
+                        esES = "Botón social: desplazamiento vertical",
+                    },
+                    visibleWhen = {
+                        ["buttons.socialPosition"] = {
+                            "above",
+                            "left",
+                            "right",
+                        },
+                    },
+                },
             },
         },
         {

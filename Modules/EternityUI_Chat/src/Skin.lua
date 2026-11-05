@@ -66,7 +66,7 @@ local BUTTONS = {
 ---@field points table<table, table[]> input box -> original points
 ---@field decor table<table, table> chat frame / tab / input box -> our drawing
 ---@field whisperMode string? the player's whisperMode while ours is applied
-local ChatSkin = { hidden = {}, fonts = {}, points = {}, decor = {} }
+local ChatSkin = { hidden = {}, fonts = {}, points = {}, decor = {}, placed = {}, placeHooks = {} }
 ns.Skin = ChatSkin
 
 local hider = CreateFrame("Frame")
@@ -363,6 +363,85 @@ end
 
 -- Buttons and modes -------------------------------------------------------------------------
 
+-- Blizzard frames anchored elsewhere (the chat's alert frame, the scroll to bottom buttons): their
+-- points are saved and given back. Blizzard may anchor them again: everything is applied again on
+-- the next frame.
+---@param frame table
+---@param place fun(frame: table)? sets the new points; nil gives Blizzard's back
+function ChatSkin:Place(frame, place)
+    if not frame then
+        return
+    end
+    local saved = self.placed[frame]
+    if place then
+        if not saved then
+            saved = {}
+            for i = 1, frame:GetNumPoints() do
+                saved[i] = { frame:GetPoint(i) }
+            end
+            self.placed[frame] = saved
+        end
+        if not self.placeHooks[frame] then
+            self.placeHooks[frame] = true
+            hooksecurefunc(frame, "SetPoint", function(placedFrame)
+                if not self.placing and self.placed[placedFrame] then
+                    self:Schedule()
+                end
+            end)
+        end
+        self.placing = true
+        frame:ClearAllPoints()
+        place(frame)
+        self.placing = false
+    elseif saved then
+        self.placed[frame] = nil
+        self.placing = true
+        frame:ClearAllPoints()
+        for _, p in ipairs(saved) do
+            frame:SetPoint(unpack(p))
+        end
+        self.placing = false
+    end
+end
+
+-- How far our background reaches past the chat's text (0 without it).
+local function backgroundPadding()
+    return opt("background.style") == "eternity" and opt("background.padding") or 0
+end
+
+--- The social button (it lives in ChatAlertFrame with the chat's other alerts) and the scroll to
+--- bottom buttons, which Blizzard anchors over the resize grip: in our background's corner.
+function ChatSkin:ApplyPlacements()
+    local main = _G.DEFAULT_CHAT_FRAME or _G.ChatFrame1
+    local where = self.running and opt("buttons.socialPosition") or "blizzard"
+    if main and where ~= "blizzard" then
+        local pad, x, y = backgroundPadding(), opt("buttons.socialX"), opt("buttons.socialY")
+        self:Place(_G.ChatAlertFrame, function(alert)
+            if where == "left" then
+                alert:SetPoint("BOTTOMRIGHT", main, "BOTTOMLEFT", -pad - 4 + x, -pad + y)
+            elseif where == "right" then
+                alert:SetPoint("BOTTOMLEFT", main, "BOTTOMRIGHT", pad + 4 + x, -pad + y)
+            else
+                alert:SetPoint("BOTTOMLEFT", main, "TOPLEFT", -pad + x, pad + TAB_HEIGHT + 4 + y)
+            end
+        end)
+    else
+        self:Place(_G.ChatAlertFrame, nil)
+    end
+    local aligned = self.running and opt("background.style") == "eternity"
+    for _, frame in ipairs(chatFrames()) do
+        local button = frame.ScrollToBottomButton
+        if aligned then
+            local inset = math.min(backgroundPadding(), 4)
+            self:Place(button, function(scroll)
+                scroll:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", backgroundPadding() - inset, inset - backgroundPadding())
+            end)
+        else
+            self:Place(button, nil)
+        end
+    end
+end
+
 function ChatSkin:ApplyButtons()
     for option, names in pairs(BUTTONS) do
         local show = not self.running or opt("buttons." .. option)
@@ -416,6 +495,7 @@ function ChatSkin:ApplyAll()
         end
     end
     self:ApplyButtons()
+    self:ApplyPlacements()
     self:ApplyMode()
 end
 
