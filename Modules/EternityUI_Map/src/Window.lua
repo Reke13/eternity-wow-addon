@@ -78,14 +78,26 @@ local function rememberHome(map)
     end
 end
 
---- Anchors the map in Blizzard's spot for its current scale.
+--- Anchors the map in Blizzard's spot for its current scale, at least the Margin option away from
+--- the screen's edges.
 local function goHome(map)
     local home = Window.home
-    if home then
-        local scale = map:GetScale()
-        map:ClearAllPoints()
-        map:SetPoint(home[1], home[2], home[3], home[4] / scale, home[5] / scale)
+    if not home then
+        return
     end
+    local scale = map:GetScale()
+    map:ClearAllPoints()
+    map:SetPoint(home[1], home[2], home[3], home[4] / scale, home[5] / scale)
+    local margin = tonumber(opt("window.margin")) or 0
+    local left, top = Window.Corner(map)
+    if margin <= 0 or not left then
+        return
+    end
+    local width, height = map:GetWidth() * scale, map:GetHeight() * scale
+    local screenW, screenH = UIParent:GetWidth(), UIParent:GetHeight()
+    left = math.max(margin, math.min(screenW - margin - width, left))
+    top = math.min(-margin, math.max(margin + height - screenH, top))
+    Window.Place(map, left, top)
 end
 
 --- Scale and spot for the map's current state (called after Blizzard placed it).
