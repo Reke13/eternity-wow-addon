@@ -438,6 +438,22 @@ ns.OptionsSchema = {
                         esES = "Mostrar el fondo",
                     },
                 },
+                {
+                    id = "opacity",
+                    type = "range",
+                    default = 1,
+                    min = 0.1,
+                    max = 1,
+                    step = 0.05,
+                    label = {
+                        enUS = "Opacity",
+                        esES = "Opacidad",
+                    },
+                    description = {
+                        enUS = "Of the whole bar: background, colors and texts.",
+                        esES = "De toda la barra: fondo, colores y textos.",
+                    },
+                },
             },
         },
         {
