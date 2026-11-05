@@ -648,6 +648,7 @@ function Module:SaveOriginal()
         alpha = c:GetAlpha(),
         points = points,
         wheel = Minimap:IsMouseWheelEnabled(),
+        clamped = c:IsClampedToScreen(),
     }
 end
 
@@ -665,6 +666,9 @@ function Module:FollowHolder()
         if not self.running then
             return
         end
+        -- The cluster has empty room around the map: clamped to the screen, it would be pushed off
+        -- the holder near the edges. The holder (the map's size) is what stays on screen.
+        c:SetClampedToScreen(false)
         c:SetScale(holder:GetScale())
         local left, top = Minimap:GetLeft(), Minimap:GetTop()
         local cLeft, cTop = c:GetLeft(), c:GetTop()
@@ -693,6 +697,7 @@ function Module:ApplyMap()
         end
         c:SetScale(original.scale)
         c:SetAlpha(original.alpha)
+        c:SetClampedToScreen(original.clamped)
         if self.moved then
             c:ClearAllPoints()
             for _, p in ipairs(original.points) do
