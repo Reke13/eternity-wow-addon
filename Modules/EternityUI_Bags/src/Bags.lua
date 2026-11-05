@@ -385,7 +385,7 @@ function Grid:Layout()
     local size, gap = opt("slots.size"), opt("slots.spacing")
     local columns = opt(self.kind == "bank" and "slots.bankColumns" or "slots.columns")
     local used, y, titleIndex = {}, 0, 0
-    local showTitles = opt("windows.sectionTitles")
+    local showTitles = opt("window.sectionTitles")
     for _, section in ipairs(self:Sections()) do
         if section.title and showTitles then
             titleIndex = titleIndex + 1
@@ -448,11 +448,11 @@ end
 --- Toolbar and footer around the content; the window's size. There is no header: the menu and
 --- close buttons sit at the end of the toolbar.
 function Grid:LayoutChrome(width, height)
-    local w, pad = self.frame, opt("window.padding")
+    local w, pad, edge = self.frame, opt("window.padding"), opt("window.toolbarPadding")
     local toolbar = self.toolbar
     toolbar:ClearAllPoints()
-    toolbar:SetPoint("TOPLEFT", w.body, "TOPLEFT", pad, -pad)
-    toolbar:SetSize(width, CONTROL_HEIGHT)
+    toolbar:SetPoint("TOPLEFT", w.body, "TOPLEFT", edge, -edge)
+    toolbar:SetSize(width + 2 * (pad - edge), CONTROL_HEIGHT)
     local left = 0
     if self.tabs then
         self.tabs:SetShown(self.tabs.count > 1)
@@ -470,8 +470,8 @@ function Grid:LayoutChrome(width, height)
     self.search:SetPoint("LEFT", toolbar, "LEFT", left, 0)
     self.search:SetPoint("RIGHT", self.sort, "LEFT", -8, 0)
     self.content:ClearAllPoints()
-    self.content:SetPoint("TOPLEFT", toolbar, "BOTTOMLEFT", 0, -pad)
-    w:SetSize(width + 2 * pad, CONTROL_HEIGHT + height + 3 * pad + 1 + w.footer:GetHeight())
+    self.content:SetPoint("TOPLEFT", w.body, "TOPLEFT", pad, -(edge + CONTROL_HEIGHT + pad))
+    w:SetSize(width + 2 * pad, edge + CONTROL_HEIGHT + height + 2 * pad + 1 + w.footer:GetHeight())
     self:UpdateFooter()
 end
 
