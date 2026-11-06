@@ -460,7 +460,7 @@ function Messenger:Send(text)
     if locked() then
         local prefix = SEND[kind] and SEND[kind][2]
         if kind == "whisper" then
-            prefix = "/w " .. conversation.target .. " "
+            prefix = "/w " .. ns.WhisperTarget(conversation) .. " "
         elseif kind == "channel" then
             prefix = "/" .. (GetChannelName(conversation.target) or 1) .. " "
         end
@@ -473,7 +473,7 @@ function Messenger:Send(text)
         return
     end
     if kind == "whisper" then
-        sendChat(text, "WHISPER", conversation.target)
+        sendChat(text, "WHISPER", ns.WhisperTarget(conversation))
     elseif kind == "bnet" then
         local id = bnetID(conversation.target)
         if id then
