@@ -52,6 +52,26 @@ local function buildToolbar(root)
     add(Widgets.Button(toolbar, L.MOVER_REDO, "ghost", session().Redo))
     add(Widgets.Button(toolbar, L.MOVER_DISCARD, "ghost", session().Discard))
     add(Widgets.Button(toolbar, L.MOVER_SAVE, "primary", session().Save))
+
+    -- Blizzard's Edit Mode, for the frames it places (buff icons' layout, tracker size...). Opened
+    -- by a secure macro button running /editmode, so no addon code opens the panel (that would
+    -- taint it). The Mover saves and closes first.
+    local editMode = add(Widgets.Button(toolbar, L.MOVER_EDITMODE, "ghost", function() end))
+    local secure = CreateFrame("Button", nil, editMode, "SecureActionButtonTemplate")
+    secure:SetAllPoints(editMode)
+    secure:RegisterForClicks("LeftButtonUp", "LeftButtonDown")
+    secure:SetAttribute("useOnKeyDown", false)
+    secure:SetAttribute("type", "macro")
+    secure:SetAttribute("macrotext", "/editmode")
+    secure:HookScript("OnClick", function()
+        if session().active then
+            session().Save()
+        end
+    end)
+    Widgets.AttachTooltip(secure, function(tip)
+        tip:SetTitle(L.MOVER_EDITMODE)
+        tip:AddLine(L.MOVER_EDITMODE_HINT, "textMuted")
+    end)
     toolbar:SetWidth(x + 2)
 end
 
