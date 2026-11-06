@@ -40,6 +40,11 @@ function Window.Show(page)
     Window.RevealNav(page)
     chrome.title:SetText(page.title)
     chrome.note:SetText(page.note)
+    -- A long note wraps inside the window; the page starts below it.
+    local top = 20 + chrome.title:GetStringHeight() + 5 + chrome.note:GetStringHeight() + 14
+    chrome.body:ClearAllPoints()
+    chrome.body:SetPoint("TOPLEFT", SIDEBAR + 26, -math.max(84, math.ceil(top)))
+    chrome.body:SetPoint("BOTTOMRIGHT", -26, 22)
     Window.current = page
     Window.Refresh()
 end
@@ -201,6 +206,10 @@ local function buildHeader(frame)
     chrome.title:SetPoint("TOPLEFT", SIDEBAR + 26, -20)
     chrome.note = Widgets.Text(frame, 14, "muted")
     chrome.note:SetPoint("TOPLEFT", chrome.title, "BOTTOMLEFT", 0, -5)
+    -- Up to the close button: a longer note wraps instead of running out of the window.
+    chrome.note:SetWidth(WIDTH - SIDEBAR - 26 - 70)
+    chrome.note:SetJustifyH("LEFT")
+    chrome.note:SetWordWrap(true)
 
     local close = Widgets.Button(frame, "×", "ghost", function()
         frame:Hide()
