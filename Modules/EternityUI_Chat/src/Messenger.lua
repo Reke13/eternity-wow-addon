@@ -822,10 +822,18 @@ function Messenger:CreateLauncher()
     self.launcher = E.Widgets.Track(b)
 end
 
+--- Unread messages the chat button counts: whispers only, everything, or none (messenger.badge).
 function Messenger:Unread()
+    local which = opt("messenger.badge")
+    if which == "none" then
+        return 0
+    end
     local total = 0
     for _, conversation in ipairs(ns.History:List()) do
-        total = total + (conversation.unread or 0)
+        local kind = conversation.kind
+        if which == "all" or kind == "whisper" or kind == "bnet" then
+            total = total + (conversation.unread or 0)
+        end
     end
     return total
 end

@@ -195,6 +195,45 @@ ns.OptionsSchema = {
                         esES = "Abre la mensajería y muestra los no leídos. /etchat también la abre.",
                     },
                 },
+                {
+                    id = "badge",
+                    type = "select",
+                    default = "whispers",
+                    label = {
+                        enUS = "Unread count on the chat button",
+                        esES = "No leídos en el botón del chat",
+                    },
+                    description = {
+                        enUS = "Which conversations add to the number on the button (and its tooltip). Each conversation keeps its own count in the list.",
+                        esES = "Qué conversaciones suman al número del botón (y a su tooltip). Cada conversación sigue con su propio contador en la lista.",
+                    },
+                    values = {
+                        {
+                            value = "whispers",
+                            label = {
+                                enUS = "Whispers only (Battle.net too)",
+                                esES = "Solo susurros (también de Battle.net)",
+                            },
+                        },
+                        {
+                            value = "all",
+                            label = {
+                                enUS = "Everything in the messenger",
+                                esES = "Todo lo de la mensajería",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "No number",
+                                esES = "Sin número",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["messenger.launcher"] = true,
+                    },
+                },
             },
         },
         {
