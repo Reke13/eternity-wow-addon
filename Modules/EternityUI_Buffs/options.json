@@ -54,8 +54,8 @@
       "id": "arrange",
       "tab": "appearance",
       "label": {
-        "enUS": "Icon order",
-        "esES": "Orden de los iconos"
+        "enUS": "Icon order and size",
+        "esES": "Orden y tamaño de los iconos"
       },
       "options": [
         {
@@ -67,8 +67,8 @@
             "esES": "Ordenarlos desde Eternity"
           },
           "description": {
-            "enUS": "These settings are written into your Edit Mode layout and Blizzard applies them after /reload. It needs a layout of your own: Edit Mode's preset layouts can't be changed.",
-            "esES": "Estos ajustes se guardan en tu disposición del Modo Edición y Blizzard los aplica al recargar (/reload). Necesita una disposición propia: las predefinidas del Modo Edición no se pueden cambiar."
+            "enUS": "These settings are written into your Edit Mode layout and Blizzard applies them after /reload. Turning this on fills them with what your layout has now. It needs a layout of your own: Edit Mode's preset layouts can't be changed.",
+            "esES": "Estos ajustes se guardan en tu disposición del Modo Edición y Blizzard los aplica al recargar (/reload). Al activarlo se rellenan con lo que tiene ahora tu disposición. Necesita una disposición propia: las predefinidas del Modo Edición no se pueden cambiar."
           }
         },
         {
@@ -164,6 +164,51 @@
           }
         },
         {
+          "id": "buffSize",
+          "type": "range",
+          "default": 100,
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "label": {
+            "enUS": "Buffs: icon size (%)",
+            "esES": "Bufos: tamaño de los iconos (%)"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "buffPadding",
+          "type": "range",
+          "default": 5,
+          "min": 5,
+          "max": 15,
+          "step": 1,
+          "label": {
+            "enUS": "Buffs: spacing",
+            "esES": "Bufos: separación"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "buffLimit",
+          "type": "range",
+          "default": 32,
+          "min": 2,
+          "max": 32,
+          "step": 1,
+          "label": {
+            "enUS": "Buffs: icons per row (or column)",
+            "esES": "Bufos: iconos por fila (o columna)"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
           "id": "debuffOrientation",
           "type": "select",
           "default": "horizontal",
@@ -251,6 +296,51 @@
               }
             }
           ],
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "debuffSize",
+          "type": "range",
+          "default": 100,
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "label": {
+            "enUS": "Debuffs: icon size (%)",
+            "esES": "Perjuicios: tamaño de los iconos (%)"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "debuffPadding",
+          "type": "range",
+          "default": 5,
+          "min": 5,
+          "max": 15,
+          "step": 1,
+          "label": {
+            "enUS": "Debuffs: spacing",
+            "esES": "Perjuicios: separación"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "debuffLimit",
+          "type": "range",
+          "default": 16,
+          "min": 1,
+          "max": 16,
+          "step": 1,
+          "label": {
+            "enUS": "Debuffs: icons per row (or column)",
+            "esES": "Perjuicios: iconos por fila (o columna)"
+          },
           "visibleWhen": {
             "arrange.custom": true
           }

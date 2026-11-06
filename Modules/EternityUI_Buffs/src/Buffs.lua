@@ -90,7 +90,6 @@ local ITEMS = {
         },
     },
 }
-local BORDER = { 0, 0, 0, 1 }
 local DEBUFF_BORDER = { 0.8, 0.1, 0.1, 1 }
 
 ---@class EternityUIBuffsModule: EternityUIModuleDefinition
@@ -318,11 +317,7 @@ local function updatePreview(item)
         cell.icon:SetPoint("TOP", cell, "TOP", 0, 0)
         cell.icon:SetSize(iconSize * scale, iconSize * scale)
         cell.icon:SetTexture(ICONS .. name)
-        cell.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-        cell.border:ClearAllPoints()
-        cell.border:SetPoint("TOPLEFT", cell.icon, "TOPLEFT", -1, 1)
-        cell.border:SetPoint("BOTTOMRIGHT", cell.icon, "BOTTOMRIGHT", 1, -1)
-        cell.border:SetColorTexture(unpack(item.debuff and DEBUFF_BORDER or BORDER))
+        Module.SampleLook(cell, item)
         cell.duration:ClearAllPoints()
         cell.duration:SetPoint("TOP", cell.icon, "BOTTOM", 0, -1)
         cell.duration:SetText((i * 3) .. " m")
@@ -535,10 +530,60 @@ local function unskinButton(button)
     s.alphas = {}
 end
 
+--- A sample icon with the look the real ones have now: Eternity's (shape, crop, border) or
+--- Blizzard's (whole art; debuffs with their type border).
+---@param cell table
+---@param item EternityUIBuffsItem
+function Module.SampleLook(cell, item)
+    local icon = cell.icon
+    if not cell.inner then
+        cell.inner = cell:CreateMaskTexture()
+        cell.outer = cell:CreateMaskTexture()
+        cell.skin = cell:CreateTexture(nil, "BACKGROUND", nil, -7)
+    end
+    local skinned = Module.running and opt("look.skin")
+    local file = skinned and SHAPES[opt("look.shape")]
+    local path = file and (E.Theme.MEDIA .. file) or nil
+    cell.inner:SetTexture(path or SQUARE, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    cell.inner:ClearAllPoints()
+    cell.inner:SetAllPoints(icon)
+    icon:RemoveMaskTexture(cell.inner)
+    if path then
+        icon:AddMaskTexture(cell.inner)
+    end
+    local zoom = skinned and opt("look.zoom") or 0
+    icon:SetTexCoord(zoom, 1 - zoom, zoom, 1 - zoom)
+    local size = skinned and opt("look.border") and opt("look.borderSize") or 0
+    cell.skin:ClearAllPoints()
+    cell.skin:SetPoint("TOPLEFT", icon, "TOPLEFT", -size, size)
+    cell.skin:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", size, -size)
+    cell.outer:SetTexture(path or SQUARE, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    cell.outer:ClearAllPoints()
+    cell.outer:SetAllPoints(cell.skin)
+    cell.skin:RemoveMaskTexture(cell.outer)
+    if path then
+        cell.skin:AddMaskTexture(cell.outer)
+    end
+    cell.skin:SetColorTexture(borderColor())
+    cell.skin:SetShown(size > 0)
+    -- Blizzard's debuff type border, a little bigger than the icon, as on the real ones.
+    local typeBorder = item.debuff and (not skinned or opt("look.blizzardBorders"))
+    cell.border:ClearAllPoints()
+    cell.border:SetPoint("TOPLEFT", icon, "TOPLEFT", -2, 2)
+    cell.border:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 2, -2)
+    cell.border:SetColorTexture(unpack(DEBUFF_BORDER))
+    cell.border:SetShown(typeBorder and true or false)
+end
+
 --- The look on every aura button, or Blizzard's back.
 function Module:ApplyLook()
     local on = self.running and opt("look.skin")
     eachAuraButton(on and skinButton or unskinButton)
+    for _, item in ipairs(ITEMS) do
+        if item.preview and item.preview:IsShown() then
+            updatePreview(item)
+        end
+    end
 end
 
 -- Icon order -----------------------------------------------------------------------------------
@@ -552,16 +597,38 @@ local ARRANGED = {
     { prefix = "debuff", index = "DebuffFrame" },
 }
 
+-- Edit Mode keeps the icon size as (percent - 50) / 10 and the spacing and limit as they are
+-- (EditModeSettingDisplayInfo in Forever's FrameXML).
+local function limitSetting(prefix)
+    local setting = Enum.EditModeAuraFrameSetting
+    return prefix == "buff" and setting.IconLimitBuffFrame or setting.IconLimitDebuffFrame
+end
+
 local function wantedSettings(prefix)
-    local vertical = opt("arrange." .. prefix .. "Orientation") == "vertical"
-    local right = opt("arrange." .. prefix .. "Horizontal") == "right" and 1 or 0
-    local up = opt("arrange." .. prefix .. "Vertical") == "up" and 1 or 0
+    local o = "arrange." .. prefix
+    local vertical = opt(o .. "Orientation") == "vertical"
+    local right = opt(o .. "Horizontal") == "right" and 1 or 0
+    local up = opt(o .. "Vertical") == "up" and 1 or 0
     local setting = Enum.EditModeAuraFrameSetting
     return {
         [setting.Orientation] = vertical and 1 or 0,
         [setting.IconDirection] = vertical and up or right,
         [setting.IconWrap] = vertical and right or up,
+        [setting.IconSize] = (opt(o .. "Size") - 50) / 10,
+        [setting.IconPadding] = opt(o .. "Padding"),
+        [limitSetting(prefix)] = opt(o .. "Limit"),
     }
+end
+
+-- The AuraFrame system of a layout for buffs or debuffs.
+local function auraSystem(layout, arranged)
+    local index = Enum.EditModeAuraFrameSystemIndices[arranged.index]
+    for _, system in ipairs(layout.systems or {}) do
+        if system.system == Enum.EditModeSystem.AuraFrame and system.systemIndex == index then
+            return system
+        end
+    end
+    return nil
 end
 
 -- The layout Edit Mode is using, if it's one of the player's own (presets come first in its list).
@@ -591,17 +658,13 @@ function Module:SaveArrangement()
     end
     local changed = false
     for _, arranged in ipairs(ARRANGED) do
-        local index = Enum.EditModeAuraFrameSystemIndices[arranged.index]
         local wanted = wantedSettings(arranged.prefix)
-        for _, system in ipairs(layout.systems or {}) do
-            if system.system == Enum.EditModeSystem.AuraFrame and system.systemIndex == index then
-                for _, entry in ipairs(system.settings or {}) do
-                    local value = wanted[entry.setting]
-                    if value ~= nil and entry.value ~= value then
-                        entry.value = value
-                        changed = true
-                    end
-                end
+        local system = auraSystem(layout, arranged)
+        for _, entry in ipairs(system and system.settings or {}) do
+            local value = wanted[entry.setting]
+            if value ~= nil and entry.value ~= value then
+                entry.value = value
+                changed = true
             end
         end
     end
@@ -610,6 +673,49 @@ function Module:SaveArrangement()
     end
     local ok = pcall(C_EditMode.SaveLayouts, layouts)
     return ok and L.ARRANGE_SAVED or L.ARRANGE_FAILED
+end
+
+--- Fills the icon order options with what the active Edit Mode layout has (presets too: reading is
+--- fine). Saving stays off meanwhile.
+function Module:LoadArrangement()
+    if not (C_EditMode and C_EditMode.GetLayouts and Enum.EditModeAuraFrameSetting) then
+        return
+    end
+    local layouts = C_EditMode.GetLayouts()
+    local layout = layouts and (activeCustomLayout(layouts) or nil)
+    if not layout then
+        return
+    end
+    local setting = Enum.EditModeAuraFrameSetting
+    self.loading = true
+    for _, arranged in ipairs(ARRANGED) do
+        local values = {}
+        local system = auraSystem(layout, arranged)
+        for _, entry in ipairs(system and system.settings or {}) do
+            values[entry.setting] = entry.value
+        end
+        local o = "arrange." .. arranged.prefix
+        local vertical = values[setting.Orientation] == 1
+        local direction, wrap = values[setting.IconDirection], values[setting.IconWrap]
+        local function set(path, value)
+            if value ~= nil then
+                E.store:Set(addonName, o .. path, value)
+            end
+        end
+        if values[setting.Orientation] ~= nil then
+            set("Orientation", vertical and "vertical" or "horizontal")
+        end
+        local horizontal, upward = direction, wrap
+        if vertical then
+            horizontal, upward = wrap, direction
+        end
+        set("Horizontal", horizontal ~= nil and (horizontal == 1 and "right" or "left") or nil)
+        set("Vertical", upward ~= nil and (upward == 1 and "up" or "down") or nil)
+        set("Size", values[setting.IconSize] and (values[setting.IconSize] * 10 + 50) or nil)
+        set("Padding", values[setting.IconPadding])
+        set("Limit", values[limitSetting(arranged.prefix)])
+    end
+    self.loading = false
 end
 
 function Module:OnEnable()
@@ -644,7 +750,12 @@ end
 function Module:OnConfigChanged(path)
     self:Apply()
     self:ApplyLook()
-    if path and path:find("^arrange%.") and opt("arrange.custom") then
+    if path == "arrange.custom" and opt("arrange.custom") then
+        -- Turned on: start from what the layout has, so nothing changes until an option does.
+        self:LoadArrangement()
+        return
+    end
+    if path and path:find("^arrange%.") and opt("arrange.custom") and not self.loading then
         E.Combat.Run(self, function()
             local message = self:SaveArrangement()
             if message then
