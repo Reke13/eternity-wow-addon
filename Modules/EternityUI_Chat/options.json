@@ -536,6 +536,19 @@
           "max": 1,
           "step": 0.05,
           "label": { "enUS": "Background opacity", "esES": "Opacidad del fondo" }
+        },
+        {
+          "id": "alpha",
+          "type": "range",
+          "default": 1,
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05,
+          "label": { "enUS": "Window opacity", "esES": "Opacidad de la ventana" },
+          "description": {
+            "enUS": "Of the whole window: background, conversations and texts.",
+            "esES": "De toda la ventana: fondo, conversaciones y textos."
+          }
         }
       ]
     },
