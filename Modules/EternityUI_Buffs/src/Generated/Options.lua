@@ -264,8 +264,8 @@ ns.OptionsSchema = {
             id = "look",
             tab = "appearance",
             label = {
-                enUS = "Look",
-                esES = "Aspecto",
+                enUS = "Icons",
+                esES = "Iconos",
             },
             options = {
                 {
@@ -273,12 +273,12 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = false,
                     label = {
-                        enUS = "Look like the action buttons",
-                        esES = "Aspecto de los botones de acción",
+                        enUS = "Eternity style for the icons",
+                        esES = "Estilo de Eternity en los iconos",
                     },
                     description = {
-                        enUS = "Shape, border and icon zoom for the buff and debuff icons, with the same choices as Action bars > Buttons. Off: Blizzard's look.",
-                        esES = "Forma, borde y zoom del icono para los bufos y perjuicios, con las mismas opciones que Barras de acción > Botones. Desactivado: el aspecto de Blizzard.",
+                        enUS = "Shape, border and cropping of the buff and debuff icons, like the action bars. Off: Blizzard's square icons.",
+                        esES = "Forma, borde y recorte de los iconos de bufos y perjuicios, como en las barras de acción. Desactivado: los iconos cuadrados de Blizzard.",
                     },
                 },
                 {
@@ -286,8 +286,8 @@ ns.OptionsSchema = {
                     type = "select",
                     default = "rounded",
                     label = {
-                        enUS = "Shape",
-                        esES = "Forma",
+                        enUS = "Icon shape",
+                        esES = "Forma de los iconos",
                     },
                     values = {
                         {
@@ -338,12 +338,12 @@ ns.OptionsSchema = {
                     max = 0.3,
                     step = 0.01,
                     label = {
-                        enUS = "Icon zoom",
-                        esES = "Zoom del icono",
+                        enUS = "Crop the spell art",
+                        esES = "Recorte del dibujo",
                     },
                     description = {
-                        enUS = "Crops the icon's edge.",
-                        esES = "Recorta el borde del icono.",
+                        enUS = "How much of the frame drawn around each spell's art is cut off.",
+                        esES = "Cuánto se recorta del marco que trae dibujado cada hechizo.",
                     },
                     visibleWhen = {
                         ["look.skin"] = true,
@@ -354,8 +354,8 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = true,
                     label = {
-                        enUS = "Border",
-                        esES = "Borde",
+                        enUS = "Border around the icons",
+                        esES = "Borde alrededor de los iconos",
                     },
                     visibleWhen = {
                         ["look.skin"] = true,
@@ -393,8 +393,8 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = false,
                     label = {
-                        enUS = "Border in the class color",
-                        esES = "Borde del color de la clase",
+                        enUS = "Border in your class color",
+                        esES = "Borde del color de tu clase",
                     },
                     visibleWhen = {
                         ["look.skin"] = true,
@@ -405,12 +405,12 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = true,
                     label = {
-                        enUS = "Keep Blizzard's colored borders",
-                        esES = "Mantener los bordes de color de Blizzard",
+                        enUS = "Debuff type colors",
+                        esES = "Color según el tipo de perjuicio",
                     },
                     description = {
-                        enUS = "The debuff type border (magic, poison...) and the weapon enchant one.",
-                        esES = "El borde del tipo de perjuicio (magia, veneno...) y el de los encantamientos de arma.",
+                        enUS = "Blizzard's border for magic, curse, poison and disease debuffs, and the one of temporary weapon enchants (poisons, sharpening stones...).",
+                        esES = "El borde de Blizzard que distingue los perjuicios de magia, maldición, veneno y enfermedad, y el de los encantamientos temporales de arma (venenos, piedras de afilar...).",
                     },
                     visibleWhen = {
                         ["look.skin"] = true,
