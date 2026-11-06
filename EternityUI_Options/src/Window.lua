@@ -227,8 +227,10 @@ local function build()
     frame:Hide()
 
     frame.shape = Shape.New(frame)
+    frame.wallpaper = Theme.NewWallpaper(frame)
     function frame:Paint()
         Theme.PaintWindow(self.shape)
+        Theme.PaintWallpaper(self.wallpaper, "window")
         self:SetScale(E.store:Get("EternityUI", "general.optionsScale"))
     end
     Widgets.Track(frame)

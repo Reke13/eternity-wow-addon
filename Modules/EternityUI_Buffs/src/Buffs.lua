@@ -4,10 +4,10 @@
 -- its top right corner, with the holder's scale. When Blizzard places its frame again (a layout
 -- change, Edit Mode), the frame goes back to the holder on the next frame. While Edit Mode is
 -- open the frames are Blizzard's; turning the module off gives them back to Edit Mode.
--- Layout: the icons' arrangement is Blizzard's own (the AuraContainer's isHorizontal,
--- addIconsToRight, addIconsToTop, iconStride, iconPadding and iconScale, applied by
--- UpdateGridLayout, as Edit Mode does). With "Arrange them here" the module sets those values; when
--- Edit Mode lays them out again, ours go back on the next frame.
+-- Layout: the icons' arrangement stays in Edit Mode. Blizzard reads the AuraContainer's values on
+-- every aura update, so an addon writing them would taint those updates until /reload, and they
+-- then fail on secret auras in combat. Its anchoring (ApplySystemAnchor) isn't called from here
+-- either: the frame gets back the points Blizzard last gave it.
 -- Samples: fake icons drawn by us over the frame's grid, to see the layout without real buffs.
 
 ---The module's private table.
@@ -39,10 +39,9 @@ local MIN_SIZE = 32 -- the holder's smallest side, so the Mover's handle can be 
 ---@field busy boolean? we are moving the frame ourselves
 ---@field hooked boolean?
 ---@field scale number? Blizzard's scale of the frame before we touched it
----@field layout string option group of its layout
+---@field points table[]? the frame's points as Blizzard last set them
 ---@field samples string[] icons of the samples
 ---@field debuff boolean? samples with a debuff border
----@field original table? Blizzard's layout values while ours are applied
 ---@field preview table? the sample icons' frame
 
 ---@type EternityUIBuffsItem[]
@@ -54,7 +53,6 @@ local ITEMS = {
         label = L.BUFFS,
         x = -205,
         y = -13,
-        layout = "buffLayout",
         samples = {
             "Spell_Holy_WordFortitude",
             "Spell_Nature_Regeneration",
@@ -76,7 +74,6 @@ local ITEMS = {
         label = L.DEBUFFS,
         x = -205,
         y = -150,
-        layout = "debuffLayout",
         debuff = true,
         samples = {
             "Spell_Shadow_ShadowWordPain",
@@ -87,7 +84,6 @@ local ITEMS = {
         },
     },
 }
-local LAYOUT_KEYS = { "isHorizontal", "addIconsToRight", "addIconsToTop", "iconStride", "iconPadding", "iconScale" }
 local BORDER = { 0, 0, 0, 1 }
 local DEBUFF_BORDER = { 0.8, 0.1, 0.1, 1 }
 
@@ -129,6 +125,34 @@ local function syncSize(item)
     end
 end
 
+-- Keeps where Blizzard put the frame, to give it back.
+local function remember(item, frame)
+    local points = {}
+    for i = 1, frame:GetNumPoints() do
+        local point = { frame:GetPoint(i) }
+        if plain(point[4], nil) == nil or plain(point[5], nil) == nil then
+            return
+        end
+        points[i] = point
+    end
+    if #points > 0 then
+        item.points = points
+    end
+end
+
+-- Back on Blizzard's points, without touching Edit Mode's code.
+local function giveBack(item, frame)
+    if not item.points then
+        return
+    end
+    item.busy = true
+    frame:ClearAllPoints()
+    for _, point in ipairs(item.points) do
+        frame:SetPoint(unpack(point))
+    end
+    item.busy = false
+end
+
 -- Puts Blizzard's frame on its holder, with the holder's scale.
 local function follow(item)
     local frame = _G[item.global]
@@ -167,6 +191,7 @@ local function hook(item, frame)
     item.hooked = true
     hooksecurefunc(frame, "SetPoint", function()
         if not item.busy and item.on then
+            remember(item, frame)
             schedule(item)
         end
     end)
@@ -175,15 +200,14 @@ local function hook(item, frame)
             syncSize(item)
         end
     end)
-    -- Edit Mode (or Blizzard) laid the icons out with its own values: ours again, next frame.
+    -- Edit Mode laid the icons out again: the samples follow, next frame.
     if frame.UpdateGridLayout then
         hooksecurefunc(frame, "UpdateGridLayout", function()
-            if item.layingOut or not item.on then
-                return
+            if item.on and item.preview and item.preview:IsShown() then
+                C_Timer.After(0, function()
+                    Module.Refresh(item)
+                end)
             end
-            C_Timer.After(0, function()
-                Module.Refresh(item)
-            end)
         end)
     end
 end
@@ -197,62 +221,6 @@ local function currentOffset(item, frame)
     end
     local scale = frame:GetEffectiveScale() / UIParent:GetEffectiveScale()
     return right * scale - UIParent:GetRight(), top * scale - UIParent:GetTop()
-end
-
--- Layout ------------------------------------------------------------------------------------------
-
-local function wantedLayout(item)
-    local g = item.layout .. "."
-    return {
-        isHorizontal = opt(g .. "orientation") == "horizontal",
-        addIconsToRight = opt(g .. "direction") == "right",
-        addIconsToTop = opt(g .. "wrap") == "up",
-        iconStride = opt(g .. "perRow"),
-        iconPadding = opt(g .. "padding"),
-        iconScale = opt(g .. "iconScale"),
-    }
-end
-
-local function relayout(item, frame)
-    item.layingOut = true
-    pcall(frame.UpdateGridLayout, frame)
-    item.layingOut = false
-end
-
---- Our layout values on Blizzard's container, or Blizzard's back.
-local function applyLayout(item)
-    local frame = _G[item.global]
-    local container = frame and frame.AuraContainer
-    if not (container and frame.UpdateGridLayout) then
-        return
-    end
-    E.Combat.Run(container, function()
-        local custom = Module.running and item.on and opt(item.layout .. ".custom")
-        if custom then
-            if not item.original then
-                item.original = {}
-                for _, key in ipairs(LAYOUT_KEYS) do
-                    item.original[key] = container[key]
-                end
-            end
-            local changed = false
-            for key, value in pairs(wantedLayout(item)) do
-                if container[key] ~= value then
-                    container[key] = value
-                    changed = true
-                end
-            end
-            if changed then
-                relayout(item, frame)
-            end
-        elseif item.original then
-            for _, key in ipairs(LAYOUT_KEYS) do
-                container[key] = item.original[key]
-            end
-            item.original = nil
-            relayout(item, frame)
-        end
-    end)
 end
 
 -- Samples ---------------------------------------------------------------------------------------
@@ -344,6 +312,7 @@ local function start(item)
         end)
     end
     local x, y = currentOffset(item, frame)
+    remember(item, frame)
     item.on = true
     hook(item, frame)
     syncSize(item)
@@ -373,7 +342,6 @@ local function stop(item)
     if item.holder then
         item.holder:Hide()
     end
-    applyLayout(item)
     updatePreview(item)
     local frame = _G[item.global]
     if not frame then
@@ -381,20 +349,17 @@ local function stop(item)
     end
     E.Combat.Run(item, function()
         frame:SetScale(item.scale or 1)
-        if frame.ApplySystemAnchor then
-            pcall(frame.ApplySystemAnchor, frame)
-        end
+        giveBack(item, frame)
     end)
 end
 
---- Starts or stops each frame from the options.
---- Layout and samples of one frame, from the options.
+--- The samples of one frame, from the options.
 ---@param item EternityUIBuffsItem
 function Module.Refresh(item)
-    applyLayout(item)
     updatePreview(item)
 end
 
+--- Starts or stops each frame from the options.
 function Module:Apply()
     for _, item in ipairs(ITEMS) do
         if self.running and opt("frames." .. item.id) then
@@ -417,8 +382,10 @@ local function hookEditMode()
         hooksecurefunc(manager, "EnterEditMode", function()
             for _, item in ipairs(ITEMS) do
                 local frame = _G[item.global]
-                if item.on and frame and frame.ApplySystemAnchor then
-                    pcall(frame.ApplySystemAnchor, frame)
+                if item.on and frame then
+                    E.Combat.Run(item, function()
+                        giveBack(item, frame)
+                    end)
                 end
             end
         end)

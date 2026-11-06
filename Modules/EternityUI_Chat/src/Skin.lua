@@ -137,6 +137,10 @@ local function background(frame)
     decor = CreateFrame("Frame", nil, UIParent)
     decor.shape = UI.Shape(decor, "card")
     decor.shadow = UI.Shadow(decor)
+    decor.wallpaper = Theme.NewWallpaper(decor)
+    decor:SetScript("OnSizeChanged", function(self)
+        Theme.PaintWallpaper(self.wallpaper, "chat", opt("background.opacity") > 0)
+    end)
     ChatSkin.decor[frame] = decor
     local function follow()
         ChatSkin:ApplyBackground(frame)
@@ -170,6 +174,7 @@ function ChatSkin:ApplyBackground(frame)
     local alpha = opt("background.opacity")
     local r, g, b = Theme.Color("window")
     decor.shape:SetColors({ r, g, b, alpha }, opt("background.border") and "border" or nil)
+    Theme.PaintWallpaper(decor.wallpaper, "chat", alpha > 0)
     decor.shadow:Update()
     if not opt("background.shadow") or alpha == 0 then
         decor.shadow:Hide()
@@ -348,14 +353,14 @@ function ChatSkin:ApplyEditBox(box, frame)
     -- While typing the field sits on the window color, so it reads the same over any background.
     -- Otherwise it follows the chat's background: Eternity's opacity and border, nothing at all
     -- without a background, and the solid field over Blizzard's.
-    local background = opt("background.style")
+    local backdrop = opt("background.style")
     local alpha, border = 0.92, "borderStrong"
     if focused then
         border = "focus"
-    elseif background == "eternity" then
+    elseif backdrop == "eternity" then
         alpha = opt("background.opacity")
         border = opt("background.border") and "borderStrong" or nil
-    elseif background == "none" then
+    elseif backdrop == "none" then
         alpha, border = 0, nil
     end
     decor.shape:SetColors({ r, g, b, alpha }, border)

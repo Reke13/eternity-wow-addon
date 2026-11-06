@@ -197,3 +197,123 @@ Theme.RegisterPreset("graphite", {
     style = "flat",
     font = "arialn",
 })
+
+-- Pink.
+Theme.RegisterPreset("bubblegum", {
+    colors = {
+        window = { 0.204, 0.055, 0.153 },
+        windowTop = { 0.333, 0.086, 0.243 },
+        text = { 1, 0.94, 0.97, 1 },
+        textMuted = { 0.9, 0.66, 0.8, 1 },
+        textDisabled = { 0.6, 0.42, 0.54, 1 },
+        danger = { 1, 0.36, 0.36, 1 },
+        surface = { 1, 0.75, 0.88, 0.05 },
+        surfaceHover = { 1, 0.75, 0.88, 0.09 },
+        border = { 1, 0.6, 0.8, 0.14 },
+        borderStrong = { 1, 0.6, 0.8, 0.3 },
+        divider = { 1, 0.6, 0.8, 0.09 },
+    },
+    accent = "#FF4FA3",
+    accent2 = "#7DE3FF",
+    corners = "round",
+    style = "glass",
+    font = "arialn",
+})
+Theme.RegisterPreset("sakura", {
+    colors = {
+        window = { 0.227, 0.133, 0.188 },
+        windowTop = { 0.353, 0.212, 0.278 },
+        text = { 1, 0.96, 0.97, 1 },
+        textMuted = { 0.91, 0.75, 0.82, 1 },
+        textDisabled = { 0.6, 0.48, 0.54, 1 },
+        danger = { 1, 0.42, 0.42, 1 },
+        surface = { 1, 0.85, 0.92, 0.05 },
+        surfaceHover = { 1, 0.85, 0.92, 0.09 },
+        border = { 1, 0.75, 0.85, 0.14 },
+        borderStrong = { 1, 0.75, 0.85, 0.3 },
+        divider = { 1, 0.75, 0.85, 0.09 },
+    },
+    accent = "#FFB3D1",
+    accent2 = "#FFE8A3",
+    corners = "round",
+    style = "glass",
+    font = "friz",
+})
+Theme.RegisterPreset("fuchsia", {
+    colors = {
+        window = { 0.141, 0.016, 0.11 },
+        windowTop = { 0.239, 0.027, 0.188 },
+        text = { 1, 0.94, 0.97, 1 },
+        textMuted = { 0.88, 0.56, 0.78, 1 },
+        textDisabled = { 0.55, 0.36, 0.5, 1 },
+        danger = { 1, 0.3, 0.3, 1 },
+    },
+    accent = "#FF1FA8",
+    accent2 = "#FFE14D",
+    corners = "round",
+    style = "neon",
+    font = "arialn",
+})
+Theme.RegisterPreset("cottoncandy", {
+    colors = {
+        window = { 0.231, 0.137, 0.314 },
+        windowTop = { 0.357, 0.227, 0.471 },
+        text = { 0.98, 0.95, 1, 1 },
+        textMuted = { 0.84, 0.74, 0.92, 1 },
+        textDisabled = { 0.56, 0.48, 0.62, 1 },
+        danger = { 1, 0.42, 0.5, 1 },
+        surface = { 1, 0.85, 0.96, 0.05 },
+        surfaceHover = { 1, 0.85, 0.96, 0.09 },
+        border = { 1, 0.7, 0.9, 0.14 },
+        borderStrong = { 1, 0.7, 0.9, 0.3 },
+        divider = { 1, 0.7, 0.9, 0.09 },
+    },
+    accent = "#FF8FD0",
+    accent2 = "#8FD8FF",
+    corners = "round",
+    style = "glass",
+    font = "arialn",
+})
+
+-- For BTS and ARMY: their purple with a soft pink.
+Theme.RegisterPreset("borahae", {
+    colors = {
+        window = { 0.165, 0.071, 0.271 },
+        windowTop = { 0.267, 0.125, 0.431 },
+        text = { 0.97, 0.94, 1, 1 },
+        textMuted = { 0.78, 0.68, 0.92, 1 },
+        textDisabled = { 0.5, 0.43, 0.62, 1 },
+        danger = { 1, 0.42, 0.52, 1 },
+        surface = { 0.85, 0.75, 1, 0.05 },
+        surfaceHover = { 0.85, 0.75, 1, 0.09 },
+        border = { 0.75, 0.6, 1, 0.16 },
+        borderStrong = { 0.75, 0.6, 1, 0.34 },
+        divider = { 0.75, 0.6, 1, 0.1 },
+    },
+    accent = "#9B5DE5",
+    accent2 = "#F7C6E0",
+    corners = "round",
+    style = "glass",
+    font = "arialn",
+    -- Personal images, not shipped: see Tools/Install-Wallpaper.ps1. aspect is the crop's width / height.
+    wallpaper = {
+        window = { file = "borahae-window", aspect = 1030 / 655 },
+        chat = { file = "borahae-chat", aspect = 2 },
+    },
+    -- Personal images too: see Tools/Install-Portraits.ps1. Six images share the classes.
+    portraits = {
+        PALADIN = "borahae-paladin",
+        WARRIOR = "borahae-paladin",
+        ROGUE = "borahae-rogue",
+        HUNTER = "borahae-rogue",
+        MAGE = "borahae-mage",
+        PRIEST = "borahae-mage",
+        SHAMAN = "borahae-shaman",
+        EVOKER = "borahae-shaman",
+        WARLOCK = "borahae-warlock",
+        DEATHKNIGHT = "borahae-warlock",
+        DEMONHUNTER = "borahae-warlock",
+        DRUID = "borahae-druid",
+        MONK = "borahae-druid",
+    },
+})

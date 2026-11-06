@@ -862,9 +862,14 @@ function Module:Capture(button)
         alpha = button:GetAlpha(),
         strata = button:GetFrameStrata(),
         level = button:GetFrameLevel(),
+        fixedStrata = button:HasFixedFrameStrata(),
+        fixedLevel = button:HasFixedFrameLevel(),
         onDragStart = button:GetScript("OnDragStart"),
         onDragStop = button:GetScript("OnDragStop"),
     }
+    -- LibDBIcon fixes its buttons at MEDIUM, which would leave them under the panel, HIGH.
+    button:SetFixedFrameStrata(false)
+    button:SetFixedFrameLevel(false)
     if not self.buttonHooks[button] then
         self.buttonHooks[button] = true
         -- If its addon repositions it (LibDBIcon when the saved position changes) or shows or
@@ -893,6 +898,8 @@ function Module:Release(button)
     button:SetAlpha(saved.alpha)
     button:SetFrameStrata(saved.strata)
     button:SetFrameLevel(saved.level)
+    button:SetFixedFrameStrata(saved.fixedStrata)
+    button:SetFixedFrameLevel(saved.fixedLevel)
     button:ClearAllPoints()
     for _, p in ipairs(saved.points) do
         button:SetPoint(unpack(p))

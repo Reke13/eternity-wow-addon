@@ -8,8 +8,24 @@ local Theme = E.Theme
 local Widgets = E.Widgets
 
 local CORE = "EternityUI"
-local THEMES =
-    { "midnight", "obsidian", "azeroth", "horde", "alliance", "holo", "frost", "neon", "nightcity", "void", "graphite" }
+local THEMES = {
+    "midnight",
+    "obsidian",
+    "azeroth",
+    "horde",
+    "alliance",
+    "holo",
+    "frost",
+    "neon",
+    "nightcity",
+    "void",
+    "graphite",
+    "bubblegum",
+    "sakura",
+    "fuchsia",
+    "cottoncandy",
+    "borahae",
+}
 local ROW = 44
 
 local controls = {} -- option path -> control
@@ -119,8 +135,16 @@ local function buildAppearance(tab)
         Widgets.Slider(tab, 0.6, 1, 0.02, percent, setter("appearance.opacity"))
     )
     addRow(tab, "appearance.pixelPerfect", L.PIXEL_PERFECT, Widgets.Toggle(tab, setter("appearance.pixelPerfect")))
+    addRow(tab, "appearance.wallpaper", L.WALLPAPER, Widgets.Toggle(tab, setter("appearance.wallpaper")))
+    addRow(
+        tab,
+        "appearance.wallpaperDim",
+        L.WALLPAPER_DIM,
+        Widgets.Slider(tab, 0.2, 0.9, 0.05, percent, setter("appearance.wallpaperDim"))
+    )
+    addRow(tab, "appearance.portraits", L.PORTRAITS, Widgets.Toggle(tab, setter("appearance.portraits")))
     local note = Widgets.Text(tab, 13, "muted")
-    note:SetPoint("TOPLEFT", 0, -ROW * 7 - 6)
+    note:SetPoint("TOPLEFT", 0, -ROW * 10 - 6)
     note:SetText(L.PIXEL_PERFECT_NOTE:format(E.Pixel.PerfectScale()))
 end
 

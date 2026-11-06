@@ -16,6 +16,7 @@ local Events = ns.Events
 local Theme = {
     CHANGED = "ETERNITY_THEME_CHANGED",
     MEDIA = "Interface\\AddOns\\" .. addonName .. "\\media\\",
+    WALLPAPERS = "Interface\\AddOns\\EternityUI_Wallpapers\\",
     presets = {},
 }
 ns.Theme = Theme
@@ -134,6 +135,9 @@ function Theme.Reload()
     local font = FONTS[pick("appearance.font", preset.font)]
     Theme.font = font[1]
     Theme.fontScale = font[2] * option("appearance.fontScale")
+    Theme.wallpaper = option("appearance.wallpaper") and preset.wallpaper or nil
+    Theme.wallpaperDim = option("appearance.wallpaperDim")
+    Theme.portraits = option("appearance.portraits") and preset.portraits or nil
     Events.Send(Theme.CHANGED)
 end
 
@@ -189,6 +193,51 @@ function Theme.PaintWindow(shape)
             CreateColor(top[1], top[2], top[3], Theme.opacity)
         )
     end
+end
+
+--- Adds a wallpaper to a frame: a photo over its shape's fill and a veil that keeps text readable.
+---@param frame table
+---@return table wallpaper
+function Theme.NewWallpaper(frame)
+    local wallpaper = {
+        frame = frame,
+        photo = frame:CreateTexture(nil, "BACKGROUND", nil, 1),
+        veil = frame:CreateTexture(nil, "BACKGROUND", nil, 2),
+    }
+    wallpaper.veil:SetAllPoints(wallpaper.photo)
+    return wallpaper
+end
+
+--- Paints a wallpaper for the current theme, covering the frame without stretching the photo. It
+--- stays inside the shape's rounded corners. Hidden when the theme has no image for the slot.
+---@param wallpaper table from Theme.NewWallpaper
+---@param slot string window or chat
+---@param visible boolean? false hides it whatever the theme says
+function Theme.PaintWallpaper(wallpaper, slot, visible)
+    local image = visible ~= false and Theme.wallpaper and Theme.wallpaper[slot]
+    wallpaper.photo:SetShown(image and true or false)
+    wallpaper.veil:SetShown(image and true or false)
+    local frame = wallpaper.frame
+    local width, height = frame:GetSize()
+    if not image or width <= 0 or height <= 0 then
+        return
+    end
+    -- A square inside a rounded corner clears it at 0.29 of the radius.
+    local inset = math.ceil(Theme.radius * 0.3)
+    wallpaper.photo:ClearAllPoints()
+    wallpaper.photo:SetPoint("TOPLEFT", inset, -inset)
+    wallpaper.photo:SetPoint("BOTTOMRIGHT", -inset, inset)
+    wallpaper.photo:SetTexture(Theme.WALLPAPERS .. image.file .. ".tga")
+    local box = width / height
+    if box > image.aspect then
+        local cut = (1 - image.aspect / box) / 2
+        wallpaper.photo:SetTexCoord(0, 1, cut, 1 - cut)
+    else
+        local cut = (1 - box / image.aspect) / 2
+        wallpaper.photo:SetTexCoord(cut, 1 - cut, 0, 1)
+    end
+    local r, g, b = Theme.Color("window")
+    wallpaper.veil:SetColorTexture(r, g, b, Theme.wallpaperDim)
 end
 
 Events.Listen(ns.CONFIG_CHANGED, Theme, function(_, module, path)
