@@ -9,8 +9,8 @@ ns.OptionsSchema = {
         esES = "Bufos",
     },
     description = {
-        enUS = "Blizzard's buff and debuff frames in the Mover: move and scale them like the rest of Eternity. The icons are arranged in Edit Mode. Turn the module off and they go back to where Edit Mode had them.",
-        esES = "Los marcos de bufos y perjuicios de Blizzard en el Mover: muévelos y escálalos como el resto de Eternity. Los iconos se ordenan en el Modo Edición. Si desactivas el módulo, vuelven a donde los tenía el Modo Edición.",
+        enUS = "Blizzard's buff and debuff frames in the Mover: move and scale them like the rest of Eternity. Blizzard's Edit Mode arranges the icons (orientation, rows, size, spacing): /editmode or the Mover's Edit Mode button. Turn the module off and they go back to where Edit Mode had them.",
+        esES = "Los marcos de bufos y perjuicios de Blizzard en el Mover: muévelos y escálalos como el resto de Eternity. Los iconos se ordenan en el Modo Edición de Blizzard (orientación, filas, tamaño, separación): /editmode o el botón Modo Edición del Mover. Si desactivas el módulo, vuelven a donde los tenía el Modo Edición.",
     },
     groups = {
         {

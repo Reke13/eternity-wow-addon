@@ -267,6 +267,35 @@ local function updatePreview(item)
     preview:ClearAllPoints()
     preview:SetAllPoints(frame)
     preview:Show()
+    -- The buff frame has Blizzard's collapse arrow in the corner the icons start from, and the icons
+    -- come after it (BuffFrameMixin:UpdateAuraContainerAnchor): the samples do the same, with the
+    -- arrow's own size and rotation.
+    local startX, startY = 0, 0
+    local button = frame.CollapseAndExpandButton
+    if button then
+        local bw, bh = plain(button:GetWidth(), 15), plain(button:GetHeight(), 30)
+        if not preview.arrow then
+            preview.arrow = preview:CreateTexture(nil, "OVERLAY")
+            preview.arrow:SetAtlas("bag-arrow")
+            preview.arrow:SetSize(10, 16)
+        end
+        local normal = button:GetNormalTexture()
+        local rotation = plain(normal and normal:GetRotation(), nil)
+        if rotation == nil then
+            rotation = horizontal and (right and 0 or math.pi) or (top and math.pi / 2 or 3 * math.pi / 2)
+        end
+        preview.arrow:SetRotation(rotation)
+        preview.arrow:ClearAllPoints()
+        preview.arrow:SetPoint("CENTER", frame, corner, bw / 2 * (right and 1 or -1), bh / 2 * (top and 1 or -1))
+        preview.arrow:Show()
+        if horizontal then
+            startX = bw * (right and 1 or -1)
+        else
+            startY = bh * (top and 1 or -1)
+        end
+    elseif preview.arrow then
+        preview.arrow:Hide()
+    end
     for i, name in ipairs(item.samples) do
         local cell = sampleCell(preview, i)
         local slot = i - 1
@@ -274,8 +303,8 @@ local function updatePreview(item)
         if not horizontal then
             col, row = row, col
         end
-        local x = col * (width + pad) * scale * (right and 1 or -1)
-        local y = row * (height + pad) * scale * (top and 1 or -1)
+        local x = startX + col * (width + pad) * scale * (right and 1 or -1)
+        local y = startY + row * (height + pad) * scale * (top and 1 or -1)
         cell:ClearAllPoints()
         cell:SetPoint(corner, frame, corner, x, y)
         cell:SetSize(width * scale, height * scale)
