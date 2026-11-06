@@ -198,6 +198,7 @@ function Bar:ApplyLayout()
     end
     local width = opt("layout.width")
     frame:SetScale(opt("layout.scale"))
+    frame:SetAlpha(opt("layout.opacity"))
     frame:SetSize(width, opt("layout.height"))
     for _, text in pairs(frame.texts) do
         Widgets.SetTextSize(text, TEXT_SIZES[opt("layout.font")] or TEXT_SIZES.caption)

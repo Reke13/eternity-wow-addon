@@ -195,6 +195,45 @@ ns.OptionsSchema = {
                         esES = "Abre la mensajería y muestra los no leídos. /etchat también la abre.",
                     },
                 },
+                {
+                    id = "badge",
+                    type = "select",
+                    default = "whispers",
+                    label = {
+                        enUS = "Unread count on the chat button",
+                        esES = "No leídos en el botón del chat",
+                    },
+                    description = {
+                        enUS = "Which conversations add to the number on the button (and its tooltip). Each conversation keeps its own count in the list.",
+                        esES = "Qué conversaciones suman al número del botón (y a su tooltip). Cada conversación sigue con su propio contador en la lista.",
+                    },
+                    values = {
+                        {
+                            value = "whispers",
+                            label = {
+                                enUS = "Whispers only (Battle.net too)",
+                                esES = "Solo susurros (también de Battle.net)",
+                            },
+                        },
+                        {
+                            value = "all",
+                            label = {
+                                enUS = "Everything in the messenger",
+                                esES = "Todo lo de la mensajería",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "No number",
+                                esES = "Sin número",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["messenger.launcher"] = true,
+                    },
+                },
             },
         },
         {
@@ -793,6 +832,87 @@ ns.OptionsSchema = {
                         esES = "Barra lateral de cada ventana",
                     },
                 },
+                {
+                    id = "socialPosition",
+                    type = "select",
+                    default = "blizzard",
+                    label = {
+                        enUS = "Social button position",
+                        esES = "Posición del botón social",
+                    },
+                    description = {
+                        enUS = "The friends and quick join button, with the chat's other alerts.",
+                        esES = "El botón de amigos y unión rápida, junto con los demás avisos del chat.",
+                    },
+                    values = {
+                        {
+                            value = "blizzard",
+                            label = {
+                                enUS = "Where Blizzard puts it",
+                                esES = "Donde lo pone Blizzard",
+                            },
+                        },
+                        {
+                            value = "above",
+                            label = {
+                                enUS = "Above the chat",
+                                esES = "Encima del chat",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left of the chat",
+                                esES = "A la izquierda del chat",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right of the chat",
+                                esES = "A la derecha del chat",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "socialX",
+                    type = "range",
+                    default = 0,
+                    min = -200,
+                    max = 200,
+                    step = 1,
+                    label = {
+                        enUS = "Social button: horizontal offset",
+                        esES = "Botón social: desplazamiento horizontal",
+                    },
+                    visibleWhen = {
+                        ["buttons.socialPosition"] = {
+                            "above",
+                            "left",
+                            "right",
+                        },
+                    },
+                },
+                {
+                    id = "socialY",
+                    type = "range",
+                    default = 0,
+                    min = -200,
+                    max = 200,
+                    step = 1,
+                    label = {
+                        enUS = "Social button: vertical offset",
+                        esES = "Botón social: desplazamiento vertical",
+                    },
+                    visibleWhen = {
+                        ["buttons.socialPosition"] = {
+                            "above",
+                            "left",
+                            "right",
+                        },
+                    },
+                },
             },
         },
         {
@@ -861,6 +981,22 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Background opacity",
                         esES = "Opacidad del fondo",
+                    },
+                },
+                {
+                    id = "alpha",
+                    type = "range",
+                    default = 1,
+                    min = 0.1,
+                    max = 1,
+                    step = 0.05,
+                    label = {
+                        enUS = "Window opacity",
+                        esES = "Opacidad de la ventana",
+                    },
+                    description = {
+                        enUS = "Of the whole window: background, conversations and texts.",
+                        esES = "De toda la ventana: fondo, conversaciones y textos.",
                     },
                 },
             },

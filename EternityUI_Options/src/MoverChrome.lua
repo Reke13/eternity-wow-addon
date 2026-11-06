@@ -52,6 +52,26 @@ local function buildToolbar(root)
     add(Widgets.Button(toolbar, L.MOVER_REDO, "ghost", session().Redo))
     add(Widgets.Button(toolbar, L.MOVER_DISCARD, "ghost", session().Discard))
     add(Widgets.Button(toolbar, L.MOVER_SAVE, "primary", session().Save))
+
+    -- Blizzard's Edit Mode, for the frames it places (buff icons' layout, tracker size...). Opened
+    -- by a secure macro button running /editmode, so no addon code opens the panel (that would
+    -- taint it). The Mover saves and closes first.
+    local editMode = add(Widgets.Button(toolbar, L.MOVER_EDITMODE, "ghost", function() end))
+    local secure = CreateFrame("Button", nil, editMode, "SecureActionButtonTemplate")
+    secure:SetAllPoints(editMode)
+    secure:RegisterForClicks("LeftButtonUp", "LeftButtonDown")
+    secure:SetAttribute("useOnKeyDown", false)
+    secure:SetAttribute("type", "macro")
+    secure:SetAttribute("macrotext", "/editmode")
+    secure:HookScript("OnClick", function()
+        if session().active then
+            session().Save()
+        end
+    end)
+    Widgets.AttachTooltip(secure, function(tip)
+        tip:SetTitle(L.MOVER_EDITMODE)
+        tip:AddLine(L.MOVER_EDITMODE_HINT, "textMuted")
+    end)
     toolbar:SetWidth(x + 2)
 end
 
@@ -102,10 +122,42 @@ end
 
 local function buildPanel(root)
     panel = CreateFrame("Frame", nil, root)
-    panel:SetPoint("TOPRIGHT", -16, -76)
     panel:SetSize(244, 286)
     panel:SetFrameLevel(root:GetFrameLevel() + 20)
     surface(panel)
+
+    -- Dragged from any empty spot; the spot is kept for the account (raw.moverPanel, offsets from
+    -- the screen's top left). A right click puts it back in its corner.
+    local function place()
+        local saved = E.store.raw.moverPanel
+        panel:ClearAllPoints()
+        if saved then
+            panel:SetPoint("TOPLEFT", root, "TOPLEFT", saved.x, saved.y)
+        else
+            panel:SetPoint("TOPRIGHT", -16, -76)
+        end
+    end
+    panel:SetMovable(true)
+    panel:SetClampedToScreen(true)
+    panel:RegisterForDrag("LeftButton")
+    panel:SetScript("OnDragStart", panel.StartMoving)
+    panel:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        self:SetUserPlaced(false)
+        local left, top = self:GetLeft(), self:GetTop()
+        local rootLeft, rootTop = root:GetLeft(), root:GetTop()
+        if left and top and rootLeft and rootTop then
+            E.store.raw.moverPanel = { x = left - rootLeft, y = top - rootTop }
+        end
+        place()
+    end)
+    panel:SetScript("OnMouseUp", function(_, button)
+        if button == "RightButton" then
+            E.store.raw.moverPanel = nil
+            place()
+        end
+    end)
+    place()
 
     panel.title = Widgets.Text(panel, 18, "text")
     panel.title:SetPoint("TOPLEFT", 14, -14)

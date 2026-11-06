@@ -1,15 +1,16 @@
 -- EternityUI_Objectives: Blizzard's quest and objective tracker restyled with the Eternity look.
 -- The tracker stays Blizzard's: it builds, lays out, collapses and positions everything (its
 -- position, height and text size are a system of Blizzard's Edit Mode, and moving it from an
--- addon would make Blizzard's managed right column lay out protected frames with taint). Skin
+-- addon can make Blizzard's managed right column lay out protected frames with taint). Skin
 -- repaints it, Fade fades it, Feedback adds the completion flash and sounds, Sections hides
--- sections on demand. Disabling the module gives everything back without /reload.
+-- sections on demand, Position puts it in the Mover when its option is on (that risk accepted).
+-- Disabling the module gives everything back without /reload.
 
 ---@type string, EternityUIObjectivesNamespace
 local addonName, ns = ...
 local E = EternityUI
 local W = ns.Ui.W
-local Core, Skin, Fade, Feedback, Sections = ns.Core, ns.Skin, ns.Fade, ns.Feedback, ns.Sections
+local Core, Skin, Fade, Feedback, Sections, Position = ns.Core, ns.Skin, ns.Fade, ns.Feedback, ns.Sections, ns.Position
 
 ---@class EternityUIObjectivesModule: EternityUIModuleDefinition
 ---@field events table?
@@ -27,6 +28,7 @@ function Module:Apply()
     Skin:Apply(tracker)
     Fade:Enable(tracker)
     Sections:Apply(tracker)
+    Position:Apply(tracker)
 end
 
 function Module:Install()
@@ -73,6 +75,7 @@ function Module:OnDisable()
     end
     Feedback:Disable()
     Fade:Disable()
+    Position:Stop()
     local tracker = Core.Tracker()
     Skin:Restore(tracker)
     if tracker then
@@ -91,6 +94,9 @@ function Module:OnConfigChanged(path)
     end
     if path == nil or path:find("^sections%.") then
         Sections:Apply(tracker)
+    end
+    if path == nil or path:find("^position%.") or path:find("^size%.") then
+        Position:Apply(tracker)
     end
     if
         path == nil

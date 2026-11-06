@@ -71,6 +71,25 @@ local function entriesOf(group)
     return entries
 end
 
+-- Lines of at most `width` characters, broken between words (the suite's tooltip doesn't wrap).
+local function wrap(text, width)
+    local lines, line = {}, ""
+    for word in text:gmatch("%S+") do
+        if line ~= "" and #line + 1 + #word > width then
+            lines[#lines + 1] = line
+            line = word
+        else
+            line = line == "" and word or (line .. " " .. word)
+        end
+    end
+    if line ~= "" then
+        lines[#lines + 1] = line
+    end
+    return lines
+end
+
+local DESCRIPTION_WIDTH = 60
+
 -- One list of sections in a scroll area. A section is { label, entries }.
 local function newList(parent, page, sections)
     local scroll = Widgets.Scroll(parent)
@@ -92,8 +111,23 @@ local function newList(parent, page, sections)
             if option.requiresReload then
                 label = label .. " (/reload)"
             end
+            local description = option.description and E.Localize(option.description)
+            if description and description ~= "" then
+                label = label .. "  |cff8a8a99(?)|r"
+            end
             local row = Widgets.Row(child, label, control)
             row:SetHeight(ROW)
+            -- The option's description, wrapped, while the mouse is over its row.
+            if description and description ~= "" then
+                local title = E.Localize(option.label)
+                row:EnableMouse(true)
+                Widgets.AttachTooltip(row, function(tip)
+                    tip:SetTitle(title)
+                    for _, line in ipairs(wrap(description, DESCRIPTION_WIDTH)) do
+                        tip:AddLine(line, "textMuted")
+                    end
+                end, "CURSOR")
+            end
             table.insert(list.items, { row = row, control = control, option = option, path = path })
         end
     end

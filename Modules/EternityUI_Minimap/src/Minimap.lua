@@ -684,11 +684,13 @@ function Module:FollowHolder()
         end
         -- The cluster has empty room around the map: clamped to the screen, it would be pushed off
         -- the holder near the edges. The holder (the map's size) is what stays on screen.
+        self.following = true
         c:SetClampedToScreen(false)
         c:SetScale(holder:GetScale())
         local left, top = Minimap:GetLeft(), Minimap:GetTop()
         local cLeft, cTop = c:GetLeft(), c:GetTop()
         if not (left and top and cLeft and cTop) then
+            self.following = false
             return
         end
         -- The map's top left corner inside the cluster, in the cluster's units.
@@ -696,6 +698,20 @@ function Module:FollowHolder()
         local dx, dy = left * ratio - cLeft, top * ratio - cTop
         c:ClearAllPoints()
         c:SetPoint("TOPLEFT", holder, "TOPLEFT", -dx, -dy)
+        self.following = false
+    end)
+end
+
+-- Blizzard places the cluster again on its own (a level up, a layout update): it goes back to the
+-- holder on the next frame, once for a burst of calls.
+function Module:ScheduleFollow()
+    if self.followPending then
+        return
+    end
+    self.followPending = true
+    C_Timer.After(0, function()
+        self.followPending = false
+        self:FollowHolder()
     end)
 end
 
@@ -731,6 +747,13 @@ function Module:ApplyMap()
         hooksecurefunc(self.holder, "SetScale", function()
             self:FollowHolder()
         end)
+        for _, method in ipairs({ "SetPoint", "SetScale" }) do
+            hooksecurefunc(c, method, function()
+                if self.running and not self.following then
+                    self:ScheduleFollow()
+                end
+            end)
+        end
     end
     local holder = self.holder
     holder:Show()

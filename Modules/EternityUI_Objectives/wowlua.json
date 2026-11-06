@@ -28,6 +28,7 @@
       "src/Fade.lua",
       "src/Feedback.lua",
       "src/Sections.lua",
+      "src/Position.lua",
       "src/Objectives.lua"
     ]
   },

@@ -13,7 +13,10 @@ local Theme, UI = E.Theme, ns.UI
 local opt, L = ns.opt, ns.L
 
 local NEW_WHISPER_SOUND = 3081 -- SOUNDKIT.TELL_MESSAGE
+-- The Width and Height options' limits and step: the grip can't go past what they store.
 local MIN_WIDTH, MIN_HEIGHT = 420, 300
+local MAX_WIDTH, MAX_HEIGHT = 1400, 1000
+local SIZE_STEP = 10
 local BAR_HEIGHT = 40
 local DAY = 86400
 -- Avatar letter for the conversations that aren't a player.
@@ -460,7 +463,7 @@ function Messenger:Send(text)
     if locked() then
         local prefix = SEND[kind] and SEND[kind][2]
         if kind == "whisper" then
-            prefix = "/w " .. conversation.target .. " "
+            prefix = "/w " .. ns.WhisperTarget(conversation) .. " "
         elseif kind == "channel" then
             prefix = "/" .. (GetChannelName(conversation.target) or 1) .. " "
         end
@@ -473,7 +476,7 @@ function Messenger:Send(text)
         return
     end
     if kind == "whisper" then
-        sendChat(text, "WHISPER", conversation.target)
+        sendChat(text, "WHISPER", ns.WhisperTarget(conversation))
     elseif kind == "bnet" then
         local id = bnetID(conversation.target)
         if id then
@@ -539,7 +542,7 @@ function Messenger:Create()
     w:SetClampedToScreen(true)
     w:SetMovable(true)
     w:SetResizable(true)
-    w:SetResizeBounds(MIN_WIDTH, MIN_HEIGHT)
+    w:SetResizeBounds(MIN_WIDTH, MIN_HEIGHT, MAX_WIDTH, MAX_HEIGHT)
     w:EnableMouse(true)
     w:RegisterForDrag("LeftButton")
     w.shape = UI.Shape(w, "card")
@@ -617,16 +620,30 @@ function Messenger:Create()
     w.grip.mark = w.grip:CreateTexture(nil, "ARTWORK")
     w.grip.mark:SetAllPoints()
     w.grip.mark:SetTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    -- The top left corner stays put while the corner is dragged (the Mover may anchor the window by
+    -- its center); on release the size goes to the options' step before the spot is saved, so the
+    -- options don't change the size, and move the window, afterwards.
     w.grip:SetScript("OnMouseDown", function()
+        local left, top = w:GetLeft(), w:GetTop()
+        if left and top then
+            w:ClearAllPoints()
+            w:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+        end
         w:StartSizing("BOTTOMRIGHT")
     end)
     w.grip:SetScript("OnMouseUp", function()
         w:StopMovingOrSizing()
         w:SetUserPlaced(false)
-        -- Resizing moved its center: keep it where it is now.
+        local function snap(value, low, high)
+            value = math.floor(value / SIZE_STEP + 0.5) * SIZE_STEP
+            return math.max(low, math.min(high, value))
+        end
+        local width = snap(w:GetWidth(), MIN_WIDTH, MAX_WIDTH)
+        local height = snap(w:GetHeight(), MIN_HEIGHT, MAX_HEIGHT)
+        w:SetSize(width, height)
         E.Mover.SaveFromFrame(Messenger.KEY)
-        E.store:Set(addonName, "window.width", math.floor(w:GetWidth() + 0.5))
-        E.store:Set(addonName, "window.height", math.floor(w:GetHeight() + 0.5))
+        E.store:Set(addonName, "window.width", width)
+        E.store:Set(addonName, "window.height", height)
     end)
 
     -- Left: search and conversations.
@@ -740,6 +757,7 @@ function Messenger:ApplyLook()
     w:SetScale(opt("window.scale"))
     Theme.PaintWindow(w.shape)
     w.shape.fill:SetAlpha(opt("window.opacity"))
+    w:SetAlpha(opt("window.alpha"))
     w.menu.dots:SetColor("text")
 end
 
@@ -804,10 +822,18 @@ function Messenger:CreateLauncher()
     self.launcher = E.Widgets.Track(b)
 end
 
+--- Unread messages the chat button counts: whispers only, everything, or none (messenger.badge).
 function Messenger:Unread()
+    local which = opt("messenger.badge")
+    if which == "none" then
+        return 0
+    end
     local total = 0
     for _, conversation in ipairs(ns.History:List()) do
-        total = total + (conversation.unread or 0)
+        local kind = conversation.kind
+        if which == "all" or kind == "whisper" or kind == "bnet" then
+            total = total + (conversation.unread or 0)
+        end
     end
     return total
 end

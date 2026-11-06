@@ -6,8 +6,8 @@
     "esES": "Bufos"
   },
   "description": {
-    "enUS": "Blizzard's buff and debuff frames in the Mover: move and scale them like the rest of Eternity. The icons are arranged in Edit Mode. Turn the module off and they go back to where Edit Mode had them.",
-    "esES": "Los marcos de bufos y perjuicios de Blizzard en el Mover: muévelos y escálalos como el resto de Eternity. Los iconos se ordenan en el Modo Edición. Si desactivas el módulo, vuelven a donde los tenía el Modo Edición."
+    "enUS": "Blizzard's buff and debuff frames in the Mover: move and scale them like the rest of Eternity. Blizzard's Edit Mode arranges the icons (orientation, rows, size, spacing): /editmode or the Mover's Edit Mode button. Turn the module off and they go back to where Edit Mode had them.",
+    "esES": "Los marcos de bufos y perjuicios de Blizzard en el Mover: muévelos y escálalos como el resto de Eternity. Los iconos se ordenan en el Modo Edición de Blizzard (orientación, filas, tamaño, separación): /editmode o el botón Modo Edición del Mover. Si desactivas el módulo, vuelven a donde los tenía el Modo Edición."
   },
   "groups": [
     {
@@ -46,6 +46,461 @@
           "description": {
             "enUS": "Fake buffs and debuffs to see how they look. They also show while the Mover is open, and turn off by themselves on /reload.",
             "esES": "Bufos y perjuicios falsos para ver cómo quedan. También salen con el Mover abierto, y se apagan solos al recargar."
+          }
+        }
+      ]
+    },
+    {
+      "id": "arrange",
+      "tab": "appearance",
+      "label": {
+        "enUS": "Icon order and size",
+        "esES": "Orden y tamaño de los iconos"
+      },
+      "options": [
+        {
+          "id": "custom",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Arrange them from Eternity",
+            "esES": "Ordenarlos desde Eternity"
+          },
+          "description": {
+            "enUS": "These settings are written into your Edit Mode layout and Blizzard applies them after /reload. Turning this on fills them with what your layout has now. It needs a layout of your own: Edit Mode's preset layouts can't be changed.",
+            "esES": "Estos ajustes se guardan en tu disposición del Modo Edición y Blizzard los aplica al recargar (/reload). Al activarlo se rellenan con lo que tiene ahora tu disposición. Necesita una disposición propia: las predefinidas del Modo Edición no se pueden cambiar."
+          }
+        },
+        {
+          "id": "buffOrientation",
+          "type": "select",
+          "default": "horizontal",
+          "label": {
+            "enUS": "Buffs: rows or columns",
+            "esES": "Bufos: filas o columnas"
+          },
+          "values": [
+            {
+              "value": "horizontal",
+              "label": {
+                "enUS": "In rows",
+                "esES": "En filas"
+              }
+            },
+            {
+              "value": "vertical",
+              "label": {
+                "enUS": "In columns",
+                "esES": "En columnas"
+              }
+            }
+          ],
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "buffHorizontal",
+          "type": "select",
+          "default": "left",
+          "label": {
+            "enUS": "Buffs: left or right",
+            "esES": "Bufos: izquierda o derecha"
+          },
+          "description": {
+            "enUS": "In rows: where the icons grow. In columns: where new columns go.",
+            "esES": "En filas: hacia dónde crecen los iconos. En columnas: dónde van las columnas nuevas."
+          },
+          "values": [
+            {
+              "value": "left",
+              "label": {
+                "enUS": "Left",
+                "esES": "Izquierda"
+              }
+            },
+            {
+              "value": "right",
+              "label": {
+                "enUS": "Right",
+                "esES": "Derecha"
+              }
+            }
+          ],
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "buffVertical",
+          "type": "select",
+          "default": "down",
+          "label": {
+            "enUS": "Buffs: down or up",
+            "esES": "Bufos: abajo o arriba"
+          },
+          "description": {
+            "enUS": "In rows: where new rows go. In columns: where the icons grow.",
+            "esES": "En filas: dónde van las filas nuevas. En columnas: hacia dónde crecen los iconos."
+          },
+          "values": [
+            {
+              "value": "down",
+              "label": {
+                "enUS": "Down",
+                "esES": "Abajo"
+              }
+            },
+            {
+              "value": "up",
+              "label": {
+                "enUS": "Up",
+                "esES": "Arriba"
+              }
+            }
+          ],
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "buffSize",
+          "type": "range",
+          "default": 100,
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "label": {
+            "enUS": "Buffs: icon size (%)",
+            "esES": "Bufos: tamaño de los iconos (%)"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "buffPadding",
+          "type": "range",
+          "default": 5,
+          "min": 5,
+          "max": 15,
+          "step": 1,
+          "label": {
+            "enUS": "Buffs: spacing",
+            "esES": "Bufos: separación"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "buffLimit",
+          "type": "range",
+          "default": 32,
+          "min": 2,
+          "max": 32,
+          "step": 1,
+          "label": {
+            "enUS": "Buffs: icons per row (or column)",
+            "esES": "Bufos: iconos por fila (o columna)"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "debuffOrientation",
+          "type": "select",
+          "default": "horizontal",
+          "label": {
+            "enUS": "Debuffs: rows or columns",
+            "esES": "Perjuicios: filas o columnas"
+          },
+          "values": [
+            {
+              "value": "horizontal",
+              "label": {
+                "enUS": "In rows",
+                "esES": "En filas"
+              }
+            },
+            {
+              "value": "vertical",
+              "label": {
+                "enUS": "In columns",
+                "esES": "En columnas"
+              }
+            }
+          ],
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "debuffHorizontal",
+          "type": "select",
+          "default": "left",
+          "label": {
+            "enUS": "Debuffs: left or right",
+            "esES": "Perjuicios: izquierda o derecha"
+          },
+          "description": {
+            "enUS": "In rows: where the icons grow. In columns: where new columns go.",
+            "esES": "En filas: hacia dónde crecen los iconos. En columnas: dónde van las columnas nuevas."
+          },
+          "values": [
+            {
+              "value": "left",
+              "label": {
+                "enUS": "Left",
+                "esES": "Izquierda"
+              }
+            },
+            {
+              "value": "right",
+              "label": {
+                "enUS": "Right",
+                "esES": "Derecha"
+              }
+            }
+          ],
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "debuffVertical",
+          "type": "select",
+          "default": "down",
+          "label": {
+            "enUS": "Debuffs: down or up",
+            "esES": "Perjuicios: abajo o arriba"
+          },
+          "description": {
+            "enUS": "In rows: where new rows go. In columns: where the icons grow.",
+            "esES": "En filas: dónde van las filas nuevas. En columnas: hacia dónde crecen los iconos."
+          },
+          "values": [
+            {
+              "value": "down",
+              "label": {
+                "enUS": "Down",
+                "esES": "Abajo"
+              }
+            },
+            {
+              "value": "up",
+              "label": {
+                "enUS": "Up",
+                "esES": "Arriba"
+              }
+            }
+          ],
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "debuffSize",
+          "type": "range",
+          "default": 100,
+          "min": 50,
+          "max": 200,
+          "step": 10,
+          "label": {
+            "enUS": "Debuffs: icon size (%)",
+            "esES": "Perjuicios: tamaño de los iconos (%)"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "debuffPadding",
+          "type": "range",
+          "default": 5,
+          "min": 5,
+          "max": 15,
+          "step": 1,
+          "label": {
+            "enUS": "Debuffs: spacing",
+            "esES": "Perjuicios: separación"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        },
+        {
+          "id": "debuffLimit",
+          "type": "range",
+          "default": 16,
+          "min": 1,
+          "max": 16,
+          "step": 1,
+          "label": {
+            "enUS": "Debuffs: icons per row (or column)",
+            "esES": "Perjuicios: iconos por fila (o columna)"
+          },
+          "visibleWhen": {
+            "arrange.custom": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "look",
+      "tab": "appearance",
+      "label": {
+        "enUS": "Icons",
+        "esES": "Iconos"
+      },
+      "options": [
+        {
+          "id": "skin",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Eternity style for the icons",
+            "esES": "Estilo de Eternity en los iconos"
+          },
+          "description": {
+            "enUS": "Shape, border and cropping of the buff and debuff icons, like the action bars. Off: Blizzard's square icons.",
+            "esES": "Forma, borde y recorte de los iconos de bufos y perjuicios, como en las barras de acción. Desactivado: los iconos cuadrados de Blizzard."
+          }
+        },
+        {
+          "id": "shape",
+          "type": "select",
+          "default": "rounded",
+          "label": {
+            "enUS": "Icon shape",
+            "esES": "Forma de los iconos"
+          },
+          "values": [
+            {
+              "value": "square",
+              "label": {
+                "enUS": "Square",
+                "esES": "Cuadrado"
+              }
+            },
+            {
+              "value": "rounded",
+              "label": {
+                "enUS": "Rounded",
+                "esES": "Redondeado"
+              }
+            },
+            {
+              "value": "circle",
+              "label": {
+                "enUS": "Circle",
+                "esES": "Círculo"
+              }
+            },
+            {
+              "value": "diamond",
+              "label": {
+                "enUS": "Diamond",
+                "esES": "Rombo"
+              }
+            },
+            {
+              "value": "hexagon",
+              "label": {
+                "enUS": "Hexagon",
+                "esES": "Hexágono"
+              }
+            }
+          ],
+          "visibleWhen": {
+            "look.skin": true
+          }
+        },
+        {
+          "id": "zoom",
+          "type": "range",
+          "default": 0.08,
+          "min": 0,
+          "max": 0.3,
+          "step": 0.01,
+          "label": {
+            "enUS": "Crop the spell art",
+            "esES": "Recorte del dibujo"
+          },
+          "description": {
+            "enUS": "How much of the frame drawn around each spell's art is cut off.",
+            "esES": "Cuánto se recorta del marco que trae dibujado cada hechizo."
+          },
+          "visibleWhen": {
+            "look.skin": true
+          }
+        },
+        {
+          "id": "border",
+          "type": "toggle",
+          "default": true,
+          "label": {
+            "enUS": "Border around the icons",
+            "esES": "Borde alrededor de los iconos"
+          },
+          "visibleWhen": {
+            "look.skin": true
+          }
+        },
+        {
+          "id": "borderSize",
+          "type": "range",
+          "default": 1,
+          "min": 1,
+          "max": 4,
+          "step": 1,
+          "label": {
+            "enUS": "Border thickness",
+            "esES": "Grosor del borde"
+          },
+          "visibleWhen": {
+            "look.skin": true
+          }
+        },
+        {
+          "id": "borderColor",
+          "type": "color",
+          "default": "@accent:80",
+          "label": {
+            "enUS": "Border color",
+            "esES": "Color del borde"
+          },
+          "visibleWhen": {
+            "look.skin": true
+          }
+        },
+        {
+          "id": "borderClass",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Border in your class color",
+            "esES": "Borde del color de tu clase"
+          },
+          "visibleWhen": {
+            "look.skin": true
+          }
+        },
+        {
+          "id": "blizzardBorders",
+          "type": "toggle",
+          "default": true,
+          "label": {
+            "enUS": "Debuff type colors",
+            "esES": "Color según el tipo de perjuicio"
+          },
+          "description": {
+            "enUS": "Blizzard's border for magic, curse, poison and disease debuffs, and the one of temporary weapon enchants (poisons, sharpening stones...).",
+            "esES": "El borde de Blizzard que distingue los perjuicios de magia, maldición, veneno y enfermedad, y el de los encantamientos temporales de arma (venenos, piedras de afilar...)."
+          },
+          "visibleWhen": {
+            "look.skin": true
           }
         }
       ]

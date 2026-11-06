@@ -116,6 +116,14 @@ function ns.FullName(name)
     return realm and (name .. "-" .. realm) or name
 end
 
+--- Who a whisper conversation is sent to: the name as the game gave it, or for conversations
+--- saved before that was kept, the name without our own realm.
+---@param conversation table
+---@return string
+function ns.WhisperTarget(conversation)
+    return conversation.reply or ns.ShortName(conversation.target)
+end
+
 --- "Name" for a player of this realm, "Name-Realm" for the others.
 function ns.ShortName(fullName)
     local name, realm = strsplit("-", fullName, 2)

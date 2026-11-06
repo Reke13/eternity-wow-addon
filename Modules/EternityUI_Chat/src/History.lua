@@ -26,6 +26,7 @@ local DIM = "ff8c8c99"
 ---@field kind string whisper, bnet, guild, officer, party, raid, instance, say, channel
 ---@field title string
 ---@field target string? whisper: "Name-Realm"; bnet: BattleTag; channel: its base name
+---@field reply string? whisper: the name exactly as the game gave it, to whisper back
 ---@field class string? whisper: the other player's class
 ---@field unread integer
 ---@field updated number
@@ -275,6 +276,11 @@ function History:Ingest(event, text, sender, channelBaseName, guid, bnSenderID)
         class = known and known.c
     end
     local conversation = self:Conversation(key, kind, title, target)
+    -- Whispers go back to the name as the game wrote it, like Blizzard's reply does: the realm
+    -- FullName adds (GetNormalizedRealmName, an internal name in Forever) isn't accepted there.
+    if kind == "whisper" and type(sender) == "string" and sender ~= "" then
+        conversation.reply = sender
+    end
     ---@type EternityUIChatMessage
     local message = {
         t = time(),
@@ -318,6 +324,11 @@ function History:FormatLine(message, conversation)
         local color = ns.Players:ClassHex(message.c)
         if color then
             who = ("|c%s%s|r"):format(color, who)
+        end
+        -- A player link, like a live line: a click whispers them (without our own realm, which the
+        -- server doesn't take in Forever).
+        if conversation.kind ~= "bnet" then
+            who = ("|Hplayer:%s|h%s|h"):format(ns.ShortName(message.f), who)
         end
     end
     local where = conversation.kind == "whisper" and ("@" .. conversation.title) or conversation.title
