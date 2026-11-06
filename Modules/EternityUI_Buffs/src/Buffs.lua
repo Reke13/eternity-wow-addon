@@ -434,6 +434,113 @@ local function hookEditMode()
     end
 end
 
+-- Look -----------------------------------------------------------------------------------------
+-- The action buttons' look on Blizzard's aura buttons: a shape mask on the icon, our border behind
+-- it (masked to the same shape), the icon's zoom, and Blizzard's colored borders kept or not. Only
+-- widgets change (masks, a texture of ours, texture coordinates, alphas); nothing is written into
+-- Blizzard's tables, and everything comes back when the option or the module is off.
+
+local SHAPES = { rounded = "rounded.tga", circle = "circle.tga", diamond = "diamond.tga", hexagon = "hexagon.tga" }
+local SQUARE = "Interface\\Buttons\\WHITE8X8"
+local skins = setmetatable({}, { __mode = "k" }) -- aura button -> { border, outer, inner, alphas }
+
+local function eachAuraButton(fn)
+    for _, item in ipairs(ITEMS) do
+        local frame = _G[item.global]
+        for _, button in ipairs(frame and frame.auraFrames or {}) do
+            if button.Icon and button.Icon.AddMaskTexture then
+                fn(button)
+            end
+        end
+    end
+end
+
+local function borderColor()
+    if opt("look.borderClass") then
+        local _, class = UnitClass("player")
+        local color = class and C_ClassColor and C_ClassColor.GetClassColor(class)
+        if color then
+            return color.r, color.g, color.b, 1
+        end
+    end
+    return E.Theme.Color(opt("look.borderColor"))
+end
+
+local function skinButton(button)
+    local s = skins[button]
+    if not s then
+        s = {
+            border = button:CreateTexture(nil, "BACKGROUND", nil, -7),
+            outer = button:CreateMaskTexture(),
+            inner = button:CreateMaskTexture(),
+            alphas = {},
+        }
+        skins[button] = s
+    end
+    s.active = true
+    local icon = button.Icon
+    local file = SHAPES[opt("look.shape")]
+    local path = file and (E.Theme.MEDIA .. file) or nil
+    local size = opt("look.border") and opt("look.borderSize") or 0
+
+    s.inner:SetTexture(path or SQUARE, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    s.inner:ClearAllPoints()
+    s.inner:SetAllPoints(icon)
+    icon:RemoveMaskTexture(s.inner)
+    if path then
+        icon:AddMaskTexture(s.inner)
+    end
+    local zoom = opt("look.zoom")
+    icon:SetTexCoord(zoom, 1 - zoom, zoom, 1 - zoom)
+
+    s.border:ClearAllPoints()
+    s.border:SetPoint("TOPLEFT", icon, "TOPLEFT", -size, size)
+    s.border:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", size, -size)
+    s.outer:SetTexture(path or SQUARE, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    s.outer:ClearAllPoints()
+    s.outer:SetAllPoints(s.border)
+    s.border:RemoveMaskTexture(s.outer)
+    if path then
+        s.border:AddMaskTexture(s.outer)
+    end
+    s.border:SetColorTexture(borderColor())
+    s.border:SetShown(size > 0)
+
+    local keep = opt("look.blizzardBorders")
+    for _, key in ipairs({ "DebuffBorder", "TempEnchantBorder" }) do
+        local region = button[key]
+        if region then
+            if s.alphas[key] == nil then
+                s.alphas[key] = region:GetAlpha()
+            end
+            region:SetAlpha(keep and s.alphas[key] or 0)
+        end
+    end
+end
+
+local function unskinButton(button)
+    local s = skins[button]
+    if not (s and s.active) then
+        return
+    end
+    s.active = false
+    button.Icon:RemoveMaskTexture(s.inner)
+    button.Icon:SetTexCoord(0, 1, 0, 1)
+    s.border:Hide()
+    for key, alpha in pairs(s.alphas) do
+        if button[key] then
+            button[key]:SetAlpha(alpha)
+        end
+    end
+    s.alphas = {}
+end
+
+--- The look on every aura button, or Blizzard's back.
+function Module:ApplyLook()
+    local on = self.running and opt("look.skin")
+    eachAuraButton(on and skinButton or unskinButton)
+end
+
 -- Icon order -----------------------------------------------------------------------------------
 -- Written into the active Edit Mode layout through C_EditMode (GetLayouts / SaveLayouts), never
 -- into Blizzard's frames: after /reload Edit Mode reads its layout from the game and applies it
@@ -519,17 +626,24 @@ function Module:OnEnable()
             updatePreview(item)
         end
     end)
+    -- The border's theme color follows the theme.
+    E.Events.Listen(E.Theme.CHANGED, self, function()
+        self:ApplyLook()
+    end)
     self:Apply()
+    self:ApplyLook()
 end
 
 function Module:OnDisable()
     self.running = false
     self.moverOpen = false
     self:Apply()
+    self:ApplyLook()
 end
 
 function Module:OnConfigChanged(path)
     self:Apply()
+    self:ApplyLook()
     if path and path:find("^arrange%.") and opt("arrange.custom") then
         E.Combat.Run(self, function()
             local message = self:SaveArrangement()

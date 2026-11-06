@@ -260,5 +260,163 @@ ns.OptionsSchema = {
                 },
             },
         },
+        {
+            id = "look",
+            tab = "appearance",
+            label = {
+                enUS = "Look",
+                esES = "Aspecto",
+            },
+            options = {
+                {
+                    id = "skin",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Look like the action buttons",
+                        esES = "Aspecto de los botones de acción",
+                    },
+                    description = {
+                        enUS = "Shape, border and icon zoom for the buff and debuff icons, with the same choices as Action bars > Buttons. Off: Blizzard's look.",
+                        esES = "Forma, borde y zoom del icono para los bufos y perjuicios, con las mismas opciones que Barras de acción > Botones. Desactivado: el aspecto de Blizzard.",
+                    },
+                },
+                {
+                    id = "shape",
+                    type = "select",
+                    default = "rounded",
+                    label = {
+                        enUS = "Shape",
+                        esES = "Forma",
+                    },
+                    values = {
+                        {
+                            value = "square",
+                            label = {
+                                enUS = "Square",
+                                esES = "Cuadrado",
+                            },
+                        },
+                        {
+                            value = "rounded",
+                            label = {
+                                enUS = "Rounded",
+                                esES = "Redondeado",
+                            },
+                        },
+                        {
+                            value = "circle",
+                            label = {
+                                enUS = "Circle",
+                                esES = "Círculo",
+                            },
+                        },
+                        {
+                            value = "diamond",
+                            label = {
+                                enUS = "Diamond",
+                                esES = "Rombo",
+                            },
+                        },
+                        {
+                            value = "hexagon",
+                            label = {
+                                enUS = "Hexagon",
+                                esES = "Hexágono",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["look.skin"] = true,
+                    },
+                },
+                {
+                    id = "zoom",
+                    type = "range",
+                    default = 0.08,
+                    min = 0,
+                    max = 0.3,
+                    step = 0.01,
+                    label = {
+                        enUS = "Icon zoom",
+                        esES = "Zoom del icono",
+                    },
+                    description = {
+                        enUS = "Crops the icon's edge.",
+                        esES = "Recorta el borde del icono.",
+                    },
+                    visibleWhen = {
+                        ["look.skin"] = true,
+                    },
+                },
+                {
+                    id = "border",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Border",
+                        esES = "Borde",
+                    },
+                    visibleWhen = {
+                        ["look.skin"] = true,
+                    },
+                },
+                {
+                    id = "borderSize",
+                    type = "range",
+                    default = 1,
+                    min = 1,
+                    max = 4,
+                    step = 1,
+                    label = {
+                        enUS = "Border thickness",
+                        esES = "Grosor del borde",
+                    },
+                    visibleWhen = {
+                        ["look.skin"] = true,
+                    },
+                },
+                {
+                    id = "borderColor",
+                    type = "color",
+                    default = "@accent:80",
+                    label = {
+                        enUS = "Border color",
+                        esES = "Color del borde",
+                    },
+                    visibleWhen = {
+                        ["look.skin"] = true,
+                    },
+                },
+                {
+                    id = "borderClass",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Border in the class color",
+                        esES = "Borde del color de la clase",
+                    },
+                    visibleWhen = {
+                        ["look.skin"] = true,
+                    },
+                },
+                {
+                    id = "blizzardBorders",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Keep Blizzard's colored borders",
+                        esES = "Mantener los bordes de color de Blizzard",
+                    },
+                    description = {
+                        enUS = "The debuff type border (magic, poison...) and the weapon enchant one.",
+                        esES = "El borde del tipo de perjuicio (magia, veneno...) y el de los encantamientos de arma.",
+                    },
+                    visibleWhen = {
+                        ["look.skin"] = true,
+                    },
+                },
+            },
+        },
     },
 }
