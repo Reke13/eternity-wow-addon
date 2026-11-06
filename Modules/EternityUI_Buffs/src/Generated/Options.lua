@@ -53,5 +53,212 @@ ns.OptionsSchema = {
                 },
             },
         },
+        {
+            id = "arrange",
+            tab = "appearance",
+            label = {
+                enUS = "Icon order",
+                esES = "Orden de los iconos",
+            },
+            options = {
+                {
+                    id = "custom",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Arrange them from Eternity",
+                        esES = "Ordenarlos desde Eternity",
+                    },
+                    description = {
+                        enUS = "These settings are written into your Edit Mode layout and Blizzard applies them after /reload. It needs a layout of your own: Edit Mode's preset layouts can't be changed.",
+                        esES = "Estos ajustes se guardan en tu disposición del Modo Edición y Blizzard los aplica al recargar (/reload). Necesita una disposición propia: las predefinidas del Modo Edición no se pueden cambiar.",
+                    },
+                },
+                {
+                    id = "buffOrientation",
+                    type = "select",
+                    default = "horizontal",
+                    label = {
+                        enUS = "Buffs: rows or columns",
+                        esES = "Bufos: filas o columnas",
+                    },
+                    values = {
+                        {
+                            value = "horizontal",
+                            label = {
+                                enUS = "In rows",
+                                esES = "En filas",
+                            },
+                        },
+                        {
+                            value = "vertical",
+                            label = {
+                                enUS = "In columns",
+                                esES = "En columnas",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["arrange.custom"] = true,
+                    },
+                },
+                {
+                    id = "buffHorizontal",
+                    type = "select",
+                    default = "left",
+                    label = {
+                        enUS = "Buffs: left or right",
+                        esES = "Bufos: izquierda o derecha",
+                    },
+                    description = {
+                        enUS = "In rows: where the icons grow. In columns: where new columns go.",
+                        esES = "En filas: hacia dónde crecen los iconos. En columnas: dónde van las columnas nuevas.",
+                    },
+                    values = {
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["arrange.custom"] = true,
+                    },
+                },
+                {
+                    id = "buffVertical",
+                    type = "select",
+                    default = "down",
+                    label = {
+                        enUS = "Buffs: down or up",
+                        esES = "Bufos: abajo o arriba",
+                    },
+                    description = {
+                        enUS = "In rows: where new rows go. In columns: where the icons grow.",
+                        esES = "En filas: dónde van las filas nuevas. En columnas: hacia dónde crecen los iconos.",
+                    },
+                    values = {
+                        {
+                            value = "down",
+                            label = {
+                                enUS = "Down",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "up",
+                            label = {
+                                enUS = "Up",
+                                esES = "Arriba",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["arrange.custom"] = true,
+                    },
+                },
+                {
+                    id = "debuffOrientation",
+                    type = "select",
+                    default = "horizontal",
+                    label = {
+                        enUS = "Debuffs: rows or columns",
+                        esES = "Perjuicios: filas o columnas",
+                    },
+                    values = {
+                        {
+                            value = "horizontal",
+                            label = {
+                                enUS = "In rows",
+                                esES = "En filas",
+                            },
+                        },
+                        {
+                            value = "vertical",
+                            label = {
+                                enUS = "In columns",
+                                esES = "En columnas",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["arrange.custom"] = true,
+                    },
+                },
+                {
+                    id = "debuffHorizontal",
+                    type = "select",
+                    default = "left",
+                    label = {
+                        enUS = "Debuffs: left or right",
+                        esES = "Perjuicios: izquierda o derecha",
+                    },
+                    description = {
+                        enUS = "In rows: where the icons grow. In columns: where new columns go.",
+                        esES = "En filas: hacia dónde crecen los iconos. En columnas: dónde van las columnas nuevas.",
+                    },
+                    values = {
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["arrange.custom"] = true,
+                    },
+                },
+                {
+                    id = "debuffVertical",
+                    type = "select",
+                    default = "down",
+                    label = {
+                        enUS = "Debuffs: down or up",
+                        esES = "Perjuicios: abajo o arriba",
+                    },
+                    description = {
+                        enUS = "In rows: where new rows go. In columns: where the icons grow.",
+                        esES = "En filas: dónde van las filas nuevas. En columnas: hacia dónde crecen los iconos.",
+                    },
+                    values = {
+                        {
+                            value = "down",
+                            label = {
+                                enUS = "Down",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "up",
+                            label = {
+                                enUS = "Up",
+                                esES = "Arriba",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["arrange.custom"] = true,
+                    },
+                },
+            },
+        },
     },
 }

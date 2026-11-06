@@ -21,9 +21,15 @@ local E = EternityUI
 local L = E.NewLocale({
     BUFFS = "Buffs",
     DEBUFFS = "Debuffs",
+    ARRANGE_SAVED = "Icon order saved in your Edit Mode layout: /reload to see it.",
+    ARRANGE_PRESET = "Your Edit Mode layout is a preset one, which can't be changed: make a layout of your own in Edit Mode (/editmode) and choose the order again.",
+    ARRANGE_FAILED = "The icon order couldn't be saved in your Edit Mode layout.",
 }, {
     BUFFS = "Bufos",
     DEBUFFS = "Perjuicios",
+    ARRANGE_SAVED = "Orden de los iconos guardado en tu disposición del Modo Edición: /reload para verlo.",
+    ARRANGE_PRESET = "Tu disposición del Modo Edición es predefinida y no se puede cambiar: crea una propia en el Modo Edición (/editmode) y vuelve a elegir el orden.",
+    ARRANGE_FAILED = "No se pudo guardar el orden de los iconos en tu disposición del Modo Edición.",
 })
 
 local MIN_SIZE = 32 -- the holder's smallest side, so the Mover's handle can be grabbed
@@ -428,6 +434,77 @@ local function hookEditMode()
     end
 end
 
+-- Icon order -----------------------------------------------------------------------------------
+-- Written into the active Edit Mode layout through C_EditMode (GetLayouts / SaveLayouts), never
+-- into Blizzard's frames: after /reload Edit Mode reads its layout from the game and applies it
+-- itself, untainted. Horizontal: IconDirection is left/right and IconWrap down/up; vertical: the
+-- other way round (Enum.AuraFrameIconDirection and AuraFrameIconWrap share their values).
+
+local ARRANGED = {
+    { prefix = "buff", index = "BuffFrame" },
+    { prefix = "debuff", index = "DebuffFrame" },
+}
+
+local function wantedSettings(prefix)
+    local vertical = opt("arrange." .. prefix .. "Orientation") == "vertical"
+    local right = opt("arrange." .. prefix .. "Horizontal") == "right" and 1 or 0
+    local up = opt("arrange." .. prefix .. "Vertical") == "up" and 1 or 0
+    local setting = Enum.EditModeAuraFrameSetting
+    return {
+        [setting.Orientation] = vertical and 1 or 0,
+        [setting.IconDirection] = vertical and up or right,
+        [setting.IconWrap] = vertical and right or up,
+    }
+end
+
+-- The layout Edit Mode is using, if it's one of the player's own (presets come first in its list).
+local function activeCustomLayout(layouts)
+    local presets = 2
+    local manager = _G.EditModePresetLayoutManager
+    if manager and manager.GetCopyOfPresetLayouts then
+        local ok, list = pcall(manager.GetCopyOfPresetLayouts, manager)
+        if ok and type(list) == "table" then
+            presets = #list
+        end
+    end
+    local index = (layouts.activeLayout or 0) - presets
+    return index >= 1 and layouts.layouts[index] or nil
+end
+
+--- Saves the options' icon order into the active Edit Mode layout. Returns a message for the chat.
+---@return string?
+function Module:SaveArrangement()
+    if not (C_EditMode and C_EditMode.GetLayouts and C_EditMode.SaveLayouts and Enum.EditModeAuraFrameSetting) then
+        return L.ARRANGE_FAILED
+    end
+    local layouts = C_EditMode.GetLayouts()
+    local layout = layouts and activeCustomLayout(layouts)
+    if not layout then
+        return L.ARRANGE_PRESET
+    end
+    local changed = false
+    for _, arranged in ipairs(ARRANGED) do
+        local index = Enum.EditModeAuraFrameSystemIndices[arranged.index]
+        local wanted = wantedSettings(arranged.prefix)
+        for _, system in ipairs(layout.systems or {}) do
+            if system.system == Enum.EditModeSystem.AuraFrame and system.systemIndex == index then
+                for _, entry in ipairs(system.settings or {}) do
+                    local value = wanted[entry.setting]
+                    if value ~= nil and entry.value ~= value then
+                        entry.value = value
+                        changed = true
+                    end
+                end
+            end
+        end
+    end
+    if not changed then
+        return nil
+    end
+    local ok = pcall(C_EditMode.SaveLayouts, layouts)
+    return ok and L.ARRANGE_SAVED or L.ARRANGE_FAILED
+end
+
 function Module:OnEnable()
     self.running = true
     hookEditMode()
@@ -451,8 +528,16 @@ function Module:OnDisable()
     self:Apply()
 end
 
-function Module:OnConfigChanged()
+function Module:OnConfigChanged(path)
     self:Apply()
+    if path and path:find("^arrange%.") and opt("arrange.custom") then
+        E.Combat.Run(self, function()
+            local message = self:SaveArrangement()
+            if message then
+                print("|cff8b5cf6Eternity|r " .. message)
+            end
+        end)
+    end
 end
 
 E:RegisterModule(addonName, Module)
