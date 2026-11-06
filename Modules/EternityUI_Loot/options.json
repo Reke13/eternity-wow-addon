@@ -1,0 +1,104 @@
+{
+  "format": 1,
+  "module": "EternityUI_Loot",
+  "title": { "enUS": "Loot", "esES": "Botín" },
+  "description": {
+    "enUS": "A loot window that can open at the mouse, a history of your loot (/etloot) and a movable spot for group rolls.",
+    "esES": "Una ventana de botín que puede abrirse en el ratón, un historial de lo despojado (/etloot) y un sitio movible para las tiradas."
+  },
+  "groups": [
+    {
+      "id": "window",
+      "label": { "enUS": "Loot window", "esES": "Ventana de botín" },
+      "options": [
+        {
+          "id": "replace",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Use Eternity's window", "esES": "Usar la ventana de Eternity" },
+          "description": {
+            "enUS": "Off keeps Blizzard's window. The history works either way.",
+            "esES": "Apagado deja la ventana de Blizzard. El historial funciona igual."
+          }
+        },
+        {
+          "id": "position",
+          "type": "select",
+          "default": "mouse",
+          "label": { "enUS": "Open it", "esES": "Abrirla" },
+          "visibleWhen": { "window.replace": true },
+          "values": [
+            { "value": "mouse", "label": { "enUS": "At the mouse", "esES": "En el ratón" } },
+            { "value": "fixed", "label": { "enUS": "In a fixed spot (Mover)", "esES": "En un sitio fijo (Mover)" } }
+          ]
+        },
+        { "id": "scale", "type": "range", "default": 1, "min": 0.6, "max": 1.6, "step": 0.05, "label": { "enUS": "Scale", "esES": "Escala" }, "visibleWhen": { "window.replace": true } },
+        { "id": "width", "type": "range", "default": 260, "min": 180, "max": 420, "step": 10, "label": { "enUS": "Width", "esES": "Ancho" }, "visibleWhen": { "window.replace": true } },
+        { "id": "rowHeight", "type": "range", "default": 34, "min": 24, "max": 52, "step": 2, "label": { "enUS": "Row height", "esES": "Alto de las filas" }, "visibleWhen": { "window.replace": true } },
+        { "id": "textSize", "type": "range", "default": 14, "min": 10, "max": 20, "step": 1, "label": { "enUS": "Text size", "esES": "Tamaño del texto" }, "visibleWhen": { "window.replace": true } },
+        { "id": "opacity", "type": "range", "default": 1, "min": 0.3, "max": 1, "step": 0.05, "label": { "enUS": "Background opacity", "esES": "Opacidad del fondo" }, "visibleWhen": { "window.replace": true } },
+        { "id": "shadow", "type": "toggle", "default": true, "label": { "enUS": "Shadow", "esES": "Sombra" }, "visibleWhen": { "window.replace": true } },
+        { "id": "qualityBorder", "type": "toggle", "default": true, "label": { "enUS": "Border in the item's quality color", "esES": "Borde del color de la calidad" }, "visibleWhen": { "window.replace": true } },
+        { "id": "buttons", "type": "toggle", "default": true, "label": { "enUS": "Take all and history buttons", "esES": "Botones de coger todo e historial" }, "visibleWhen": { "window.replace": true } }
+      ]
+    },
+    {
+      "id": "history",
+      "label": { "enUS": "History", "esES": "Historial" },
+      "options": [
+        { "id": "enabled", "type": "toggle", "default": true, "label": { "enUS": "Record what you loot", "esES": "Registrar lo que despojas" } },
+        {
+          "id": "minQuality",
+          "type": "select",
+          "default": "0",
+          "label": { "enUS": "Lowest item quality", "esES": "Calidad mínima de los objetos" },
+          "visibleWhen": { "history.enabled": true },
+          "values": [
+            { "value": "0", "label": { "enUS": "Poor", "esES": "Pobre" } },
+            { "value": "1", "label": { "enUS": "Common", "esES": "Común" } },
+            { "value": "2", "label": { "enUS": "Uncommon", "esES": "Poco común" } },
+            { "value": "3", "label": { "enUS": "Rare", "esES": "Raro" } },
+            { "value": "4", "label": { "enUS": "Epic", "esES": "Épico" } }
+          ]
+        },
+        { "id": "money", "type": "toggle", "default": true, "label": { "enUS": "Gold", "esES": "Oro" }, "visibleWhen": { "history.enabled": true } },
+        { "id": "currency", "type": "toggle", "default": true, "label": { "enUS": "Currencies", "esES": "Monedas" }, "visibleWhen": { "history.enabled": true } },
+        {
+          "id": "received",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Items received another way", "esES": "Objetos recibidos de otra forma" },
+          "description": {
+            "enUS": "Quest rewards, purchases and anything else the game announces as received, not looted.",
+            "esES": "Recompensas de misión, compras y lo demás que el juego anuncia como recibido, no como botín."
+          },
+          "visibleWhen": { "history.enabled": true }
+        },
+        {
+          "id": "others",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "What others in your group loot", "esES": "Lo que despojan otros de tu grupo" },
+          "visibleWhen": { "history.enabled": true }
+        },
+        { "id": "limit", "type": "range", "default": 5000, "min": 500, "max": 20000, "step": 500, "label": { "enUS": "Entries kept", "esES": "Entradas guardadas" }, "visibleWhen": { "history.enabled": true } }
+      ]
+    },
+    {
+      "id": "rolls",
+      "label": { "enUS": "Group rolls", "esES": "Tiradas de grupo" },
+      "options": [
+        {
+          "id": "move",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Place them with the Mover", "esES": "Colocarlas con el Mover" },
+          "description": {
+            "enUS": "The roll windows stay Blizzard's. Off leaves them in their usual spot.",
+            "esES": "Las ventanas de tirada siguen siendo las de Blizzard. Apagado las deja en su sitio de siempre."
+          }
+        }
+      ]
+    }
+  ]
+}

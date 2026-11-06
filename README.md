@@ -26,6 +26,7 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_Discs` | Radial discs of spells, items, toys and macros, opened with a key (`/etdiscs`) |
 | `EternityUI_Experience` | Experience bar |
 | `EternityUI_InfoBar` | Information bar |
+| `EternityUI_Loot` | Loot window that can open at the mouse, searchable loot history (`/etloot`) and a Mover spot for group rolls |
 | `EternityUI_Map` | World map |
 | `EternityUI_Minimap` | Minimap and button collector |
 | `EternityUI_Objectives` | Quest tracker |

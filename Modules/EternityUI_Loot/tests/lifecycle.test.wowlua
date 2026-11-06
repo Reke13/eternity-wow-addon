@@ -1,0 +1,135 @@
+-- The module reads the game's loot lines, filters its log and gives Blizzard's window back.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Loot"
+local LINK = "|cff0070dd|Hitem:1234::::::::60:::::|h[Sample Blade]|h|r"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+@test("the module starts and takes over the loot window")
+local function starts()
+    expect(module().active).toBe(true)
+    expect(module().Window.Active()).toBe(true)
+    expect(EternityUI.Secret ~= nil).toBe(true)
+    expect(LootFrame:IsEventRegistered("LOOT_OPENED")).toBe(false)
+end
+
+@test("a format string becomes a pattern, positional arguments included")
+local function patterns()
+    local pattern = module().Recorder.Pattern("You receive loot: %sx%d.")
+    local link, count = ("You receive loot: linkx5."):match(pattern)
+    expect(link).toBe("link")
+    expect(count).toBe("5")
+    expect(module().Recorder.Pattern("%1$s gets %2$d")).toBe("^(.+) gets (%d+)$")
+end
+
+@test("your own loot line gives link and count")
+local function ownLine()
+    local line = module().Recorder.ParseItem(LOOT_ITEM_SELF_MULTIPLE:format(LINK, 3))
+    expect(line.own).toBe(true)
+    expect(line.link).toBe(LINK)
+    expect(line.count).toBe(3)
+end
+
+@test("another player's line names them")
+local function otherLine()
+    local line = module().Recorder.ParseItem(LOOT_ITEM:format("Thrall", LINK))
+    expect(line.own == nil).toBe(true)
+    expect(line.looter).toBe("Thrall")
+    expect(line.count).toBe(1)
+end
+
+@test("a line that only mentions an item is not loot")
+local function otherLines()
+    expect(module().Recorder.ParseItem("Thrall won: " .. LINK) == nil).toBe(true)
+end
+
+@test("money adds up its coins and ignores other players")
+local function money()
+    local text = YOU_LOOT_MONEY:format(GOLD_AMOUNT:format(1) .. ", " .. SILVER_AMOUNT:format(5))
+    expect(module().Recorder.ParseMoney(text)).toBe(10500)
+    expect(module().Recorder.ParseMoney("nothing here") == nil).toBe(true)
+end
+
+@test("the options drop what they exclude")
+local function wanted()
+    local recorder = module().Recorder
+    expect(recorder.Wanted({ kind = "item", quality = 3 })).toBe(true)
+    expect(recorder.Wanted({ kind = "item", quality = 3, pushed = true })).toBe(false)
+    expect(recorder.Wanted({ kind = "item", quality = 3, looter = "Thrall" })).toBe(false)
+end
+
+@test("the filter goes newest first, with a header per day, and adds up the gold")
+local function filter()
+    local now = time()
+    local entries = {
+        { time = now - 3 * 86400, kind = "money", count = 500, zone = "Elwynn" },
+        { time = now - 100, kind = "item", name = "Blade", quality = 3, count = 1, zone = "Durotar" },
+        { time = now - 50, kind = "item", name = "Rag", quality = 0, count = 1, zone = "Durotar" },
+    }
+    local base = { text = "", kind = "all", quality = 0, character = "all", period = "all" }
+    local history = module().History
+    local view, count, copper = history.Filter(entries, base, now)
+    expect(count).toBe(3)
+    expect(copper).toBe(500)
+    expect(view[2].name).toBe("Rag")
+
+    local rare = { text = "", kind = "all", quality = 3, character = "all", period = "all" }
+    local _, rareCount = history.Filter(entries, rare, now)
+    expect(rareCount).toBe(1)
+
+    local search = { text = "elwy", kind = "all", quality = 0, character = "all", period = "all" }
+    local _, found = history.Filter(entries, search, now)
+    expect(found).toBe(1)
+
+    local today = { text = "", kind = "all", quality = 0, character = "all", period = "today" }
+    local _, recent = history.Filter({ entries[1] }, today, now)
+    expect(recent).toBe(0)
+end
+
+@test("the log stays within the limit")
+local function limit()
+    local recorder = module().Recorder
+    recorder.Bind()
+    recorder.Clear()
+    for i = 1, 700 do
+        recorder.db.entries[i] = { time = i }
+    end
+    EternityUI.store:Set(NAME, "history.limit", 500)
+    expect(#recorder.db.entries).toBe(500)
+    expect(recorder.db.entries[1].time).toBe(201)
+    EternityUI.store:Set(NAME, "history.limit", 5000)
+    recorder.Clear()
+end
+
+@test("the window goes to the Mover only in the fixed spot")
+local function mover()
+    local key = NAME .. ".window"
+    expect(EternityUI.Mover.elements[key] == nil).toBe(true)
+    EternityUI.store:Set(NAME, "window.position", "fixed")
+    expect(EternityUI.Mover.elements[key] ~= nil).toBe(true)
+    EternityUI.store:Set(NAME, "window.position", "mouse")
+    expect(EternityUI.Mover.elements[key] == nil).toBe(true)
+end
+
+@test("the sample rows fit the window")
+local function preview()
+    local window = module().Window
+    window.Preview()
+    expect(window.frame:IsShown()).toBe(true)
+    expect(window.rows[4]:IsShown()).toBe(true)
+    window.frame:Hide()
+    expect(window.preview).toBe(false)
+end
+
+@test("disabling gives Blizzard's window back")
+local function disables()
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(LootFrame:IsEventRegistered("LOOT_OPENED")).toBe(true)
+    expect(LootFrame:IsEventRegistered("LOOT_CLOSED")).toBe(true)
+    expect(EternityUI.Mover.elements[NAME .. ".rolls"] == nil).toBe(true)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    expect(LootFrame:IsEventRegistered("LOOT_OPENED")).toBe(false)
+end

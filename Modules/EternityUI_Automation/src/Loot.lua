@@ -37,6 +37,7 @@ local BUSY_FRAMES = {
     "AuctionHouseFrame",
     "GuildBankFrame",
     "LootFrame",
+    "EternityUILootWindow",
 }
 
 function Loot.Busy()

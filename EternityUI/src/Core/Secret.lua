@@ -7,6 +7,7 @@ local _, ns = ...
 ---@class EternitySecret
 local Secret = {}
 ns.Secret = Secret
+EternityUI.Secret = Secret
 
 --- True if value is secret. Comparing or doing arithmetic on such a value throws.
 ---@param value any
