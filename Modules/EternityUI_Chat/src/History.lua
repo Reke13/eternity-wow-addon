@@ -325,6 +325,11 @@ function History:FormatLine(message, conversation)
         if color then
             who = ("|c%s%s|r"):format(color, who)
         end
+        -- A player link, like a live line: a click whispers them (without our own realm, which the
+        -- server doesn't take in Forever).
+        if conversation.kind ~= "bnet" then
+            who = ("|Hplayer:%s|h%s|h"):format(ns.ShortName(message.f), who)
+        end
     end
     local where = conversation.kind == "whisper" and ("@" .. conversation.title) or conversation.title
     local stamp = date("%H:%M", message.t)
