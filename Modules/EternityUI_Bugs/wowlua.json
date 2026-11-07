@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-bugs",
+    "version": "0.1.5",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Bugs",
+    "title": "Eternity Bugs",
+    "notes": "Eternity module: collects the game's Lua errors, warnings and blocked actions, and lists them in a window to read, copy and clear (/etbugs).",
+    "saved-variables": ["EternityUIBugsDB"]
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Recorder.lua",
+      "src/Window.lua",
+      "src/Bugs.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "EternityUIBugsDB",
+      "SOUNDKIT"
+    ]
+  }
+}

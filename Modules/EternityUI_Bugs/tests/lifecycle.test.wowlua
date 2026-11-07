@@ -1,0 +1,130 @@
+-- The module collects errors once each, filters its list and stops cleanly.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Bugs"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function recorder()
+    return module().Recorder
+end
+
+@test("the module starts collecting")
+local function starts()
+    expect(module().active).toBe(true)
+    expect(recorder().running).toBe(true)
+    expect(type(EternityUIBugsDB.errors)).toBe("table")
+end
+
+@test("the same error is kept once, with a count")
+local function counts()
+    recorder().Clear()
+    recorder().Add("error", "Foo.lua:1: boom", "stack a", "locals")
+    recorder().Add("error", "Foo.lua:1: boom", "stack a", "locals")
+    recorder().Add("error", "Bar.lua:2: other", "stack b", nil)
+    local errors = EternityUIBugsDB.errors
+    expect(#errors).toBe(2)
+    expect(errors[1].message).toBe("Foo.lua:1: boom")
+    expect(errors[1].count).toBe(2)
+    expect(errors[2].count).toBe(1)
+end
+
+@test("an error that comes again moves to the end")
+local function moves()
+    recorder().Clear()
+    recorder().Add("error", "first", "", nil)
+    recorder().Add("error", "second", "", nil)
+    recorder().Add("error", "first", "", nil)
+    local errors = EternityUIBugsDB.errors
+    expect(errors[2].message).toBe("first")
+    expect(errors[2].count).toBe(2)
+end
+
+@test("the limit drops the oldest")
+local function limit()
+    recorder().Clear()
+    EternityUI.store:Set(NAME, "capture.limit", 20)
+    for i = 1, 25 do
+        recorder().Add("error", "error " .. i, "", nil)
+    end
+    local errors = EternityUIBugsDB.errors
+    expect(#errors).toBe(20)
+    expect(errors[1].message).toBe("error 6")
+    EternityUI.store:Set(NAME, "capture.limit", 200)
+end
+
+@test("blocked actions name the addon and the function")
+local function blocked()
+    recorder().Clear()
+    recorder().OnBlocked("ADDON_ACTION_BLOCKED", "SomeAddon", "CastSpellByName()")
+    local entry = EternityUIBugsDB.errors[1]
+    expect(entry.kind).toBe("blocked")
+    expect(entry.message:find("SomeAddon", 1, true) ~= nil).toBe(true)
+    expect(entry.message:find("CastSpellByName()", 1, true) ~= nil).toBe(true)
+end
+
+@test("warnings are left out unless the option asks for them")
+local function warnings()
+    recorder().Clear()
+    local frame = ScriptErrorsFrame
+    expect(frame ~= nil and frame.DisplayMessageInternal ~= nil).toBe(true)
+    expect(recorder().hooked).toBe(true)
+    frame:DisplayMessageInternal("a warning", 1)
+    expect(#EternityUIBugsDB.errors).toBe(0)
+    frame:DisplayMessageInternal("an error", 0, "the stack", "the locals")
+    expect(#EternityUIBugsDB.errors).toBe(1)
+    expect(EternityUIBugsDB.errors[1].stack).toBe("the stack")
+end
+
+@test("the list filters by session and text, newest first")
+local function filters()
+    local errors = {
+        { kind = "error", message = "old one", stack = "", session = 1, count = 1, time = 1 },
+        { kind = "error", message = "Foo failed", stack = "", session = 2, count = 1, time = 2 },
+        { kind = "error", message = "Bar failed", stack = "in Foo", session = 2, count = 1, time = 3 },
+    }
+    local view = module().Window.Filter(errors, { text = "", session = "current" }, 2)
+    expect(#view).toBe(2)
+    expect(view[1].message).toBe("Bar failed")
+    view = module().Window.Filter(errors, { text = "foo", session = "all" }, 2)
+    expect(#view).toBe(2)
+    view = module().Window.Filter(errors, { text = "", session = "previous" }, 2)
+    expect(#view).toBe(1)
+    expect(view[1].message).toBe("old one")
+end
+
+@test("the full text has the message, stack and locals")
+local function describe()
+    local text = module().Window.Describe({
+        kind = "error", message = "boom", stack = "line 1", locals = "x = 1", session = 3, count = 4, time = 0,
+    })
+    expect(text:find("boom", 1, true) ~= nil).toBe(true)
+    expect(text:find("line 1", 1, true) ~= nil).toBe(true)
+    expect(text:find("x = 1", 1, true) ~= nil).toBe(true)
+end
+
+@test("the window opens and closes")
+local function window()
+    recorder().Clear()
+    recorder().Add("error", "shown", "stack", nil)
+    module().Window.Open()
+    expect(module().Window.frame:IsShown()).toBe(true)
+    expect(#module().Window.view).toBe(1)
+    module().Window.Toggle()
+    expect(module().Window.frame:IsShown()).toBe(false)
+end
+
+@test("the module stops collecting and starts again")
+local function cycle()
+    recorder().Clear()
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(module().active).toBe(false)
+    expect(recorder().running).toBe(false)
+    recorder().OnBlocked("ADDON_ACTION_BLOCKED", "SomeAddon", "Foo()")
+    expect(#EternityUIBugsDB.errors).toBe(0)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    expect(module().active).toBe(true)
+    expect(recorder().running).toBe(true)
+end
