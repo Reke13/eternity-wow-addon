@@ -1,12 +1,14 @@
--- Modules: one switch per part of the interface.
+-- Modules: one switch per part of the interface, in a list that scrolls when they don't fit.
 ---@type string, table
 local _, ns = ...
 local L = ns.L
 local E = EternityUI
 local Widgets = E.Widgets
 
+local ROW = 40
+
 local rows = {}
-local holder, empty
+local scroll, holder, empty
 
 local function row(index)
     if rows[index] then
@@ -21,8 +23,8 @@ local function row(index)
     entry.note = Widgets.Text(entry.frame, 13, "muted")
     entry.note:SetPoint("RIGHT", entry.toggle, "LEFT", -12, 0)
     entry.note:SetText(L.NEEDS_RELOAD)
-    entry.frame:SetPoint("TOPLEFT", 0, -(index - 1) * 40)
-    entry.frame:SetPoint("TOPRIGHT", 0, -(index - 1) * 40)
+    entry.frame:SetPoint("TOPLEFT", 0, -(index - 1) * ROW)
+    entry.frame:SetPoint("TOPRIGHT", 0, -(index - 1) * ROW)
     rows[index] = entry
     return entry
 end
@@ -37,11 +39,13 @@ local function refresh()
         entry.toggle:SetValue(E.store:IsModuleEnabled(module.name))
         entry.note:SetShown(module.reloadPending == true)
     end
+    scroll:SetContentHeight(#modules * ROW + 8)
 end
 
 local function build(frame)
-    holder = CreateFrame("Frame", nil, frame)
-    holder:SetAllPoints()
+    scroll = Widgets.Scroll(frame)
+    scroll:SetAllPoints()
+    holder = scroll.child
 
     empty = CreateFrame("Frame", nil, frame)
     empty:SetAllPoints()
