@@ -14,7 +14,7 @@
 local addonName, ns = ...
 local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
-local L, Inventory = ns.L, ns.Inventory
+local L, Inventory, Viewer = ns.L, ns.Inventory, ns.Viewer
 
 local QUALITY_FROM = { poor = 0, common = 1, uncommon = 2, rare = 3, epic = 4 }
 local QUEST_COLOR = { 1, 0.82, 0.2, 1 }
@@ -56,6 +56,7 @@ local RELAYOUT = {
 local Module = {
     schema = ns.OptionsSchema,
     inventory = Inventory, -- for the tests
+    viewer = ns.Viewer,
 }
 
 local function opt(path)
@@ -479,6 +480,10 @@ function Grid:LayoutChrome(width, height)
     self.search:SetPoint("RIGHT", self.sort, "LEFT", -8, 0)
     self.content:ClearAllPoints()
     self.content:SetPoint("TOPLEFT", toolbar, "BOTTOMLEFT", 0, -pad)
+    -- Wide enough for everything in the footer.
+    self:UpdateFooter()
+    width = math.max(width, self:FooterWidth() - 2 * pad)
+    toolbar:SetWidth(width)
     -- The footer's text is centered in it: the space up to that text sets the gap below the items.
     local footer = w.footer:GetHeight()
     local below = opt("window.footerSpace") - (footer - FOOTER_TEXT) / 2
@@ -516,6 +521,18 @@ function Grid:Bags()
     return list
 end
 
+--- The width the footer's shown pieces take, with their gaps and the edges.
+function Grid:FooterWidth()
+    local total = 24
+    for _, piece in ipairs({ self.money, self.others, self.savedBank, self.keyring, self.free, self.deposit, self.blizzard, self.guild }) do
+        if piece and piece:IsShown() then
+            local width = piece.GetStringWidth and piece:GetStringWidth() or piece:GetWidth()
+            total = total + width + 12
+        end
+    end
+    return total
+end
+
 function Grid:UpdateFooter()
     local free, total = 0, 0
     for _, bag in ipairs(self:Bags()) do
@@ -540,6 +557,12 @@ function Grid:UpdateFooter()
     if self.money then
         self.money:SetText(GetMoneyString(GetMoney(), true))
         self.money:SetShown(opt("windows.money"))
+        self.others:ClearAllPoints()
+        if self.money:IsShown() then
+            self.others:SetPoint("LEFT", self.money, "RIGHT", 12, 0)
+        else
+            self.others:SetPoint("LEFT", self.frame.footer, "LEFT", 12, 0)
+        end
     end
     if self.deposit then
         self.deposit:SetShown(C_Bank ~= nil and C_Bank.AutoDepositItemsIntoBank ~= nil)
@@ -778,6 +801,21 @@ function Grid.New(module, kind)
         end)
         self.blizzard:SetPoint("LEFT", self.deposit, "RIGHT", 4, 0)
         hint(self.blizzard, L.BLIZZARD_BANK, L.BLIZZARD_BANK_HINT)
+        -- The saved view: the guild bank, and the bank of the other characters.
+        self.guild = Widgets.Button(w.footer, L.GUILD, "ghost", function()
+            Viewer.Open("guild", nil, nil, w)
+        end)
+        self.guild:SetHeight(26)
+        self.guild:SetPoint("LEFT", self.blizzard, "RIGHT", 4, 0)
+        hint(self.guild, L.GUILD_BANK, L.GUILD_HINT)
+        self.others = Widgets.Button(w.footer, L.OTHER_CHARACTERS, "ghost", function(button)
+            Viewer.CharacterMenu(button, function(realm, name)
+                Viewer.Open("bank", realm, name, w)
+            end)
+        end)
+        self.others:SetHeight(26)
+        self.others:SetPoint("LEFT", self.guild, "RIGHT", 4, 0)
+        hint(self.others, L.OTHER_CHARACTERS, L.OTHER_CHARACTERS_HINT)
     else
         self.money = Widgets.Text(w.footer, FOOTER_TEXT, "text")
         self.money:SetPoint("LEFT", w.footer, "LEFT", pad, 0)
@@ -785,6 +823,22 @@ function Grid.New(module, kind)
             E.store:Set(addonName, "windows.keyring", value)
         end)
         hint(self.keyring, L.KEYRING, L.KEYRING_HINT)
+        -- The saved view: the other characters' bags, and this one's bank from anywhere.
+        self.others = Widgets.Button(w.footer, L.OTHER_CHARACTERS, "ghost", function(button)
+            Viewer.CharacterMenu(button, function(realm, name)
+                Viewer.Open("bags", realm, name, w)
+            end)
+        end)
+        self.others:SetHeight(26)
+        self.others:SetWidth(self.others.label:GetStringWidth() + 20)
+        hint(self.others, L.OTHER_CHARACTERS, L.OTHER_CHARACTERS_HINT)
+        self.savedBank = Widgets.Button(w.footer, L.SAVED_BANK, "ghost", function()
+            Viewer.Open("bank", nil, nil, w)
+        end)
+        self.savedBank:SetHeight(26)
+        self.savedBank:SetWidth(self.savedBank.label:GetStringWidth() + 20)
+        self.savedBank:SetPoint("LEFT", self.others, "RIGHT", 4, 0)
+        hint(self.savedBank, L.SAVED_BANK, L.SAVED_BANK_HINT)
     end
     self.dirty = true
     return self
@@ -1072,6 +1126,7 @@ end
 function Module:OnDisable()
     self.running = false
     Inventory:Stop()
+    Viewer.Stop()
     self:ApplyAll()
     for _, grid in ipairs({ self.bags, self.bank }) do
         if grid then
@@ -1085,6 +1140,7 @@ end
 function Module:OnConfigChanged()
     -- Everything is idempotent and cheap: it's reapplied in full.
     self:ApplyAll()
+    Viewer.Refresh()
 end
 
 E:RegisterModule(addonName, Module)

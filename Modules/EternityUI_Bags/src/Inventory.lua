@@ -2,7 +2,8 @@
 -- and the lines it adds to the item tooltips ("who has it and how many").
 --   * Bags (and keyring) and equipment are read on login and whenever they change. The bank and
 --     the warband bank can only be read while the bank is open: they're updated on each visit and
---     the last snapshot is kept.
+--     the last snapshot is kept. The guild bank too, while it's open: its tabs are asked for
+--     (QueryGuildBankTab) and kept per guild, shared by the characters in it.
 --   * Totals per item (what the tooltips read) and, for the Companion, where each item sits:
 --     every bag or bank tab with its size and slots, and the equipment by slot.
 --   * No links: only IDs and counts per slot, plus one account-wide entry per item with its
@@ -44,6 +45,13 @@ local FIRST_EQUIPPED, LAST_EQUIPPED = 1, 19 -- INVSLOT_HEAD .. INVSLOT_TABARD
 ---@field bank table<integer, integer>
 ---@field equipped table<integer, integer>
 ---@field layout EternityUIBagsLayout?
+---@field guild string? key of the character's guild in `guilds` (realm/guild name)
+
+---@class EternityUIBagsGuild
+---@field name string
+---@field realm string
+---@field tabs EternityUIBagsContainer[]
+---@field updated number? time() of the last visit
 
 ---@class EternityUIBagsOwner
 ---@field name string display name (Name or Name-Realm)
@@ -150,6 +158,7 @@ function Inventory:Bind()
     db.version = SCHEMA_VERSION
     db.warband = type(db.warband) == "table" and db.warband or { items = {} }
     db.items = type(db.items) == "table" and db.items or {}
+    db.guilds = type(db.guilds) == "table" and db.guilds or {}
     _G.EternityUIBagsDB = db
     self.db = db
     return db
@@ -190,6 +199,50 @@ function Inventory:Others()
         return a.name < b.name
     end)
     return list
+end
+
+--- Every remembered character, this one first, then by realm and name: { realm, name, class,
+--- current }.
+function Inventory:Characters()
+    local db = self:Bind()
+    local myRealm, myName = realmName(), playerName()
+    local list = {}
+    for realm, chars in pairs(db.realms) do
+        for name, char in pairs(chars) do
+            local current = realm == myRealm and name == myName
+            list[#list + 1] = { realm = realm, name = name, class = char.class, current = current }
+        end
+    end
+    table.sort(list, function(a, b)
+        if a.current ~= b.current then
+            return a.current
+        elseif a.realm ~= b.realm then
+            return a.realm < b.realm
+        end
+        return a.name < b.name
+    end)
+    return list
+end
+
+--- This character's realm and name, as they're saved.
+---@return string realm
+---@return string name
+function Inventory.Me()
+    return realmName(), playerName()
+end
+
+--- A saved character, or nil.
+---@return EternityUIBagsCharacter?
+function Inventory:Character(realm, name)
+    local chars = self:Bind().realms[realm]
+    return chars and chars[name] or nil
+end
+
+--- The saved guild bank of a character's guild, or nil.
+---@param char EternityUIBagsCharacter?
+---@return EternityUIBagsGuild?
+function Inventory:GuildOf(char)
+    return char and char.guild and self:Bind().guilds[char.guild] or nil
 end
 
 function Inventory:Forget(realm, name)
@@ -300,6 +353,13 @@ function Inventory:ScanBags()
     char.bags = items
     layoutOf(char).bags = containers
     char.updated = time()
+    -- The guild the character is in, to find its guild bank (none: it left).
+    local guild = GetGuildInfo and GetGuildInfo("player")
+    if type(guild) == "string" and guild ~= "" and not secret(guild) then
+        char.guild = realmName() .. "/" .. guild
+    elseif IsInGuild and not IsInGuild() then
+        char.guild = nil
+    end
 end
 
 function Inventory:ScanEquipped()
@@ -344,6 +404,95 @@ function Inventory:ScanBank()
     end
 end
 
+-- Guild bank ---------------------------------------------------------------------------------
+
+local GUILD_SLOTS = 98 -- MAX_GUILDBANK_SLOTS_PER_TAB in Blizzard_GuildBankUI
+local QUERY_GAP = 0.4 -- seconds between tab requests
+local QUERY_WAIT = 1.5 -- a tab asked for this long ago and still empty is empty
+
+local function itemIDFromLink(link)
+    if type(link) ~= "string" or secret(link) then
+        return nil
+    end
+    return tonumber(link:match("item:(%d+)"))
+end
+
+--- Asks the server for every tab this character can see, a little apart: until a tab arrives
+--- it reads as empty.
+function Inventory:QueryGuildTabs()
+    if not (GetNumGuildBankTabs and QueryGuildBankTab) then
+        return
+    end
+    self.guildQueried = {}
+    local delay = 0
+    for tab = 1, GetNumGuildBankTabs() do
+        local _, _, isViewable = GetGuildBankTabInfo(tab)
+        if isViewable then
+            C_Timer.After(delay, function()
+                if self.guildOpen then
+                    QueryGuildBankTab(tab)
+                    self.guildQueried[tab] = GetTime()
+                end
+            end)
+            delay = delay + QUERY_GAP
+        end
+    end
+end
+
+--- Reads the guild bank's tabs while it's open. A tab that hasn't arrived yet keeps its last
+--- snapshot instead of being wiped.
+function Inventory:ScanGuild()
+    if not (self.guildOpen and opt("inventory.guild") and GetNumGuildBankTabs) then
+        return
+    end
+    local guild = GetGuildInfo and GetGuildInfo("player")
+    if type(guild) ~= "string" or guild == "" or secret(guild) then
+        return
+    end
+    local db = self:Bind()
+    local key = realmName() .. "/" .. guild
+    local saved = db.guilds[key] or { name = guild, realm = realmName(), tabs = {} }
+    local current = GetCurrentGuildBankTab and GetCurrentGuildBankTab()
+    local tabs = {}
+    for tab = 1, GetNumGuildBankTabs() do
+        local name, icon, isViewable = GetGuildBankTabInfo(tab)
+        if isViewable then
+            local slots, found = {}, false
+            for slot = 1, GUILD_SLOTS do
+                local id = itemIDFromLink(GetGuildBankItemLink(tab, slot))
+                if id then
+                    local texture, count, _, _, quality = GetGuildBankItemInfo(tab, slot)
+                    count = type(count) == "number" and not secret(count) and count or 1
+                    slots[slot] = { id, count }
+                    found = true
+                    self:Remember(id, nameFromLink(GetGuildBankItemLink(tab, slot)), quality, texture)
+                end
+            end
+            local asked = self.guildQueried and self.guildQueried[tab]
+            local arrived = found or tab == current or (asked and GetTime() - asked >= QUERY_WAIT)
+            local previous
+            for _, old in ipairs(saved.tabs) do
+                if old.index == tab then
+                    previous = old
+                end
+            end
+            tabs[#tabs + 1] = {
+                id = tab,
+                index = tab,
+                kind = "guild",
+                name = type(name) == "string" and name ~= "" and not secret(name) and name or L.TAB_N:format(tab),
+                icon = type(icon) == "number" and not secret(icon) and icon or nil,
+                size = GUILD_SLOTS,
+                slots = (arrived or not previous) and slots or previous.slots,
+            }
+        end
+    end
+    saved.name, saved.realm, saved.tabs = guild, realmName(), tabs
+    saved.updated = time()
+    db.guilds[key] = saved
+    self:Current().guild = key
+end
+
 --- Forgets the item entries nobody carries any more.
 function Inventory:PruneItems()
     local db = self:Bind()
@@ -361,6 +510,13 @@ function Inventory:PruneItems()
         end
     end
     mark(db.warband.items)
+    for _, guild in pairs(db.guilds) do
+        for _, tab in ipairs(type(guild.tabs) == "table" and guild.tabs or {}) do
+            for _, slot in pairs(type(tab.slots) == "table" and tab.slots or {}) do
+                used[slot[1]] = true
+            end
+        end
+    end
     for id in pairs(db.items) do
         if not used[id] then
             db.items[id] = nil
@@ -531,6 +687,9 @@ local EVENTS = {
     "BANKFRAME_OPENED",
     "BANKFRAME_CLOSED",
     "PLAYERBANKSLOTS_CHANGED",
+    "GUILDBANKFRAME_OPENED",
+    "GUILDBANKFRAME_CLOSED",
+    "GUILDBANKBAGSLOTS_CHANGED",
 }
 
 function Inventory:OnEvent(event)
@@ -540,8 +699,23 @@ function Inventory:OnEvent(event)
         -- No last read: once closing, the bank bags may already report 0 slots.
         self.bankOpen = false
         return
+    elseif event == "GUILDBANKFRAME_OPENED" then
+        self.guildOpen = true
+    elseif event == "GUILDBANKFRAME_CLOSED" then
+        self.guildOpen = false
+        return
     end
     if not self.running or not opt("inventory.track") then
+        return
+    end
+    if event == "GUILDBANKFRAME_OPENED" then
+        if opt("inventory.guild") then
+            self:QueryGuildTabs()
+            self:ScanGuild()
+        end
+        return
+    elseif event == "GUILDBANKBAGSLOTS_CHANGED" then
+        self:ScanGuild()
         return
     end
     if event == "PLAYER_ENTERING_WORLD" then
