@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
   "package": {
     "name": "eternity-ui-castbars",
-    "version": "0.1.0",
+    "version": "0.1.5",
     "authors": ["Jaime"],
     "license": "MIT",
     "wowlua": "^0.13"
@@ -10,7 +10,7 @@
   "addon": {
     "name": "EternityUI_CastBars",
     "title": "Eternity Cast Bars",
-    "notes": "Eternity module: cast bars for every unit, plus GCD, swing and mirror timers."
+    "notes": "Eternity module: cast bars for every unit, plus GCD and mirror timers."
   },
   "addon-dependencies": {
     "required": ["EternityUI"]
@@ -28,7 +28,6 @@
       "src/Bar.lua",
       "src/Group.lua",
       "src/Gcd.lua",
-      "src/Swing.lua",
       "src/Mirror.lua",
       "src/Blizzard.lua",
       "src/CastBars.lua"

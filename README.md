@@ -21,7 +21,7 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_Automation` | Small one-switch automations |
 | `EternityUI_Bags` | Bags and bank |
 | `EternityUI_Buffs` | Blizzard's buff and debuff frames in the Mover |
-| `EternityUI_CastBars` | Cast bars, plus GCD, swing and mirror timers |
+| `EternityUI_CastBars` | Cast bars, plus GCD and mirror timers |
 | `EternityUI_Chat` | Chat look and tools |
 | `EternityUI_Discs` | Radial discs of spells, items, toys and macros, opened with a key (`/etdiscs`) |
 | `EternityUI_Experience` | Experience bar |
@@ -31,6 +31,8 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_Minimap` | Minimap and button collector |
 | `EternityUI_Objectives` | Quest tracker |
 | `EternityUI_Stats` | Detailed stats panel |
+| `EternityUI_SwingTimer` | Bars for your main hand, off hand and ranged auto attacks, one stack or each on its own |
+| `EternityUI_Resources` | Power bar that follows the druid's forms, combo point pips and the druid's mana while shapeshifted |
 | `EternityUI_Tooltip` | Tooltips |
 
 ## License

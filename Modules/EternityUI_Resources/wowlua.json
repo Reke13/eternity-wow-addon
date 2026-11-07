@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-resources",
+    "version": "0.1.5",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Resources",
+    "title": "Eternity Resources",
+    "notes": "Eternity module: a bar for your mana, rage or energy that follows the druid's forms, combo points and the druid's mana while shapeshifted."
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Ui.lua",
+      "src/Power.lua",
+      "src/Bar.lua",
+      "src/Pips.lua",
+      "src/Display.lua",
+      "src/Resources.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": [
+      "EternityUI"
+    ]
+  }
+}

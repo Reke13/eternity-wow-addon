@@ -1,0 +1,178 @@
+{
+  "format": 1,
+  "module": "EternityUI_SwingTimer",
+  "title": { "enUS": "Swing Timer", "esES": "Temporizador de golpe" },
+  "description": {
+    "enUS": "Your auto attacks as bars, timed by the game itself (parry haste included). Enemies' swings can't be read on Forever. Move them with /etmove.",
+    "esES": "Tus ataques automáticos como barras, medidos por el propio juego (con la aceleración por parada). Los golpes enemigos no se pueden leer en Forever. Muévelas con /etmove."
+  },
+  "groups": [
+    {
+      "id": "hands",
+      "label": { "enUS": "Hands", "esES": "Manos" },
+      "options": [
+        { "id": "mainHand", "type": "toggle", "default": true, "label": { "enUS": "Main hand", "esES": "Mano principal" } },
+        { "id": "offHand", "type": "toggle", "default": true, "label": { "enUS": "Off hand", "esES": "Mano secundaria" } },
+        { "id": "ranged", "type": "toggle", "default": true, "label": { "enUS": "Ranged", "esES": "A distancia" } }
+      ]
+    },
+    {
+      "id": "display",
+      "label": { "enUS": "Behavior", "esES": "Comportamiento" },
+      "options": [
+        {
+          "id": "visibility",
+          "type": "select",
+          "default": "attacking",
+          "label": { "enUS": "Show the bars", "esES": "Mostrar las barras" },
+          "description": {
+            "enUS": "An idle bar shows empty. Hands without a weapon for them stay hidden.",
+            "esES": "Una barra en reposo se ve vacía. Las manos sin arma para ellas siguen ocultas."
+          },
+          "values": [
+            { "value": "attacking", "label": { "enUS": "Only while swinging", "esES": "Solo mientras golpeas" } },
+            { "value": "combat", "label": { "enUS": "In combat", "esES": "En combate" } },
+            { "value": "always", "label": { "enUS": "Always", "esES": "Siempre" } }
+          ]
+        },
+        { "id": "alphaCombat", "type": "range", "default": 1, "min": 0.1, "max": 1, "step": 0.05, "label": { "enUS": "Opacity in combat", "esES": "Opacidad en combate" } },
+        { "id": "alphaIdle", "type": "range", "default": 1, "min": 0.1, "max": 1, "step": 0.05, "label": { "enUS": "Opacity out of combat", "esES": "Opacidad fuera de combate" } },
+        {
+          "id": "separate",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Move each hand on its own", "esES": "Mover cada mano por separado" },
+          "description": {
+            "enUS": "Each bar becomes its own element in /etmove instead of one stack.",
+            "esES": "Cada barra pasa a ser un elemento propio en /etmove en lugar de una sola pila."
+          }
+        },
+        { "id": "hideBlizzard", "type": "toggle", "default": true, "label": { "enUS": "Hide Blizzard's swing timer", "esES": "Ocultar el temporizador de golpe de Blizzard" } }
+      ]
+    },
+    {
+      "id": "range",
+      "label": { "enUS": "Out of range", "esES": "Fuera de alcance" },
+      "options": [
+        {
+          "id": "mode",
+          "type": "select",
+          "default": "dim",
+          "label": { "enUS": "When the target is out of range", "esES": "Con el objetivo fuera de alcance" },
+          "values": [
+            { "value": "dim", "label": { "enUS": "Dim the bar", "esES": "Atenuar la barra" } },
+            { "value": "color", "label": { "enUS": "Change its color", "esES": "Cambiar su color" } },
+            { "value": "off", "label": { "enUS": "Nothing", "esES": "Nada" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sound",
+      "label": { "enUS": "Sound", "esES": "Sonido" },
+      "options": [
+        {
+          "id": "swing",
+          "type": "select",
+          "default": "none",
+          "label": { "enUS": "Sound on each swing", "esES": "Sonido en cada golpe" },
+          "description": {
+            "enUS": "Main hand and ranged only, so dual wielding doesn't sound twice.",
+            "esES": "Solo mano principal y a distancia, para no sonar dos veces con dos armas."
+          },
+          "values": [
+            { "value": "none", "label": { "enUS": "None", "esES": "Ninguno" } },
+            { "value": "click", "label": { "enUS": "Click", "esES": "Clic" } },
+            { "value": "ping", "label": { "enUS": "Ping", "esES": "Ping" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "layout",
+      "label": { "enUS": "Size", "esES": "Tamaño" },
+      "options": [
+        { "id": "width", "type": "range", "default": 200, "min": 60, "max": 800, "step": 2, "label": { "enUS": "Width", "esES": "Ancho" } },
+        { "id": "height", "type": "range", "default": 12, "min": 4, "max": 40, "step": 1, "label": { "enUS": "Height", "esES": "Alto" } },
+        { "id": "spacing", "type": "range", "default": 3, "min": 0, "max": 20, "step": 1, "label": { "enUS": "Space between bars", "esES": "Espacio entre barras" } },
+        {
+          "id": "grow",
+          "type": "select",
+          "default": "down",
+          "label": { "enUS": "Stack direction", "esES": "Dirección de la pila" },
+          "visibleWhen": { "display.separate": false },
+          "values": [
+            { "value": "down", "label": { "enUS": "Down", "esES": "Hacia abajo" } },
+            { "value": "up", "label": { "enUS": "Up", "esES": "Hacia arriba" } }
+          ]
+        },
+        { "id": "scale", "type": "range", "default": 1, "min": 0.6, "max": 2, "step": 0.05, "label": { "enUS": "Scale", "esES": "Escala" } }
+      ]
+    },
+    {
+      "id": "look",
+      "tab": "appearance",
+      "label": { "enUS": "Look", "esES": "Aspecto" },
+      "options": [
+        {
+          "id": "direction",
+          "type": "select",
+          "default": "fill",
+          "label": { "enUS": "Bar movement", "esES": "Movimiento de la barra" },
+          "values": [
+            { "value": "fill", "label": { "enUS": "Fills up to the swing", "esES": "Se llena hasta el golpe" } },
+            { "value": "drain", "label": { "enUS": "Drains to the swing", "esES": "Se vacía hasta el golpe" } }
+          ]
+        },
+        {
+          "id": "texture",
+          "type": "select",
+          "default": "theme",
+          "label": { "enUS": "Fill", "esES": "Relleno" },
+          "values": [
+            { "value": "theme", "label": { "enUS": "Like the theme (glass or flat)", "esES": "Como el tema (cristal o plano)" } },
+            { "value": "flat", "label": { "enUS": "Flat", "esES": "Plano" } },
+            { "value": "gradient", "label": { "enUS": "Gradient", "esES": "Degradado" } }
+          ]
+        },
+        { "id": "spark", "type": "toggle", "default": true, "label": { "enUS": "Spark at the edge", "esES": "Chispa en el borde" } },
+        { "id": "background", "type": "toggle", "default": true, "label": { "enUS": "Show the background", "esES": "Mostrar el fondo" } },
+        { "id": "icon", "type": "toggle", "default": false, "label": { "enUS": "Weapon icon", "esES": "Icono del arma" } },
+        {
+          "id": "label",
+          "type": "select",
+          "default": "hand",
+          "label": { "enUS": "Bar text", "esES": "Texto de la barra" },
+          "values": [
+            { "value": "hand", "label": { "enUS": "The hand's name", "esES": "Nombre de la mano" } },
+            { "value": "weapon", "label": { "enUS": "The weapon's name", "esES": "Nombre del arma" } },
+            { "value": "none", "label": { "enUS": "None", "esES": "Ninguno" } }
+          ]
+        },
+        { "id": "time", "type": "toggle", "default": true, "label": { "enUS": "Time left", "esES": "Tiempo restante" } },
+        {
+          "id": "font",
+          "type": "select",
+          "default": "small",
+          "label": { "enUS": "Text size", "esES": "Tamaño del texto" },
+          "values": [
+            { "value": "caption", "label": { "enUS": "Small", "esES": "Pequeño" } },
+            { "value": "small", "label": { "enUS": "Medium", "esES": "Mediano" } },
+            { "value": "body", "label": { "enUS": "Large", "esES": "Grande" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "colors",
+      "tab": "appearance",
+      "label": { "enUS": "Colors", "esES": "Colores" },
+      "options": [
+        { "id": "mainHand", "type": "color", "default": "#F59E0B", "label": { "enUS": "Main hand", "esES": "Mano principal" } },
+        { "id": "offHand", "type": "color", "default": "#FB923C", "label": { "enUS": "Off hand", "esES": "Mano secundaria" } },
+        { "id": "ranged", "type": "color", "default": "#84CC16", "label": { "enUS": "Ranged", "esES": "A distancia" } },
+        { "id": "outOfRange", "type": "color", "default": "#EF4444", "label": { "enUS": "Out of range", "esES": "Fuera de alcance" }, "visibleWhen": { "range.mode": "color" } }
+      ]
+    }
+  ]
+}

@@ -22,15 +22,34 @@ function Window.AddPage(page)
     Window.pages[#Window.pages + 1] = page
 end
 
---- Shows a page, building it the first time.
+--- Builds a page the first time it's needed.
 ---@param page table
-function Window.Show(page)
-    local chrome = Window.chrome
+function Window.Ensure(page)
     if not page.frame then
-        page.frame = CreateFrame("Frame", nil, chrome.body)
+        page.frame = CreateFrame("Frame", nil, Window.chrome.body)
         page.frame:SetAllPoints()
         page.Build(page.frame)
     end
+end
+
+--- The title and note above the body. A long note wraps inside the window; the body starts below it.
+---@param title string
+---@param note string
+function Window.SetHeader(title, note)
+    local chrome = Window.chrome
+    chrome.title:SetText(title)
+    chrome.note:SetText(note)
+    local top = 20 + chrome.title:GetStringHeight() + 5 + chrome.note:GetStringHeight() + 14
+    chrome.body:ClearAllPoints()
+    chrome.body:SetPoint("TOPLEFT", SIDEBAR + 26, -math.max(84, math.ceil(top)))
+    chrome.body:SetPoint("BOTTOMRIGHT", -26, 22)
+end
+
+--- Shows a page, building it the first time.
+---@param page table
+function Window.Show(page)
+    ns.Search.Close()
+    Window.Ensure(page)
     for _, other in ipairs(Window.pages) do
         if other.frame then
             other.frame:SetShown(other == page)
@@ -38,13 +57,7 @@ function Window.Show(page)
         other.nav:SetActive(other == page)
     end
     Window.RevealNav(page)
-    chrome.title:SetText(page.title)
-    chrome.note:SetText(page.note)
-    -- A long note wraps inside the window; the page starts below it.
-    local top = 20 + chrome.title:GetStringHeight() + 5 + chrome.note:GetStringHeight() + 14
-    chrome.body:ClearAllPoints()
-    chrome.body:SetPoint("TOPLEFT", SIDEBAR + 26, -math.max(84, math.ceil(top)))
-    chrome.body:SetPoint("BOTTOMRIGHT", -26, 22)
+    Window.SetHeader(page.title, page.note)
     Window.current = page
     Window.Refresh()
 end
@@ -147,9 +160,13 @@ local function buildSidebar(frame)
     end
     Widgets.Track(divider)
 
+    local search = ns.Search.Build(frame, chrome.body)
+    search:SetPoint("TOPLEFT", 16, -62)
+    search:SetPoint("TOPRIGHT", frame, "TOPLEFT", SIDEBAR - 16, -62)
+
     -- The page list scrolls when it doesn't fit (many modules, or a small options scale).
     local nav = Widgets.Scroll(frame)
-    nav:SetPoint("TOPLEFT", 0, -60)
+    nav:SetPoint("TOPLEFT", 0, -100)
     nav:SetPoint("BOTTOMRIGHT", frame, "BOTTOMLEFT", SIDEBAR - 4, 16)
     chrome.nav = nav
 
@@ -254,6 +271,7 @@ local function build()
         ns.MoverScene.SetBehind(true)
     end)
     frame:SetScript("OnHide", function()
+        ns.Search.Blur()
         ns.MoverScene.SetBehind(false)
     end)
     frame:SetScript("OnKeyDown", function(self, key)

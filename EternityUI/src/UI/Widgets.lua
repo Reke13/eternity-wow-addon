@@ -451,6 +451,14 @@ function Widgets.Scroll(parent)
         place()
     end
 
+    --- Scrolls to an offset, within the content.
+    ---@param offset number
+    function scroll:ScrollTo(offset)
+        local range = math.max(self.child:GetHeight() - self:GetHeight(), 0)
+        self:SetVerticalScroll(math.max(0, math.min(offset, range)))
+        place()
+    end
+
     function scroll:Paint()
         local c = Theme.colors.lineStrong
         thumb:SetColorTexture(c[1], c[2], c[3], c[4])

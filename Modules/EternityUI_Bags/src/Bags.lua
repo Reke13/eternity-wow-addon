@@ -356,13 +356,13 @@ function Grid:Sections()
     sections[1] = main
     for _, bag in ipairs(Inventory.PlayerBags()) do
         local apart = bag == index.Keyring or (bag == index.ReagentBag and (split or opt("windows.reagents")))
-        if bag == index.Keyring and not opt("windows.keyring") then
-            -- Hidden from the window; the keys stay where they are.
-        elseif split or apart then
+        -- A hidden keyring leaves the window; the keys stay where they are.
+        local shown = bag ~= index.Keyring or opt("windows.keyring")
+        if shown and (split or apart) then
             if C_Container.GetContainerNumSlots(bag) > 0 then
                 sections[#sections + 1] = { title = bagTitle(bag), bags = { bag } }
             end
-        else
+        elseif shown then
             main.bags[#main.bags + 1] = bag
         end
     end
@@ -677,6 +677,11 @@ function Grid.New(module, kind)
     w:SetSize(480, 400)
     w:SetFrameStrata("HIGH")
     w:SetToplevel(true)
+    -- Esc is left to Blizzard, as for its own bags: CloseAllWindows hides its bag frames
+    -- (CloseAllBags) and BankFrame (a UI panel), and our windows follow them. Nothing of
+    -- Blizzard's is called or written, it also works in combat and no key is ever held back.
+    w:EnableKeyboard(false)
+    w:SetScript("OnKeyDown", nil)
     w:SetScript("OnDragStart", function(frame)
         local entry = E.Mover.Entry(self:Key())
         if not (entry and entry.locked) then
@@ -929,7 +934,8 @@ function Module:UseBlizzardBank()
     self:ApplyBank()
 end
 
---- The player closed one of our windows (close button or Escape).
+--- The player closed one of our windows (close button). Escape goes through Blizzard, which
+--- closes its frames first, so this finds nothing left to close.
 function Module:OnWindowHidden(grid)
     if self.syncing or not self.running then
         return

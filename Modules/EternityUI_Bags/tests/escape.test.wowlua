@@ -1,0 +1,25 @@
+-- Esc is Blizzard's: CloseAllWindows (what Esc runs) closes our bags window through the
+-- hidden Blizzard bag frames. The windows take no keyboard input and no right click.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Bags"
+
+@test("the bags window takes no keyboard input and no right click")
+local function noInput()
+    local module = EternityUI:GetModule(NAME)
+    expect(module.active).toBe(true)
+    local window = _G.EternityUIBagsWindow
+    expect(window ~= nil).toBe(true)
+    expect(window:IsKeyboardEnabled()).toBe(false)
+    expect(window:GetScript("OnKeyDown") == nil).toBe(true)
+    expect(window:GetScript("OnMouseUp") == nil).toBe(true)
+end
+
+@test("closing all windows, as Esc does, closes the bags window")
+local function escCloses()
+    OpenAllBags()
+    local window = _G.EternityUIBagsWindow
+    expect(window:IsShown()).toBe(true)
+    CloseAllWindows()
+    expect(window:IsShown()).toBe(false)
+end

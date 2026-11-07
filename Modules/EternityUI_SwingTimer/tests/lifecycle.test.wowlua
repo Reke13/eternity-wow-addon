@@ -1,0 +1,111 @@
+-- The module follows the game's swings, honors its options and gives everything back.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_SwingTimer"
+local MAIN_HAND, RANGED = 0, 2
+
+local function swing()
+    return EternityUI:GetModule(NAME).swing
+end
+
+local function set(path, value)
+    EternityUI.store:Set(NAME, path, value)
+end
+
+@test("the module starts and registers the stack in the Mover")
+local function starts()
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+    expect(EternityUI.Mover.elements[NAME .. ".stack"] ~= nil).toBe(true)
+end
+
+@test("a swing shows its bar and stopping hides it")
+local function swings()
+    local row = swing().rows.mainHand
+    swing():OnEvent("PLAYER_SWING", 2.4, MAIN_HAND)
+    expect(row.running).toBe(true)
+    expect(row:IsShown()).toBe(true)
+    swing():OnEvent("PLAYER_LEAVE_COMBAT")
+    expect(row.running).toBe(false)
+    expect(row:IsShown()).toBe(false)
+end
+
+@test("stopping auto attack leaves a ranged swing alone")
+local function ranged()
+    local row = swing().rows.ranged
+    swing():OnEvent("PLAYER_SWING", 2.4, RANGED)
+    swing():OnEvent("PLAYER_LEAVE_COMBAT")
+    expect(row.running).toBe(true)
+    swing():OnEvent("STOP_AUTOREPEAT_SPELL")
+    expect(row.running).toBe(false)
+end
+
+@test("a hand turned off ignores its swings")
+local function handOff()
+    set("hands.mainHand", false)
+    swing():OnEvent("PLAYER_SWING", 2.4, MAIN_HAND)
+    expect(swing().rows.mainHand.running == true).toBe(false)
+    set("hands.mainHand", true)
+end
+
+@test("always keeps an idle main hand bar on screen")
+local function always()
+    set("display.visibility", "always")
+    expect(swing().rows.mainHand:IsShown()).toBe(true)
+    set("display.visibility", "attacking")
+    expect(swing().rows.mainHand:IsShown()).toBe(false)
+end
+
+@test("moving each hand on its own swaps the Mover elements")
+local function separate()
+    set("display.separate", true)
+    local elements = EternityUI.Mover.elements
+    expect(elements[NAME .. ".stack"] == nil).toBe(true)
+    expect(elements[NAME .. ".mainHand"] ~= nil).toBe(true)
+    expect(swing().rows.mainHand:GetParent() == swing().free.mainHand).toBe(true)
+    set("display.separate", false)
+    expect(elements[NAME .. ".stack"] ~= nil).toBe(true)
+    expect(elements[NAME .. ".mainHand"] == nil).toBe(true)
+    expect(swing().rows.mainHand:GetParent() == swing().stack).toBe(true)
+end
+
+@test("the Mover shows every hand as a preview")
+local function preview()
+    swing():SetPreview(true)
+    expect(swing().rows.offHand:IsShown()).toBe(true)
+    swing():SetPreview(false)
+    expect(swing().rows.offHand:IsShown()).toBe(false)
+end
+
+@test("out of range dims or recolors, and an unknown range does nothing")
+local function range()
+    local row = swing().rows.mainHand
+    swing():SetRange(row, false, true)
+    expect(row:GetAlpha() < 1).toBe(true)
+    swing():SetRange(row, false, false)
+    expect(row:GetAlpha()).toBe(1)
+    set("range.mode", "color")
+    swing():SetRange(row, false, true)
+    expect(row:GetAlpha()).toBe(1)
+    set("range.mode", "dim")
+end
+
+@test("Blizzard's bars are hidden and come back when disabled")
+local function blizzard()
+    local frame = SwingTimerMainHandFrame
+    expect(EternityUI.Hider.IsHidden(frame)).toBe(true)
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(EternityUI.Hider.IsHidden(frame)).toBe(false)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    expect(EternityUI.Hider.IsHidden(frame)).toBe(true)
+end
+
+@test("the module stops and starts again")
+local function cycle()
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(EternityUI:GetModule(NAME).active).toBe(false)
+    expect(EternityUI.Mover.elements[NAME .. ".stack"] == nil).toBe(true)
+    expect(swing().stack:IsShown()).toBe(false)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+    expect(EternityUI.Mover.elements[NAME .. ".stack"] ~= nil).toBe(true)
+end

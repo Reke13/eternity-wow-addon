@@ -3,8 +3,8 @@
   "module": "EternityUI_CastBars",
   "title": { "enUS": "Cast Bars", "esES": "Barras de lanzamiento" },
   "description": {
-    "enUS": "Cast bars for you, your target, focus, pet, bosses and arena; GCD, swing and breath timers. Move them with /etmove.",
-    "esES": "Barras de lanzamiento para ti, objetivo, foco, mascota, jefes y arena; GCD, golpe y respiración. Muévelas con /etmove."
+    "enUS": "Cast bars for you, your target, focus, pet, bosses and arena; GCD and breath timers. Move them with /etmove.",
+    "esES": "Barras de lanzamiento para ti, objetivo, foco, mascota, jefes y arena; GCD y respiración. Muévelas con /etmove."
   },
   "groups": [
     {
@@ -52,16 +52,6 @@
           "type": "toggle",
           "default": true,
           "label": { "enUS": "Global cooldown", "esES": "Tiempo de reutilización global" }
-        },
-        {
-          "id": "swing",
-          "type": "toggle",
-          "default": false,
-          "label": { "enUS": "Swing timer", "esES": "Temporizador de golpe" },
-          "description": {
-            "enUS": "Your auto attacks, as the game reports them (parry haste included).",
-            "esES": "Tus ataques automáticos, tal como los informa el juego (con la aceleración por parada)."
-          }
         },
         {
           "id": "mirror",
@@ -120,12 +110,6 @@
           "type": "toggle",
           "default": true,
           "label": { "enUS": "Hide breath and fatigue", "esES": "Ocultar respiración y fatiga" }
-        },
-        {
-          "id": "swing",
-          "type": "toggle",
-          "default": true,
-          "label": { "enUS": "Hide the swing timer", "esES": "Ocultar el temporizador de golpe" }
         }
       ]
     },
@@ -157,22 +141,6 @@
           "step": 1,
           "label": { "enUS": "Gap to the player's bar", "esES": "Separación de la del jugador" }
         }
-      ]
-    },
-    {
-      "id": "swing",
-      "label": { "enUS": "Swing timer", "esES": "Temporizador de golpe" },
-      "options": [
-        { "id": "mainHand", "type": "toggle", "default": true, "label": { "enUS": "Main hand", "esES": "Mano principal" } },
-        { "id": "offHand", "type": "toggle", "default": true, "label": { "enUS": "Off hand", "esES": "Mano secundaria" } },
-        { "id": "ranged", "type": "toggle", "default": true, "label": { "enUS": "Ranged", "esES": "A distancia" } },
-        {
-          "id": "range",
-          "type": "toggle",
-          "default": true,
-          "label": { "enUS": "Dim when out of range", "esES": "Atenuar fuera de alcance" }
-        },
-        { "id": "names", "type": "toggle", "default": true, "label": { "enUS": "Show the hand's name", "esES": "Mostrar el nombre de la mano" } }
       ]
     },
     {
@@ -317,8 +285,6 @@
         { "id": "arenaHeight", "type": "range", "default": 18, "min": 8, "max": 60, "step": 1, "label": { "enUS": "Arena: height", "esES": "Arena: alto" } },
         { "id": "gcdWidth", "type": "range", "default": 280, "min": 40, "max": 800, "step": 2, "label": { "enUS": "Global cooldown: width (free)", "esES": "Reutilización global: ancho (suelta)" }, "visibleWhen": { "gcd.attach": "free" } },
         { "id": "gcdHeight", "type": "range", "default": 6, "min": 2, "max": 40, "step": 1, "label": { "enUS": "Global cooldown: height", "esES": "Reutilización global: alto" } },
-        { "id": "swingWidth", "type": "range", "default": 200, "min": 60, "max": 800, "step": 2, "label": { "enUS": "Swing: width", "esES": "Golpe: ancho" } },
-        { "id": "swingHeight", "type": "range", "default": 12, "min": 4, "max": 40, "step": 1, "label": { "enUS": "Swing: height", "esES": "Golpe: alto" } },
         { "id": "mirrorWidth", "type": "range", "default": 220, "min": 80, "max": 800, "step": 2, "label": { "enUS": "Breath and fatigue: width", "esES": "Respiración y fatiga: ancho" } },
         { "id": "mirrorHeight", "type": "range", "default": 18, "min": 8, "max": 40, "step": 1, "label": { "enUS": "Breath and fatigue: height", "esES": "Respiración y fatiga: alto" } },
         { "id": "scale", "type": "range", "default": 1, "min": 0.6, "max": 2, "step": 0.05, "label": { "enUS": "Scale", "esES": "Escala" } }
@@ -400,9 +366,6 @@
         { "id": "failed", "type": "color", "default": "#EF4444", "label": { "enUS": "Failed or interrupted", "esES": "Fallido o interrumpido" } },
         { "id": "latency", "type": "color", "default": "#EF444488", "label": { "enUS": "Latency", "esES": "Latencia" } },
         { "id": "gcd", "type": "color", "default": "@accent", "label": { "enUS": "Global cooldown", "esES": "Reutilización global" } },
-        { "id": "mainHand", "type": "color", "default": "#F59E0B", "label": { "enUS": "Swing: main hand", "esES": "Golpe: mano principal" } },
-        { "id": "offHand", "type": "color", "default": "#FB923C", "label": { "enUS": "Swing: off hand", "esES": "Golpe: mano secundaria" } },
-        { "id": "ranged", "type": "color", "default": "#84CC16", "label": { "enUS": "Swing: ranged", "esES": "Golpe: a distancia" } },
         { "id": "breath", "type": "color", "default": "#3B82F6", "label": { "enUS": "Breath", "esES": "Respiración" } },
         { "id": "fatigue", "type": "color", "default": "#F59E0B", "label": { "enUS": "Fatigue", "esES": "Fatiga" } },
         { "id": "feign", "type": "color", "default": "#A78BFA", "label": { "enUS": "Feign death and others", "esES": "Fingir muerte y otros" } }

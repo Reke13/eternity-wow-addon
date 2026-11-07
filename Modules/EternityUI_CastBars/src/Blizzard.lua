@@ -1,4 +1,4 @@
--- Hiding Blizzard's cast, mirror and swing bars: each one is moved to a hidden frame and given back to the parent
+-- Hiding Blizzard's cast and mirror bars: each one is moved to a hidden frame and given back to the parent
 -- it had. Blizzard's Edit Mode re-parents the player's bar ("lock to player frame"), so a SetParent
 -- hook keeps it hidden and remembers the new parent to give it back there. Nothing is moved in
 -- combat: the change waits for PLAYER_REGEN_ENABLED (CastBars.lua calls Apply again).
@@ -10,8 +10,7 @@ local _, ns = ...
 
 -- Blizzard's bars per unit or kind (seen in Forever FrameXML 1.60.1.70790). Boss bars are made by
 -- TargetFrameMixin:CreateSpellbar; arena ones live in Blizzard_Deprecated_ArenaUI (Forever has no
--- CompactArenaFrame); the swing bars are Blizzard_SwingTimer's (Camelot only). A name the client
--- doesn't have is skipped.
+-- CompactArenaFrame). A name the client doesn't have is skipped.
 local FRAMES = {
     player = { "PlayerCastingBarFrame", "OverlayPlayerCastingBarFrame" },
     target = { "TargetFrameSpellBar" },
@@ -20,7 +19,6 @@ local FRAMES = {
     boss = {},
     arena = {},
     mirror = { "MirrorTimerContainer" },
-    swing = { "SwingTimerMainHandFrame", "SwingTimerOffHandFrame", "SwingTimerRangedFrame" },
 }
 for i = 1, 5 do
     FRAMES.boss[i] = "Boss" .. i .. "TargetFrameSpellBar"

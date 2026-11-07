@@ -1,0 +1,201 @@
+-- The module follows the player's power and the druid's forms, honors its options and stops cleanly.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Resources"
+local MANA, RAGE, ENERGY = 0, 1, 3
+
+local function display()
+    return EternityUI:GetModule(NAME).display
+end
+
+local function set(path, value)
+    EternityUI.store:Set(NAME, path, value)
+end
+
+-- Plays a class and a power type (a druid's form) for the duration of fn.
+local function as(class, powerType, fn)
+    local unitClass, unitPowerType = UnitClass, UnitPowerType
+    local tokens = { [MANA] = "MANA", [RAGE] = "RAGE", [ENERGY] = "ENERGY" }
+    UnitClass = function()
+        return class, class, 0
+    end
+    UnitPowerType = function()
+        return powerType, tokens[powerType]
+    end
+    display():OnEvent("UNIT_DISPLAYPOWER", "player")
+    local ok, err = pcall(fn)
+    UnitClass, UnitPowerType = unitClass, unitPowerType
+    display():OnEvent("UNIT_DISPLAYPOWER", "player")
+    if not ok then
+        error(err)
+    end
+end
+
+@test("the module starts and registers the stack in the Mover")
+local function starts()
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+    expect(EternityUI.Mover.elements[NAME .. ".stack"] ~= nil).toBe(true)
+    expect(display().stack:IsShown()).toBe(true)
+    expect(display().parts.power:IsShown()).toBe(true)
+end
+
+@test("a druid in caster form shows mana and no combo points or second mana bar")
+local function caster()
+    as("DRUID", MANA, function()
+        expect(display().powerType).toBe(MANA)
+        expect(display().parts.combo:IsShown()).toBe(false)
+        expect(display().parts.mana:IsShown()).toBe(false)
+    end)
+end
+
+@test("a druid in Cat Form shows energy, combo points and the mana bar")
+local function cat()
+    as("DRUID", ENERGY, function()
+        expect(display().powerType).toBe(ENERGY)
+        expect(display().parts.combo:IsShown()).toBe(true)
+        expect(display().parts.mana:IsShown()).toBe(true)
+    end)
+end
+
+@test("a druid in Bear Form shows rage and the mana bar, without combo points")
+local function bear()
+    as("DRUID", RAGE, function()
+        expect(display().powerType).toBe(RAGE)
+        expect(display().parts.combo:IsShown()).toBe(false)
+        expect(display().parts.mana:IsShown()).toBe(true)
+    end)
+end
+
+@test("the form picks the main bar's color")
+local function colors()
+    set("colors.blizzard", false)
+    as("DRUID", ENERGY, function()
+        local energy = EternityUI.Theme.RGBA(EternityUI.store:Get(NAME, "colors.energy"))
+        expect(display().parts.power.color[1]).toBe(energy[1])
+    end)
+    as("DRUID", RAGE, function()
+        local rage = EternityUI.Theme.RGBA(EternityUI.store:Get(NAME, "colors.rage"))
+        expect(display().parts.power.color[1]).toBe(rage[1])
+    end)
+end
+
+@test("the second mana bar can be turned off")
+local function manaOff()
+    set("parts.druidMana", false)
+    as("DRUID", ENERGY, function()
+        expect(display().parts.mana:IsShown()).toBe(false)
+    end)
+    set("parts.druidMana", true)
+end
+
+@test("a rogue gets combo points and no mana bar")
+local function rogue()
+    as("ROGUE", ENERGY, function()
+        expect(display().parts.combo:IsShown()).toBe(true)
+        expect(display().parts.mana:IsShown()).toBe(false)
+        expect(EternityUI.Mover.elements[NAME .. ".stack"] ~= nil).toBe(true)
+    end)
+end
+
+@test("pips light up to the count and turn the full color at the maximum")
+local function pips()
+    local getComboPoints = GetComboPoints
+    local points = 3
+    GetComboPoints = function()
+        return points
+    end
+    local ok, err = pcall(as, "ROGUE", ENERGY, function()
+        local combo = display().parts.combo
+        display():OnEvent("COMBO_TARGET_CHANGED")
+        expect(combo.pips[3].bar:GetValue()).toBe(3)
+        local _, max4 = combo.pips[4].bar:GetMinMaxValues()
+        expect(max4).toBe(4)
+        expect(combo.maxed).toBe(false)
+        points = combo.count
+        display():OnEvent("COMBO_TARGET_CHANGED")
+        expect(combo.maxed).toBe(true)
+    end)
+    GetComboPoints = getComboPoints
+    if not ok then
+        error(err)
+    end
+end
+
+@test("only in combat hides the bars out of combat")
+local function combatOnly()
+    set("display.visibility", "combat")
+    expect(display().stack:IsShown()).toBe(false)
+    display():OnEvent("PLAYER_REGEN_DISABLED")
+    expect(display().stack:IsShown()).toBe(true)
+    display():OnEvent("PLAYER_REGEN_ENABLED")
+    expect(display().stack:IsShown()).toBe(false)
+    set("display.visibility", "always")
+    expect(display().stack:IsShown()).toBe(true)
+end
+
+@test("the opacity options follow combat")
+local function opacity()
+    set("display.alphaIdle", 0.5)
+    expect(display().stack:GetAlpha()).toBe(0.5)
+    display():OnEvent("PLAYER_REGEN_DISABLED")
+    expect(display().stack:GetAlpha()).toBe(1)
+    display():OnEvent("PLAYER_REGEN_ENABLED")
+    set("display.alphaIdle", 1)
+end
+
+@test("the main bar fades at rest out of combat but never in combat")
+local function rest()
+    set("display.fadeAtRest", true)
+    set("display.restAlpha", 0.3)
+    local power = display().parts.power
+    display():OnEvent("PLAYER_REGEN_DISABLED")
+    expect(power:GetAlpha()).toBe(1)
+    display():OnEvent("PLAYER_REGEN_ENABLED")
+    set("display.fadeAtRest", false)
+    expect(power:GetAlpha()).toBe(1)
+    set("display.fadeAtRest", true)
+end
+
+@test("text formats write the bar's text")
+local function texts()
+    set("layout.powerHeight", 16)
+    set("look.text", "none")
+    expect(display().parts.power.text:GetText() or "").toBe("")
+    set("look.text", "current")
+    expect((display().parts.power.text:GetText() or "") ~= "").toBe(true)
+end
+
+@test("moving each part on its own swaps the Mover elements")
+local function separate()
+    set("display.separate", true)
+    local elements = EternityUI.Mover.elements
+    expect(elements[NAME .. ".stack"] == nil).toBe(true)
+    expect(elements[NAME .. ".power"] ~= nil).toBe(true)
+    expect(display().parts.power:GetParent() == display().free.power).toBe(true)
+    set("display.separate", false)
+    expect(elements[NAME .. ".stack"] ~= nil).toBe(true)
+    expect(elements[NAME .. ".power"] == nil).toBe(true)
+    expect(display().parts.power:GetParent() == display().stack).toBe(true)
+end
+
+@test("the Mover previews every part the class can have")
+local function preview()
+    as("DRUID", MANA, function()
+        display():SetPreview(true)
+        expect(display().parts.combo:IsShown()).toBe(true)
+        expect(display().parts.mana:IsShown()).toBe(true)
+        display():SetPreview(false)
+        expect(display().parts.combo:IsShown()).toBe(false)
+    end)
+end
+
+@test("the module stops and starts again")
+local function cycle()
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(EternityUI:GetModule(NAME).active).toBe(false)
+    expect(EternityUI.Mover.elements[NAME .. ".stack"] == nil).toBe(true)
+    expect(display().stack:IsShown()).toBe(false)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    expect(EternityUI:GetModule(NAME).active).toBe(true)
+    expect(EternityUI.Mover.elements[NAME .. ".stack"] ~= nil).toBe(true)
+end

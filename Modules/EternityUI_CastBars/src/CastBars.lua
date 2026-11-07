@@ -1,14 +1,13 @@
 -- EternityUI_CastBars: Quartz-style cast bars for the player, target, focus and pet, boss and arena
--- groups, a GCD bar, a swing timer and mirror timers (breath, fatigue, feign death), each one
+-- groups, a GCD bar and mirror timers (breath, fatigue, feign death), each one
 -- placed with the core's Mover. Cast reads casts (secret-safe), Bar draws one cast bar and Group
--- stacks five of them; Timer is the plain bar behind Gcd, Swing and Mirror; Blizzard hides
+-- stacks five of them; Timer is the plain bar behind Gcd and Mirror; Blizzard hides
 -- Blizzard's bars. Disabling the module hides the bars and gives Blizzard's back.
 
 ---@type string, EternityUICastBarsNamespace
 local addonName, ns = ...
 local E = EternityUI
-local Cast, Bar, Group, Gcd, Swing, Mirror, Blizzard, L =
-    ns.Cast, ns.Bar, ns.Group, ns.Gcd, ns.Swing, ns.Mirror, ns.Blizzard, ns.L
+local Cast, Bar, Group, Gcd, Mirror, Blizzard, L = ns.Cast, ns.Bar, ns.Group, ns.Gcd, ns.Mirror, ns.Blizzard, ns.L
 
 local UNITS = { "player", "target", "focus", "pet" }
 -- Default places: the player's above the action bars, the pet's under it, target and focus higher.
@@ -40,13 +39,12 @@ local GROUP_DEFINITIONS = {
     },
 }
 -- Everything Blizzard.lua can hide, by "blizzard.<kind>" option.
-local HIDEABLE = { "player", "target", "focus", "pet", "boss", "arena", "mirror", "swing" }
+local HIDEABLE = { "player", "target", "focus", "pet", "boss", "arena", "mirror" }
 
 ---@class EternityUICastBarsModule: EternityUIModuleDefinition
 ---@field bars table<string, EternityUICastBar> (created the first time it's enabled)
 ---@field groups table<string, EternityUICastBarGroup>
 ---@field gcd EternityUICastBarsGcd?
----@field swing EternityUICastBarsSwing?
 ---@field mirror EternityUICastBarsMirror?
 ---@field events table?
 ---@field running boolean?
@@ -85,14 +83,6 @@ local VIEWS = {
         { label = L.SECTION_BAR, paths = { "bars.gcd", "layout.gcdWidth", "layout.gcdHeight", "colors.gcd" } },
         { group = "gcd" },
     }),
-    view("swing", L.SHORT_SWING, {
-        {
-            label = L.SECTION_BAR,
-            paths = { "bars.swing", "blizzard.swing", "layout.swingWidth", "layout.swingHeight" },
-        },
-        { group = "swing" },
-        { label = L.SECTION_COLORS, paths = { "colors.mainHand", "colors.offHand", "colors.ranged" } },
-    }),
     view("mirror", L.SHORT_MIRROR, {
         {
             label = L.SECTION_BAR,
@@ -111,7 +101,7 @@ local Module = {
 ns.Module = Module
 -- Internals reachable from the tests.
 Module.Cast, Module.Bar, Module.Blizzard = Cast, Bar, Blizzard
-Module.Group, Module.Gcd, Module.Swing, Module.Mirror = Group, Gcd, Swing, Mirror
+Module.Group, Module.Gcd, Module.Mirror = Group, Gcd, Mirror
 
 local EVENTS = {
     "PLAYER_ENTERING_WORLD",
@@ -127,7 +117,7 @@ local function opt(path)
     return E.store:Get(addonName, path)
 end
 
---- Every element with a preview (bars, groups, GCD, swing, mirror).
+--- Every element with a preview (bars, groups, GCD, mirror).
 local function elements(self)
     local list = {}
     for _, unit in ipairs(UNITS) do
@@ -137,7 +127,6 @@ local function elements(self)
         list[#list + 1] = self.groups[kind]
     end
     list[#list + 1] = self.gcd
-    list[#list + 1] = self.swing
     list[#list + 1] = self.mirror
     return list
 end
@@ -154,7 +143,6 @@ function Module:Install()
         self.groups[kind] = Group.New(kind, GROUP_DEFINITIONS[kind])
     end
     self.gcd = Gcd.New()
-    self.swing = Swing.New()
     self.mirror = Mirror.New()
 end
 
@@ -216,7 +204,6 @@ function Module:Apply()
     end
     -- After the player's bar: the GCD hangs from it.
     toggle(self, self.gcd, opt("bars.gcd"), self.bars.player)
-    toggle(self, self.swing, opt("bars.swing") and Swing.Supported())
     toggle(self, self.mirror, opt("bars.mirror"))
     local hide = {}
     for _, kind in ipairs(HIDEABLE) do

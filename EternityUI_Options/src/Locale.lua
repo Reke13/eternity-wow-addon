@@ -4,6 +4,11 @@ local _, ns = ...
 
 ns.L = EternityUI.NewLocale({
     ENABLED = "Enabled",
+    SEARCH = "Search settings",
+    SEARCH_TITLE = "Search",
+    SEARCH_COUNT = "Results: %d",
+    SEARCH_NONE = 'Nothing found for "%s".',
+    SEARCH_PAGE = "Page",
     PROFILE_LINE = "Profile: %s",
     CLOSE = "Close",
     LOOK = "Personalization",
@@ -112,6 +117,11 @@ ns.L = EternityUI.NewLocale({
     POINT_BOTTOMRIGHT = "bottom right corner",
 }, {
     ENABLED = "Activado",
+    SEARCH = "Buscar ajustes",
+    SEARCH_TITLE = "Búsqueda",
+    SEARCH_COUNT = "Resultados: %d",
+    SEARCH_NONE = 'Nada encontrado para "%s".',
+    SEARCH_PAGE = "Página",
     PROFILE_LINE = "Perfil: %s",
     CLOSE = "Cerrar",
     LOOK = "Personalización",

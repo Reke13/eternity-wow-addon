@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-swingtimer",
+    "version": "0.1.5",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_SwingTimer",
+    "title": "Eternity Swing Timer",
+    "notes": "Eternity module: bars for your main hand, off hand and ranged auto attacks, timed by the game's own swing events."
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Ui.lua",
+      "src/Bar.lua",
+      "src/Swing.lua",
+      "src/SwingTimer.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "SOUNDKIT"
+    ]
+  }
+}

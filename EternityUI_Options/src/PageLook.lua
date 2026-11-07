@@ -31,6 +31,8 @@ local ROW = 44
 local controls = {} -- option path -> control
 local tabs = {}
 local stacks = {}
+local rows = {} -- in order, for the search
+local selector
 
 local function setter(path)
     return function(value)
@@ -53,6 +55,7 @@ local function addRow(tab, path, label, control, visible)
     row:SetHeight(ROW)
     stacks[tab] = stacks[tab] or {}
     table.insert(stacks[tab], { row = row, visible = visible })
+    rows[#rows + 1] = { tab = tab, path = path, label = label, row = row }
 end
 
 local function buildGeneral(tab)
@@ -210,7 +213,7 @@ local function build(frame)
     left:SetPoint("TOPLEFT")
     left:SetPoint("BOTTOMRIGHT", -322, 0)
 
-    local selector = Widgets.Segmented(left, {
+    selector = Widgets.Segmented(left, {
         { "general", L.TAB_GENERAL },
         { "appearance", L.TAB_APPEARANCE },
     }, showTab)
@@ -262,4 +265,36 @@ local function refresh()
     end
 end
 
-ns.Window.AddPage({ key = "look", title = L.LOOK, note = L.LOOK_NOTE, Build = build, Refresh = refresh })
+local page = { key = "look", title = L.LOOK, note = L.LOOK_NOTE, Build = build, Refresh = refresh }
+
+function page.Entries()
+    ns.Window.Ensure(page)
+    local entries = {}
+    for _, row in ipairs(rows) do
+        local key = row.tab == tabs.general and "general" or "appearance"
+        entries[#entries + 1] = {
+            label = row.label,
+            path = row.path,
+            tab = key,
+            where = key == "general" and L.TAB_GENERAL or L.TAB_APPEARANCE,
+        }
+    end
+    return entries
+end
+
+function page.Select(tab)
+    if tab and tabs[tab] then
+        selector:SetValue(tab)
+        showTab(tab)
+    end
+end
+
+function page.Reveal(path)
+    for _, row in ipairs(rows) do
+        if row.path == path and row.row:IsVisible() then
+            ns.Search.Flash(row.row)
+        end
+    end
+end
+
+ns.Window.AddPage(page)

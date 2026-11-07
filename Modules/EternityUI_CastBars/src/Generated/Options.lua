@@ -9,8 +9,8 @@ ns.OptionsSchema = {
         esES = "Barras de lanzamiento",
     },
     description = {
-        enUS = "Cast bars for you, your target, focus, pet, bosses and arena; GCD, swing and breath timers. Move them with /etmove.",
-        esES = "Barras de lanzamiento para ti, objetivo, foco, mascota, jefes y arena; GCD, golpe y respiración. Muévelas con /etmove.",
+        enUS = "Cast bars for you, your target, focus, pet, bosses and arena; GCD and breath timers. Move them with /etmove.",
+        esES = "Barras de lanzamiento para ti, objetivo, foco, mascota, jefes y arena; GCD y respiración. Muévelas con /etmove.",
     },
     groups = {
         {
@@ -81,19 +81,6 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Global cooldown",
                         esES = "Tiempo de reutilización global",
-                    },
-                },
-                {
-                    id = "swing",
-                    type = "toggle",
-                    default = false,
-                    label = {
-                        enUS = "Swing timer",
-                        esES = "Temporizador de golpe",
-                    },
-                    description = {
-                        enUS = "Your auto attacks, as the game reports them (parry haste included).",
-                        esES = "Tus ataques automáticos, tal como los informa el juego (con la aceleración por parada).",
                     },
                 },
                 {
@@ -181,15 +168,6 @@ ns.OptionsSchema = {
                         esES = "Ocultar respiración y fatiga",
                     },
                 },
-                {
-                    id = "swing",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Hide the swing timer",
-                        esES = "Ocultar el temporizador de golpe",
-                    },
-                },
             },
         },
         {
@@ -245,60 +223,6 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Gap to the player's bar",
                         esES = "Separación de la del jugador",
-                    },
-                },
-            },
-        },
-        {
-            id = "swing",
-            label = {
-                enUS = "Swing timer",
-                esES = "Temporizador de golpe",
-            },
-            options = {
-                {
-                    id = "mainHand",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Main hand",
-                        esES = "Mano principal",
-                    },
-                },
-                {
-                    id = "offHand",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Off hand",
-                        esES = "Mano secundaria",
-                    },
-                },
-                {
-                    id = "ranged",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Ranged",
-                        esES = "A distancia",
-                    },
-                },
-                {
-                    id = "range",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Dim when out of range",
-                        esES = "Atenuar fuera de alcance",
-                    },
-                },
-                {
-                    id = "names",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Show the hand's name",
-                        esES = "Mostrar el nombre de la mano",
                     },
                 },
             },
@@ -692,30 +616,6 @@ ns.OptionsSchema = {
                     },
                 },
                 {
-                    id = "swingWidth",
-                    type = "range",
-                    default = 200,
-                    min = 60,
-                    max = 800,
-                    step = 2,
-                    label = {
-                        enUS = "Swing: width",
-                        esES = "Golpe: ancho",
-                    },
-                },
-                {
-                    id = "swingHeight",
-                    type = "range",
-                    default = 12,
-                    min = 4,
-                    max = 40,
-                    step = 1,
-                    label = {
-                        enUS = "Swing: height",
-                        esES = "Golpe: alto",
-                    },
-                },
-                {
                     id = "mirrorWidth",
                     type = "range",
                     default = 220,
@@ -964,33 +864,6 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Global cooldown",
                         esES = "Reutilización global",
-                    },
-                },
-                {
-                    id = "mainHand",
-                    type = "color",
-                    default = "#F59E0B",
-                    label = {
-                        enUS = "Swing: main hand",
-                        esES = "Golpe: mano principal",
-                    },
-                },
-                {
-                    id = "offHand",
-                    type = "color",
-                    default = "#FB923C",
-                    label = {
-                        enUS = "Swing: off hand",
-                        esES = "Golpe: mano secundaria",
-                    },
-                },
-                {
-                    id = "ranged",
-                    type = "color",
-                    default = "#84CC16",
-                    label = {
-                        enUS = "Swing: ranged",
-                        esES = "Golpe: a distancia",
                     },
                 },
                 {

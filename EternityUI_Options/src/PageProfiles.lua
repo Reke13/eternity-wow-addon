@@ -82,7 +82,10 @@ local function build(frame)
     shareBox = Widgets.Input(actions)
     shareBox:SetPoint("TOPLEFT", 0, -86)
     shareBox:SetPoint("TOPRIGHT", -216, -86)
-    shareBox:SetScript("OnEditFocusGained", shareBox.HighlightText)
+    -- Not HighlightText itself: the handler gets extra arguments it would take as a range.
+    shareBox:SetScript("OnEditFocusGained", function(box)
+        box:HighlightText()
+    end)
 
     local export = Widgets.Button(actions, L.EXPORT, "ghost", function()
         local text, err = E.store:ExportProfile()

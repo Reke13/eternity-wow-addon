@@ -155,6 +155,7 @@ local function refreshList(list, module)
                 item.row:ClearAllPoints()
                 item.row:SetPoint("TOPLEFT", 0, y)
                 item.row:SetPoint("TOPRIGHT", 0, y)
+                item.y = -y
                 y = y - ROW
             end
         end
@@ -244,8 +245,8 @@ local function viewsOf(tab, byId, byPath, used)
     return views
 end
 
-local function build(page, frame)
-    local module = page.module
+-- Where the module's options go: General, Appearance (lists of sections) and the tabs' views.
+local function placeOptions(module)
     local byId, byPath, used = {}, {}, {}
     for _, group in ipairs(module.schema.groups) do
         byId[group.id] = group
@@ -273,6 +274,12 @@ local function build(page, frame)
             table.insert(group.tab == "appearance" and appearance or general, section)
         end
     end
+    return general, appearance, tabViews
+end
+
+local function build(page, frame)
+    local module = page.module
+    local general, appearance, tabViews = placeOptions(module)
 
     page.lists = {}
     page.views = {}
@@ -347,6 +354,50 @@ local function build(page, frame)
     page.ShowTab(choices[#choices][1])
 end
 
+-- What a search should find in an option besides its label.
+local function extraText(option, section)
+    local parts = { E.Localize(section.label) }
+    if option.description then
+        parts[#parts + 1] = E.Localize(option.description)
+    end
+    for _, entry in ipairs(option.values or {}) do
+        parts[#parts + 1] = E.Localize(entry.label)
+    end
+    return table.concat(parts, " ")
+end
+
+-- The search entries of a module's page: every option, and the tabs that draw themselves.
+local function entriesOfPage(page)
+    local module = page.module
+    local general, appearance, tabViews = placeOptions(module)
+    local entries = {}
+    local function addSections(sections, tab, where, view)
+        for _, section in ipairs(sections) do
+            for _, entry in ipairs(section.entries) do
+                entries[#entries + 1] = {
+                    label = E.Localize(entry.option.label),
+                    extra = extraText(entry.option, section),
+                    path = entry.path,
+                    tab = tab,
+                    view = view,
+                    where = where,
+                }
+            end
+        end
+    end
+    addSections(general, "general", L.TAB_GENERAL)
+    addSections(appearance, "appearance", L.TAB_APPEARANCE)
+    for _, tab in ipairs(module.tabs or {}) do
+        if tab.build then
+            entries[#entries + 1] = { label = tab.text, tab = tab.key }
+        end
+        for _, view in ipairs(tabViews[tab] or {}) do
+            addSections(view.sections, tab.key, tab.text .. " > " .. view.text, view.id)
+        end
+    end
+    return entries
+end
+
 --- Adds a page per registered module with options, once.
 function ModulePage.AddAll()
     for _, module in ipairs(E:ListModules()) do
@@ -383,6 +434,21 @@ function ModulePage.AddAll()
                 end
                 if group and page.Pick then
                     page.Pick(group)
+                end
+            end
+            function page.Entries()
+                return entriesOfPage(page)
+            end
+            -- An option hidden by visibleWhen has no row to show: its tab stays open.
+            function page.Reveal(path)
+                for _, list in ipairs(page.lists) do
+                    for _, item in ipairs(list.items) do
+                        if item.path == path and item.row:IsVisible() then
+                            list.scroll:ScrollTo(item.y - ROW)
+                            ns.Search.Flash(item.row)
+                            return
+                        end
+                    end
                 end
             end
             ns.Window.AddPage(page)

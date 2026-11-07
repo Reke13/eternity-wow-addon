@@ -1,0 +1,79 @@
+-- The search box finds options without building their pages and takes the page's place.
+import test, expect from "wowlua:test"
+
+local function window()
+    return EternityUI.OptionsWindow
+end
+
+local function labels(results)
+    local list = {}
+    for i, entry in ipairs(results) do
+        list[i] = entry.label
+    end
+    return table.concat(list, ",")
+end
+
+@test("folding drops case, accents and color codes")
+local function folds()
+    EternityUI:ToggleOptions()
+    local Search = window().Search
+    expect(Search.Fold("Tamaño ÁREA")).toBe("tamano area")
+    expect(Search.Fold("|cff8a8a99Música|r")).toBe("musica")
+    window().Toggle()
+end
+
+@test("an empty search is no search")
+local function empty()
+    expect(window().Search.Find("   ")).toBe(nil)
+end
+
+@test("every word must match, in any order")
+local function words()
+    local Search = window().Search
+    local scale = Search.Find("options scale")
+    expect(#scale > 0).toBe(true)
+    expect(#Search.Find("scale options")).toBe(#scale)
+    expect(#Search.Find("options zzzz")).toBe(0)
+end
+
+@test("a label that starts with the text comes first")
+local function ranked()
+    local results = window().Search.Find("font")
+    expect(results[1].folded:find("font", 1, true)).toBe(1)
+    expect(labels(results) ~= "").toBe(true)
+end
+
+@test("pages are found by name")
+local function pages()
+    local results = window().Search.Find("profiles")
+    expect(results[1].page.key).toBe("profiles")
+end
+
+@test("results replace the page and an empty box brings it back")
+local function replaces()
+    EternityUI:ToggleOptions()
+    local Search = window().Search
+    local page = window().current
+    Search.Update("font")
+    expect(Search.active).toBe(true)
+    expect(page.frame:IsShown()).toBe(false)
+    expect(Search.frame:IsShown()).toBe(true)
+    Search.Update("")
+    expect(Search.active).toBe(false)
+    expect(page.frame:IsShown()).toBe(true)
+    expect(Search.frame:IsShown()).toBe(false)
+    window().Toggle()
+end
+
+@test("opening a result goes to its page and tab and empties the box")
+local function opens()
+    EternityUI:ToggleOptions()
+    local Search = window().Search
+    Search.box:SetText("options scale")
+    Search.Update("options scale")
+    Search.Open(Search.results[1])
+    expect(Search.active).toBe(false)
+    expect(Search.box:GetText()).toBe("")
+    expect(window().current.key).toBe("look")
+    window().Toggle()
+end

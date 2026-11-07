@@ -39,8 +39,6 @@ local strings = {
         BAG_N = "Bag %d",
         TAB_N = "Tab %d",
         NO_TABS = "This bank has no tabs yet",
-        HINT_HEADER = "Drag to move · Right-click: options",
-        HINT_LOCKED = "Right-click: options",
     },
     esES = {
         BAGS = "Bolsas",
@@ -71,8 +69,6 @@ local strings = {
         BAG_N = "Bolsa %d",
         TAB_N = "Pestaña %d",
         NO_TABS = "Este banco aún no tiene pestañas",
-        HINT_HEADER = "Arrastra para mover · Clic derecho: opciones",
-        HINT_LOCKED = "Clic derecho: opciones",
     },
 }
 ns.L = EternityUI.NewLocale(strings.enUS, strings.esES)

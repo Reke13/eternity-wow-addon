@@ -1,4 +1,4 @@
--- A plain themed timer bar for the GCD, swing and mirror timers: a track, a rounded fill that
+-- A plain themed timer bar for the GCD and mirror timers: a track, a rounded fill that
 -- follows a StatusBar through anchors (no Lua math on a possibly secret duration), a spark and two
 -- texts. It runs on a Duration object (StatusBar:SetTimerDuration, secret-safe) or, without one,
 -- on plain start and total times. Bar.lua paints its fills with Timer.Paint too.
