@@ -356,7 +356,9 @@ function Grid:Sections()
     sections[1] = main
     for _, bag in ipairs(Inventory.PlayerBags()) do
         local apart = bag == index.Keyring or (bag == index.ReagentBag and (split or opt("windows.reagents")))
-        if split or apart then
+        if bag == index.Keyring and not opt("windows.keyring") then
+            -- Hidden from the window; the keys stay where they are.
+        elseif split or apart then
             if C_Container.GetContainerNumSlots(bag) > 0 then
                 sections[#sections + 1] = { title = bagTitle(bag), bags = { bag } }
             end
@@ -524,6 +526,17 @@ function Grid:UpdateFooter()
     end
     self.free:SetText(L.FREE:format(free, total))
     self.free:SetShown(opt("windows.freeSlots"))
+    if self.keyring then
+        local keyring = (Enum.BagIndex or {}).Keyring
+        self.keyring:SetShown(keyring ~= nil and C_Container.GetContainerNumSlots(keyring) > 0)
+        self.keyring:SetValue(opt("windows.keyring"))
+        self.keyring:ClearAllPoints()
+        if self.free:IsShown() then
+            self.keyring:SetPoint("RIGHT", self.free, "LEFT", -14, 0)
+        else
+            self.keyring:SetPoint("RIGHT", self.frame.footer, "RIGHT", -12, 0)
+        end
+    end
     if self.money then
         self.money:SetText(GetMoneyString(GetMoney(), true))
         self.money:SetShown(opt("windows.money"))
@@ -611,6 +624,41 @@ function Grid:OpenMenu(owner)
     Widgets.Menu(owner, entries, 220)
 end
 
+--- A check box with a label at its right: onClick(value) after it changes.
+local function newCheck(parent, text, onClick)
+    local check = CreateFrame("Button", nil, parent)
+    check.box = CreateFrame("Frame", nil, check)
+    check.box:SetSize(14, 14)
+    check.box:SetPoint("LEFT")
+    check.box.shape = Shape.New(check.box)
+    check.mark = CreateFrame("Frame", nil, check.box)
+    check.mark:SetSize(6, 6)
+    check.mark:SetPoint("CENTER")
+    check.mark.shape = Shape.New(check.mark)
+    check.label = Widgets.Text(check, FOOTER_TEXT, "muted")
+    check.label:SetPoint("LEFT", check.box, "RIGHT", 6, 0)
+    check.label:SetText(text)
+    check:SetSize(14 + 6 + check.label:GetStringWidth(), 16)
+
+    function check:SetValue(value)
+        self.value = value and true or false
+        self:Paint()
+    end
+
+    function check:Paint()
+        Shape.Paint(self.box.shape, 3, self.value and Theme.accent or Theme.colors.hover, Theme.colors.line)
+        Shape.Paint(self.mark.shape, 1, Theme.colors.onAccent, nil)
+        self.mark:SetShown(self.value)
+        self:SetWidth(14 + 6 + self.label:GetStringWidth())
+    end
+
+    check:SetScript("OnClick", function(self)
+        self:SetValue(not self.value)
+        onClick(self.value)
+    end)
+    return Widgets.Track(check)
+end
+
 local function hint(frame, title, text)
     Widgets.AttachTooltip(frame, function(tip)
         tip:SetTitle(title)
@@ -639,11 +687,6 @@ function Grid.New(module, kind)
         frame:StopMovingOrSizing()
         frame:SetUserPlaced(false)
         E.Mover.SaveFromFrame(self:Key())
-    end)
-    w:SetScript("OnMouseUp", function(_, button)
-        if button == "RightButton" then
-            E:OpenOptions(addonName, "general")
-        end
     end)
     w:HookScript("OnShow", function()
         self:Place()
@@ -733,6 +776,10 @@ function Grid.New(module, kind)
     else
         self.money = Widgets.Text(w.footer, FOOTER_TEXT, "text")
         self.money:SetPoint("LEFT", w.footer, "LEFT", pad, 0)
+        self.keyring = newCheck(w.footer, L.KEYRING, function(value)
+            E.store:Set(addonName, "windows.keyring", value)
+        end)
+        hint(self.keyring, L.KEYRING, L.KEYRING_HINT)
     end
     self.dirty = true
     return self

@@ -124,6 +124,19 @@ ns.OptionsSchema = {
                         esES = "Mostrar los huecos libres",
                     },
                 },
+                {
+                    id = "keyring",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Show the keyring",
+                        esES = "Mostrar el llavero",
+                    },
+                    description = {
+                        enUS = "Also from the check box at the bottom of the bags.",
+                        esES = "También desde la casilla de la parte inferior de las bolsas.",
+                    },
+                },
             },
         },
         {
