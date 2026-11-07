@@ -148,16 +148,6 @@
           "type": "toggle",
           "default": true,
           "label": { "enUS": "Remember the warband bank", "esES": "Recordar el banco de la banda guerrera" }
-        },
-        {
-          "id": "guild",
-          "type": "toggle",
-          "default": true,
-          "label": { "enUS": "Remember the guild bank", "esES": "Recordar el banco de la hermandad" },
-          "description": {
-            "enUS": "Updated each time you open it; only the tabs you can see. Shared by the characters of the guild.",
-            "esES": "Se actualiza cada vez que lo abres; solo las pestañas que puedes ver. Lo comparten los personajes de la hermandad."
-          }
         }
       ]
     },
