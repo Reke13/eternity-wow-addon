@@ -85,19 +85,19 @@ local function filters()
         { kind = "error", message = "Foo failed", stack = "", session = 2, count = 1, time = 2 },
         { kind = "error", message = "Bar failed", stack = "in Foo", session = 2, count = 1, time = 3 },
     }
-    local view = module().Window.Filter(errors, { text = "", session = "current" }, 2)
+    local view = module().List.Filter(errors, { text = "", session = "current" }, 2)
     expect(#view).toBe(2)
     expect(view[1].message).toBe("Bar failed")
-    view = module().Window.Filter(errors, { text = "foo", session = "all" }, 2)
+    view = module().List.Filter(errors, { text = "foo", session = "all" }, 2)
     expect(#view).toBe(2)
-    view = module().Window.Filter(errors, { text = "", session = "previous" }, 2)
+    view = module().List.Filter(errors, { text = "", session = "previous" }, 2)
     expect(#view).toBe(1)
     expect(view[1].message).toBe("old one")
 end
 
 @test("the full text has the message, stack and locals")
 local function describe()
-    local text = module().Window.Describe({
+    local text = module().List.Describe({
         kind = "error", message = "boom", stack = "line 1", locals = "x = 1", session = 3, count = 4, time = 0,
     })
     expect(text:find("boom", 1, true) ~= nil).toBe(true)
@@ -105,15 +105,25 @@ local function describe()
     expect(text:find("x = 1", 1, true) ~= nil).toBe(true)
 end
 
-@test("the window opens and closes")
-local function window()
+@test("the Errors tab is one of the module's tabs and lists what was collected")
+local function tab()
+    local tabs = module().tabs
+    expect(#tabs).toBe(1)
+    expect(tabs[1].key).toBe("list")
     recorder().Clear()
     recorder().Add("error", "shown", "stack", nil)
-    module().Window.Open()
-    expect(module().Window.frame:IsShown()).toBe(true)
-    expect(#module().Window.view).toBe(1)
-    module().Window.Toggle()
-    expect(module().Window.frame:IsShown()).toBe(false)
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 500)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    local height
+    local view = module().List.Build(child, function(h)
+        height = h
+    end)
+    expect(height > 200).toBe(true)
+    view:Refresh()
+    expect(#module().List.view).toBe(1)
+    expect(module().List.selected.message).toBe("shown")
 end
 
 @test("the module stops collecting and starts again")

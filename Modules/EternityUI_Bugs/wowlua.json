@@ -10,7 +10,7 @@
   "addon": {
     "name": "EternityUI_Bugs",
     "title": "Eternity Bugs",
-    "notes": "Eternity module: collects the game's Lua errors, warnings and blocked actions, and lists them in a window to read, copy and clear (/etbugs).",
+    "notes": "Eternity module: collects the game's Lua errors, warnings and blocked actions, and lists them in a tab of its options to read, copy and clear (/etbugs).",
     "saved-variables": ["EternityUIBugsDB"]
   },
   "addon-dependencies": {
@@ -24,7 +24,7 @@
       "src/Generated/Options.lua",
       "src/Locale.lua",
       "src/Recorder.lua",
-      "src/Window.lua",
+      "src/List.lua",
       "src/Bugs.lua"
     ]
   },

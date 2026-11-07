@@ -1,5 +1,6 @@
 -- EternityUI_Bugs: collects the game's Lua errors, warnings and blocked actions (Recorder) and
--- lists them (Window). This file starts and stops them and tells the player when one comes in.
+-- lists them in a tab of the module's options (List). This file starts and stops them and tells
+-- the player when one comes in.
 -- Nothing of Blizzard's is replaced: its error window keeps working as before (the "Display Lua
 -- errors" setting still decides whether it pops up), and disabling the module only stops the
 -- collecting.
@@ -7,7 +8,7 @@
 ---@type string, EternityUIBugsNamespace
 local addonName, ns = ...
 local E = EternityUI
-local L, Recorder, Window, opt = ns.L, ns.Recorder, ns.Window, ns.opt
+local L, Recorder, List, opt = ns.L, ns.Recorder, ns.List, ns.opt
 
 local CHAT_EVERY = 10 -- seconds between chat notices, so a burst gives one line
 local MESSAGE_LENGTH = 80
@@ -15,17 +16,10 @@ local MESSAGE_LENGTH = 80
 ---@class EternityUIBugsModule: EternityUIModuleDefinition
 local Module = {
     schema = ns.OptionsSchema,
-    actions = {
-        {
-            text = L.OPEN,
-            onClick = function()
-                Window.Toggle()
-            end,
-        },
-    },
+    tabs = { { key = List.TAB, text = L.TAB, build = List.Build } },
 }
 -- Internals reachable from the tests.
-Module.Recorder, Module.Window = Recorder, Window
+Module.Recorder, Module.List = Recorder, List
 
 local lastNotice = -math.huge
 
@@ -43,7 +37,7 @@ end
 ---@param entry EternityUIBugsEntry
 ---@param isNew boolean new this session
 function Module.Notify(entry, isNew)
-    Window.Schedule()
+    List.Schedule()
     local now = GetTime()
     if opt("notify.chat") and now - lastNotice >= CHAT_EVERY then
         lastNotice = now
@@ -56,10 +50,8 @@ function Module.Notify(entry, isNew)
     if isNew and opt("notify.sound") and SOUNDKIT then
         PlaySound(SOUNDKIT.RAID_WARNING, "Master")
     end
-    if isNew and opt("notify.open") and not InCombatLockdown() then
-        if not (Window.frame and Window.frame:IsShown()) then
-            Window.Open()
-        end
+    if isNew and opt("notify.open") and not InCombatLockdown() and not List.IsShown() then
+        List.Open()
     end
 end
 
@@ -75,23 +67,18 @@ end
 function Module:OnDisable()
     Recorder.onAdd = nil
     Recorder.Stop()
-    Window.Stop()
 end
 
 function Module:OnConfigChanged(path)
     if path == nil or path == "capture.limit" then
         Recorder.Trim()
     end
-    Window.Apply()
+    List.Apply()
 end
 
 _G.SLASH_ETERNITYBUGS1 = "/etbugs"
 SlashCmdList.ETERNITYBUGS = function()
-    if E.store:IsModuleEnabled(addonName) then
-        Window.Toggle()
-    else
-        E:OpenOptions(addonName)
-    end
+    List.Open()
 end
 
 E:RegisterModule(addonName, Module)

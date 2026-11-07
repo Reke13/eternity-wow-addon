@@ -9,8 +9,8 @@ ns.OptionsSchema = {
         esES = "Errores",
     },
     description = {
-        enUS = "Collects the game's Lua errors and blocked actions as they happen and lists them in a window to read, copy and clear (/etbugs).",
-        esES = "Recoge los errores de Lua y las acciones bloqueadas del juego según ocurren y los muestra en una ventana para leerlos, copiarlos y borrarlos (/etbugs).",
+        enUS = "Collects the game's Lua errors and blocked actions as they happen and lists them in the Errors tab to read, copy and clear (/etbugs).",
+        esES = "Recoge los errores de Lua y las acciones bloqueadas del juego según ocurren y los muestra en la pestaña Errores para leerlos, copiarlos y borrarlos (/etbugs).",
     },
     groups = {
         {
@@ -103,8 +103,8 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = false,
                     label = {
-                        enUS = "Open the list",
-                        esES = "Abrir la lista",
+                        enUS = "Open the Errors tab",
+                        esES = "Abrir la pestaña Errores",
                     },
                     description = {
                         enUS = "Only out of combat, and only for errors that are new this session.",
@@ -114,37 +114,13 @@ ns.OptionsSchema = {
             },
         },
         {
-            id = "window",
+            id = "list",
             tab = "appearance",
             label = {
-                enUS = "Window",
-                esES = "Ventana",
+                enUS = "Error list",
+                esES = "Lista de errores",
             },
             options = {
-                {
-                    id = "scale",
-                    type = "range",
-                    default = 1,
-                    min = 0.6,
-                    max = 1.6,
-                    step = 0.05,
-                    label = {
-                        enUS = "Scale",
-                        esES = "Escala",
-                    },
-                },
-                {
-                    id = "opacity",
-                    type = "range",
-                    default = 1,
-                    min = 0.3,
-                    max = 1,
-                    step = 0.05,
-                    label = {
-                        enUS = "Background opacity",
-                        esES = "Opacidad del fondo",
-                    },
-                },
                 {
                     id = "textSize",
                     type = "range",
@@ -153,8 +129,8 @@ ns.OptionsSchema = {
                     max = 18,
                     step = 1,
                     label = {
-                        enUS = "Text size",
-                        esES = "Tamaño del texto",
+                        enUS = "Text size of the error",
+                        esES = "Tamaño del texto del error",
                     },
                 },
             },

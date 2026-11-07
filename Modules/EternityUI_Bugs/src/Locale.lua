@@ -6,7 +6,7 @@
 ---@field L table<string, string>
 ---@field opt fun(path: string): any
 ---@field Recorder EternityUIBugsRecorder
----@field Window EternityUIBugsWindow
+---@field List EternityUIBugsList
 
 ---@type string, EternityUIBugsNamespace
 local addonName, ns = ...
@@ -20,8 +20,7 @@ end
 
 local strings = {
     enUS = {
-        TITLE = "Errors",
-        OPEN = "Open the list",
+        TAB = "Errors",
         SEARCH = "Search",
         EMPTY = "No errors. All good.",
         NOTHING_SELECTED = "Pick an error on the left.",
@@ -50,8 +49,7 @@ local strings = {
         AGAIN = "|cffff5f5fEternity|r: the error happened again (x%d). /etbugs to see it.",
     },
     esES = {
-        TITLE = "Errores",
-        OPEN = "Abrir la lista",
+        TAB = "Errores",
         SEARCH = "Buscar",
         EMPTY = "No hay errores. Todo bien.",
         NOTHING_SELECTED = "Elige un error a la izquierda.",
