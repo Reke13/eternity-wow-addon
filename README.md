@@ -34,7 +34,7 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_SwingTimer` | Bars for your main hand, off hand and ranged auto attacks, one stack or each on its own |
 | `EternityUI_Resources` | Power bar that follows the druid's forms, combo point pips and the druid's mana while shapeshifted |
 | `EternityUI_Bugs` | Collects Lua errors, warnings and blocked actions and lists them to read, copy and clear (`/etbugs`) |
-| `EternityUI_TargetDebuffs` | The target's debuffs in a frame of their own: filtered by caster, crowd control and your own list of spell IDs (Sunder Armor of anyone), in combat too (`/etdebuffs`) |
+| `EternityUI_TargetDebuffs` | The target's debuffs in a frame of their own: filtered by caster, crowd control and your own list of spell IDs, in combat too (`/etdebuffs`) |
 | `EternityUI_Tooltip` | Tooltips |
 
 ## License

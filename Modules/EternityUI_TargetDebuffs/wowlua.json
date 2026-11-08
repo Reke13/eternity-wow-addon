@@ -10,7 +10,8 @@
   "addon": {
     "name": "EternityUI_TargetDebuffs",
     "title": "Eternity Target Debuffs",
-    "notes": "Eternity module: the target's debuffs in a frame of their own, filtered by who cast them, their type and your own list of spells, in combat too."
+    "notes": "Eternity module: the target's debuffs in a frame of their own, filtered by who cast them, their type and your own list of spells, in combat too.",
+    "saved-variables": ["EternityUITargetDebuffsDB"]
   },
   "addon-dependencies": {
     "required": ["EternityUI"]
@@ -19,13 +20,13 @@
     "camelot": {}
   },
   "build": {
-    "load-order": ["src/Generated/Options.lua", "src/Locale.lua", "src/Filters.lua", "src/TargetDebuffs.lua"]
+    "load-order": ["src/Generated/Options.lua", "src/Locale.lua", "src/Filters.lua", "src/Spells.lua", "src/SpellsTab.lua", "src/TargetDebuffs.lua"]
   },
   "test": {
     "blizzard-ui": true,
     "addons": ["../../../../dist/dev/EternityUI"]
   },
   "check": {
-    "globals": ["EternityUI", "SLASH_ETERNITYTARGETDEBUFFS1", "SlashCmdList"]
+    "globals": ["EternityUI", "EternityUITargetDebuffsDB", "SLASH_ETERNITYTARGETDEBUFFS1", "SlashCmdList"]
   }
 }

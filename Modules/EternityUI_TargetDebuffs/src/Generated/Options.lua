@@ -9,8 +9,8 @@ ns.OptionsSchema = {
         esES = "Perjuicios del objetivo",
     },
     description = {
-        enUS = "The target's debuffs in a frame of their own, placed with the Mover. The game filters them, so it works in combat too. /etdebuffs lists the target's debuffs with their spell IDs.",
-        esES = "Los perjuicios del objetivo en un marco propio, colocado con el Mover. Los filtra el propio juego, así que funciona también en combate. /etdebuffs lista los perjuicios del objetivo con su número de hechizo.",
+        enUS = "The target's debuffs in a frame of their own, placed with the Mover. The game filters them, so it works in combat too. The Spells tab keeps your own list of spell IDs to always or never show.",
+        esES = "Los perjuicios del objetivo en un marco propio, colocado con el Mover. Los filtra el propio juego, así que funciona también en combate. La pestaña Hechizos guarda tu lista de números de hechizo para mostrar siempre o nunca.",
     },
     groups = {
         {
@@ -153,51 +153,53 @@ ns.OptionsSchema = {
             },
         },
         {
-            id = "spells",
+            id = "frame",
             label = {
-                enUS = "Your list of spells",
-                esES = "Tu lista de hechizos",
+                enUS = "Frame",
+                esES = "Marco",
             },
             options = {
                 {
-                    id = "sunder",
+                    id = "scale",
+                    type = "range",
+                    default = 1,
+                    min = 0.5,
+                    max = 3,
+                    step = 0.05,
+                    label = {
+                        enUS = "Zoom",
+                        esES = "Zoom",
+                    },
+                    description = {
+                        enUS = "Makes the whole frame bigger or smaller. Its place is set with the Mover (Spells tab > Place the frame, or /et move).",
+                        esES = "Hace todo el marco más grande o más pequeño. Su sitio se elige con el Mover (pestaña Hechizos > Colocar el marco, o /et move).",
+                    },
+                },
+                {
+                    id = "durationText",
                     type = "toggle",
                     default = true,
                     label = {
-                        enUS = "Sunder Armor, whoever cast it",
-                        esES = "Hender armadura, la ponga quien la ponga",
-                    },
-                    description = {
-                        enUS = "Every rank, shown first with its stacks, also when a group mate started it.",
-                        esES = "Todos los rangos, primero y con sus cargas, también cuando la empezó un compañero.",
+                        enUS = "Time left as text",
+                        esES = "Tiempo restante en texto",
                     },
                 },
                 {
-                    id = "tracked",
-                    type = "text",
-                    default = "",
-                    maxLength = 200,
+                    id = "swipe",
+                    type = "toggle",
+                    default = true,
                     label = {
-                        enUS = "Always show (spell IDs)",
-                        esES = "Mostrar siempre (números de hechizo)",
-                    },
-                    description = {
-                        enUS = "Separated by commas. Shown first, whoever cast them and whatever the filters above. /etdebuffs prints the IDs of the target's debuffs.",
-                        esES = "Separados por comas. Salen primero, los ponga quien los ponga y sean cuales sean los filtros de arriba. /etdebuffs escribe los números de los perjuicios del objetivo.",
+                        enUS = "Time left as a shadow",
+                        esES = "Tiempo restante como sombra",
                     },
                 },
                 {
-                    id = "excluded",
-                    type = "text",
-                    default = "",
-                    maxLength = 200,
+                    id = "dispelBorder",
+                    type = "toggle",
+                    default = true,
                     label = {
-                        enUS = "Never show (spell IDs)",
-                        esES = "No mostrar nunca (números de hechizo)",
-                    },
-                    description = {
-                        enUS = "Separated by commas.",
-                        esES = "Separados por comas.",
+                        enUS = "Border in the debuff type's color",
+                        esES = "Borde del color del tipo de perjuicio",
                     },
                 },
             },
@@ -294,33 +296,6 @@ ns.OptionsSchema = {
                                 esES = "Encima",
                             },
                         },
-                    },
-                },
-                {
-                    id = "durationText",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Time left as text",
-                        esES = "Tiempo restante en texto",
-                    },
-                },
-                {
-                    id = "swipe",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Time left as a shadow",
-                        esES = "Tiempo restante como sombra",
-                    },
-                },
-                {
-                    id = "dispelBorder",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Border in the debuff type's color",
-                        esES = "Borde del color del tipo de perjuicio",
                     },
                 },
                 {

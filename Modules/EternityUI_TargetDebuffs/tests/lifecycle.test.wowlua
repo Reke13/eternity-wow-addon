@@ -1,4 +1,5 @@
--- The filters built from the options, and the module's frame in the Mover.
+-- The filters built from the options and the list of spells, the Spells tab, and the module's
+-- frame in the Mover.
 import test, expect from "wowlua:test"
 
 local NAME = "EternityUI_TargetDebuffs"
@@ -8,7 +9,7 @@ local function module()
 end
 
 local function base(extra)
-    local o = { origin = "all", crowdControl = "show", dispellable = false, max = 16, sunder = false, tracked = "", excluded = "" }
+    local o = { origin = "all", crowdControl = "show", dispellable = false, max = 16, show = {}, hide = {} }
     for k, v in pairs(extra or {}) do
         o[k] = v
     end
@@ -42,23 +43,70 @@ local function mainFilter()
     end
 end
 
-@test("Sunder Armor and the own list go first, any caster, and leave the main group")
+@test("the shown spells go first, any caster, and leave the main group; hidden ones never show")
 local function groups()
     local filters = module().Filters
-    local g = filters.Groups(base({ sunder = true, tracked = "12345", excluded = "11597, 999" }))
+    local g = filters.Groups(base({ show = { [7386] = true, [12345] = true, [11597] = true }, hide = { [11597] = true, [999] = true } }))
     expect(g.tracked.enabled).toBe(true)
     expect(g.tracked.filter).toBe("HARMFUL")
     local include = g.tracked.candidate.includeSpellIDs
     expect(include[7386]).toBe(true)
     expect(include[12345]).toBe(true)
-    -- Excluded wins over tracked.
+    -- Hidden wins over shown.
     expect(include[11597] == nil).toBe(true)
-    expect(g.tracked.max).toBe(5)
+    expect(g.tracked.max).toBe(2)
     local skip = g.main.candidate.excludeSpellIDs
     expect(skip[7386]).toBe(true)
     expect(skip[999]).toBe(true)
     expect(skip[11597]).toBe(true)
     expect(g.main.max).toBe(16)
+end
+
+@test("the list of spells adds, switches, hides and removes spell IDs")
+local function list()
+    local spells = module().Spells
+    spells.Clear()
+    expect(spells.Add(7386)).toBe(true)
+    expect(spells.Add(7386)).toBe(false)
+    expect(spells.Add(0)).toBe(false)
+    expect(spells.Add(999)).toBe(true)
+    local show, hide = spells.Sets()
+    expect(show[7386]).toBe(true)
+    spells.SetEnabled(7386, false)
+    show = spells.Sets()
+    expect(show[7386] == nil).toBe(true)
+    spells.SetHidden(999, true)
+    show, hide = spells.Sets()
+    expect(show[999] == nil).toBe(true)
+    expect(hide[999]).toBe(true)
+    spells.Remove(999)
+    expect(#spells.List()).toBe(1)
+    expect(type(EternityUITargetDebuffsDB.spells)).toBe("table")
+    spells.Clear()
+end
+
+@test("the Spells tab adds typed IDs and draws a row for each")
+local function tab()
+    local m = module()
+    m.Spells.Clear()
+    expect(m.tabs[1].key).toBe("spells")
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 500)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    local height
+    local view = m.SpellsTab.Build(child, function(h)
+        height = h
+    end)
+    m.SpellsTab.AddText("7386, 7405 abc")
+    expect(#m.Spells.List()).toBe(2)
+    expect(m.SpellsTab.rows[1]:IsShown()).toBe(true)
+    expect(m.SpellsTab.rows[2].spellID).toBe(7405)
+    expect(view.status:GetText():find("abc", 1, true) ~= nil).toBe(true)
+    expect(height > 100).toBe(true)
+    m.Spells.Clear()
+    m.SpellsTab.Refresh()
+    expect(m.SpellsTab.rows[1]:IsShown()).toBe(false)
 end
 
 @test("with no list, the tracked group is off and the main one has no candidate filter")
@@ -79,6 +127,8 @@ local function lifecycle()
     store:Set(NAME, "look.spacing", 2)
     store:Set(NAME, "look.perRow", 5)
     expect(math.floor(m.holder:GetWidth() + 0.5)).toBe(5 * 20 + 4 * 2)
+    store:Set(NAME, "frame.scale", 2)
+    expect(m.holder:GetScale()).toBe(2)
     store:Reset(NAME)
     store:SetModuleEnabled(NAME, false)
     expect(m.holder:IsShown()).toBe(false)
@@ -126,8 +176,11 @@ local function container()
     expect(m.container:HasAuraGroup("tracked")).toBe(true)
     expect(m.container:HasAuraGroup("main")).toBe(true)
     expect(m.container:GetUnit()).toBe("target")
-    EternityUI.store:Set(NAME, "spells.sunder", false)
+    m.Spells.Clear()
     expect(m.container:IsAuraGroupEnabled("tracked")).toBe(false)
-    EternityUI.store:Set(NAME, "spells.sunder", true)
+    m.Spells.Add(7386)
     expect(m.container:IsAuraGroupEnabled("tracked")).toBe(true)
+    m.Spells.SetEnabled(7386, false)
+    expect(m.container:IsAuraGroupEnabled("tracked")).toBe(false)
+    m.Spells.Clear()
 end

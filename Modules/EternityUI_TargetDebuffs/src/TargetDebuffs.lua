@@ -2,7 +2,8 @@
 -- The icons live in Blizzard's custom aura container (CreateFrame("AuraContainer", ...,
 -- "CustomAuraContainerTemplate")): it reads, filters, sorts and draws the auras itself, so it
 -- keeps working in combat, when aura data is secret to addons. This file only configures it:
---   * Two aura groups (Filters.lua): the player's own list of spells first, then the rest.
+--   * Two aura groups (Filters.lua): the player's list of spells (Spells.lua, edited in the
+--     "Spells" tab) first, then the rest.
 --   * The buttons get our regions (icon, time shadow and text, stacks, dispel border) through
 --     the container's initializer and setters; the container fills them.
 -- Blizzard's target frame is never touched. Its own auras keep showing.
@@ -13,7 +14,7 @@
 local addonName, ns = ...
 local E = EternityUI
 local Shape, Theme = E.Shape, E.Theme
-local L, Filters, opt = ns.L, ns.Filters, ns.opt
+local L, Filters, Spells, SpellsTab, opt = ns.L, ns.Filters, ns.Spells, ns.SpellsTab, ns.opt
 
 local SAMPLE_ICON = 136118 -- a generic debuff icon for the Mover's samples
 local SAMPLE_ROWS = 2
@@ -27,7 +28,10 @@ local SAMPLE_ROWS = 2
 ---@field moverOpen boolean?
 local Module = {
     schema = ns.OptionsSchema,
+    tabs = { { key = SpellsTab.TAB, text = L.TAB, build = SpellsTab.Build } },
     Filters = Filters,
+    Spells = Spells,
+    SpellsTab = SpellsTab,
     buttons = {},
     samples = {},
 }
@@ -48,14 +52,14 @@ local function sortDirection()
 end
 
 local function options()
+    local show, hide = Spells.Sets()
     return {
         origin = opt("show.origin"),
         crowdControl = opt("show.crowdControl"),
         dispellable = opt("show.dispellable"),
         max = opt("show.max"),
-        sunder = opt("spells.sunder"),
-        tracked = opt("spells.tracked"),
-        excluded = opt("spells.excluded"),
+        show = show,
+        hide = hide,
     }
 end
 
@@ -90,11 +94,11 @@ local function styleButton(button)
     button.etIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     button.etCount:SetFont(Theme.font, opt("look.countSize"), "OUTLINE")
     button.etTime:SetFont(Theme.font, opt("look.textSize"), "OUTLINE")
-    button.etCooldown:SetDrawSwipe(opt("look.swipe"))
+    button.etCooldown:SetDrawSwipe(opt("frame.swipe"))
     paintBack(button)
     -- Parts the container fills are attached or detached: it owns what they show.
     pcall(function()
-        if opt("look.durationText") then
+        if opt("frame.durationText") then
             button:SetDurationText(button.etTime, {})
         else
             button:ClearDurationText()
@@ -102,7 +106,7 @@ local function styleButton(button)
         end
     end)
     pcall(function()
-        local wanted = opt("look.dispelBorder")
+        local wanted = opt("frame.dispelBorder")
         if wanted and not button.etDispelOn then
             button:AddDispelTypeTexture(button.etDispel, {
                 style = Enum.CustomAuraButtonDispelTypeTextureStyle and Enum.CustomAuraButtonDispelTypeTextureStyle.Border,
@@ -196,10 +200,7 @@ function Module:ApplyFilters()
     if not container then
         return
     end
-    local groups, invalid = Filters.Groups(options())
-    if #invalid > 0 then
-        print(L.BAD_IDS:format(table.concat(invalid, ", ")))
-    end
+    local groups = Filters.Groups(options())
     local method, direction = sortMethod(opt("show.sort")), sortDirection()
     for key, group in pairs(groups) do
         container:SetAuraGroupFilterString(key, group.filter)
@@ -213,6 +214,8 @@ end
 --- Sizes, growth and the holder the Mover moves.
 function Module:ApplyLayout()
     local holder = self.holder
+    -- Zoom on top of the Mover's own scale (the Mover multiplies the frame's scale).
+    holder:SetScale(opt("frame.scale"))
     local size, spacing = opt("look.size"), opt("look.spacing")
     local width = rowWidth()
     holder:SetSize(width, SAMPLE_ROWS * size + (SAMPLE_ROWS - 1) * spacing)
@@ -289,7 +292,7 @@ function Module:ShowSamples()
     end
 end
 
--- /etdebuffs: the target's debuffs with their spell IDs, to fill the lists.
+-- /etdebuffs: the target's debuffs with their spell IDs, to fill the list.
 
 local function secret(value)
     return issecretvalue ~= nil and issecretvalue(value)
@@ -350,6 +353,12 @@ function Module:OnEnable()
             E:OpenOptions(addonName)
         end,
     })
+    -- A change in the list of spells reaches the container at once.
+    Spells.onChange = function()
+        if self.running then
+            self:ApplyFilters()
+        end
+    end
     if self:CreateContainer() then
         self.container:SetEnabled(true)
         self:ApplyFilters()
@@ -390,10 +399,10 @@ function Module:OnConfigChanged(path)
     if not self.running then
         return
     end
-    if path == nil or path:find("^show%.") or path:find("^spells%.") then
+    if path == nil or path:find("^show%.") then
         self:ApplyFilters()
     end
-    if path == nil or path:find("^look%.") or path == "show.sort" then
+    if path == nil or path:find("^look%.") or path:find("^frame%.") or path == "show.sort" then
         self:ApplyLayout()
     end
     self:UpdateVisibility()

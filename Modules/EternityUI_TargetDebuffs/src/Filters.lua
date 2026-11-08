@@ -1,7 +1,8 @@
 -- What the container shows, from the options: pure data, no frames. Two aura groups:
---   * "tracked": the player's own list of spells (and Sunder Armor), whoever cast them, first.
+--   * "tracked": the spells of the player's list (Spells.lua) to always show, whoever cast them,
+--     first.
 --   * "main": the rest, narrowed by the game's filter string (who cast it, crowd control,
---     dispellable) and without the tracked and excluded spells.
+--     dispellable) and without the tracked and hidden spells.
 -- Both kinds of filter are evaluated by Blizzard's aura container, not here: the filter string
 -- by the game, and the spell ID lists by the container's own code, which may match spell IDs
 -- of debuffs on enemies even while they're secret to addons. That's why it works in combat.
@@ -10,10 +11,7 @@
 local _, ns = ...
 
 ---@class EternityUITargetDebuffsFilters
-local Filters = {
-    -- Sunder Armor, every rank.
-    SUNDER = { 7386, 7405, 8380, 11596, 11597 },
-}
+local Filters = {}
 ns.Filters = Filters
 
 --- A set of spell IDs from text like "7386, 11597": { [id] = true }, how many, and the pieces
@@ -70,32 +68,20 @@ function Filters.MainFilter(o)
     return table.concat(tokens, "|")
 end
 
---- Both groups from the options.
----@param o table { origin, crowdControl, dispellable, sunder, tracked, excluded, max }
+--- Both groups from the options and the list of spells.
+---@param o table { origin, crowdControl, dispellable, max, show = set, hide = set }
 ---@return table groups { tracked = { enabled, filter, candidate, max }, main = { filter, candidate, max } }
----@return string[] invalid pieces of the lists that weren't spell IDs
 function Filters.Groups(o)
-    local tracked, _, badTracked = Filters.ParseIDs(o.tracked)
-    local excluded, _, badExcluded = Filters.ParseIDs(o.excluded)
-    if o.sunder then
-        for _, id in ipairs(Filters.SUNDER) do
-            tracked[id] = true
-        end
-    end
-    -- An excluded spell stays out of the tracked group too.
+    local show, hide = o.show or {}, o.hide or {}
+    -- A spell both shown and hidden stays hidden.
     local include, count = {}, 0
-    for id in pairs(tracked) do
-        if not excluded[id] then
+    for id in pairs(show) do
+        if not hide[id] then
             include[id] = true
             count = count + 1
         end
     end
-    local invalid = {}
-    for _, list in ipairs({ badTracked, badExcluded }) do
-        for _, piece in ipairs(list) do
-            invalid[#invalid + 1] = piece
-        end
-    end
+    local skip = union(include, hide)
     return {
         tracked = {
             enabled = count > 0,
@@ -105,12 +91,9 @@ function Filters.Groups(o)
         },
         main = {
             filter = Filters.MainFilter(o),
-            -- The tracked ones are already shown, and the excluded never are.
-            candidate = (function()
-                local skip = union(include, excluded)
-                return skip and { excludeSpellIDs = skip } or nil
-            end)(),
+            -- The tracked ones are already shown, and the hidden never are.
+            candidate = skip and { excludeSpellIDs = skip } or nil,
             max = o.max,
         },
-    }, invalid
+    }
 end

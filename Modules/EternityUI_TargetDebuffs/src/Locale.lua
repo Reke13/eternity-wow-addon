@@ -6,6 +6,8 @@
 ---@field L table<string, string>
 ---@field opt fun(path: string): any
 ---@field Filters EternityUITargetDebuffsFilters
+---@field Spells EternityUITargetDebuffsSpells
+---@field SpellsTab EternityUITargetDebuffsSpellsTab
 
 ---@type string, EternityUITargetDebuffsNamespace
 local addonName, ns = ...
@@ -26,7 +28,25 @@ local strings = {
         IDS_NONE = "%s has no debuffs.",
         IDS_NO_TARGET = "Target something first.",
         IDS_SECRET = "In combat the game hides which spell each debuff is: try again out of combat.",
-        BAD_IDS = "Target debuffs: these aren't spell IDs and were left out: %s",
+        TAB = "Spells",
+        SPELLS_INTRO = "Spells to always show first, whoever cast them, or to never show. They're matched by spell ID, also in combat, on enemies' debuffs. Switch one off to keep it without using it.",
+        SPELLS_EXAMPLE = "Sunder Armor, every rank: 7386, 7405, 8380, 11596, 11597",
+        SPELL_ID = "Spell ID",
+        ADD = "Add",
+        FROM_TARGET = "From the target",
+        FROM_TARGET_SECRET = "In combat the game hides which spell each one is",
+        FROM_TARGET_NONE = "The target has no debuffs",
+        FROM_TARGET_NO_TARGET = "Target something first",
+        PLACE_FRAME = "Place the frame",
+        ADDED = "%d added",
+        ALREADY = "%d already in the list",
+        NOT_IDS = "not spell IDs: %s",
+        NO_SPELLS = "No spells yet: type an ID above or pick one from the target.",
+        REMOVE = "Remove",
+        MODE_SHOW = "Always",
+        MODE_HIDE = "Never",
+        UNKNOWN_SPELL = "Unknown spell",
+        SPELL_ID_N = "ID %d",
     },
     esES = {
         TITLE = "Perjuicios del objetivo",
@@ -36,7 +56,25 @@ local strings = {
         IDS_NONE = "%s no tiene perjuicios.",
         IDS_NO_TARGET = "Selecciona un objetivo primero.",
         IDS_SECRET = "En combate el juego oculta qué hechizo es cada perjuicio: prueba fuera de combate.",
-        BAD_IDS = "Perjuicios del objetivo: esto no son números de hechizo y se han dejado fuera: %s",
+        TAB = "Hechizos",
+        SPELLS_INTRO = "Hechizos que salen siempre los primeros, los ponga quien los ponga, o que no salen nunca. Se reconocen por su número de hechizo, también en combate, en los perjuicios de los enemigos. Desactiva uno para guardarlo sin usarlo.",
+        SPELLS_EXAMPLE = "Hender armadura, todos los rangos: 7386, 7405, 8380, 11596, 11597",
+        SPELL_ID = "Número de hechizo",
+        ADD = "Añadir",
+        FROM_TARGET = "Del objetivo",
+        FROM_TARGET_SECRET = "En combate el juego oculta qué hechizo es cada uno",
+        FROM_TARGET_NONE = "El objetivo no tiene perjuicios",
+        FROM_TARGET_NO_TARGET = "Selecciona un objetivo primero",
+        PLACE_FRAME = "Colocar el marco",
+        ADDED = "%d añadidos",
+        ALREADY = "%d ya estaban en la lista",
+        NOT_IDS = "no son números de hechizo: %s",
+        NO_SPELLS = "Aún no hay hechizos: escribe un número arriba o elige uno del objetivo.",
+        REMOVE = "Quitar",
+        MODE_SHOW = "Siempre",
+        MODE_HIDE = "Nunca",
+        UNKNOWN_SPELL = "Hechizo desconocido",
+        SPELL_ID_N = "Número %d",
     },
 }
 ns.L = EternityUI.NewLocale(strings.enUS, strings.esES)
