@@ -1,6 +1,8 @@
 -- The module's "Spells" tab in the options: the player's list of spell IDs. Each one has its
 -- switch, whether it's always shown or never shown, and a button to take it out. IDs are typed
--- (several at once, separated by commas) or picked from the target's debuffs.
+-- (several at once, separated by commas), picked from the target's debuffs, or put in the box by
+-- shift-clicking a spell anywhere (spellbook, action bar, a link in the chat) while it has the
+-- cursor: the game hands that click to ChatFrameUtil.InsertLink, which we only follow.
 
 ---@type string, EternityUITargetDebuffsNamespace
 local addonName, ns = ...
@@ -62,6 +64,46 @@ function Tab.AddText(text)
         Tab.frame.input:SetText("")
     end
     Tab.Refresh()
+end
+
+--- The spell ID of a link ("|Hspell:7386:0|h[...]|h"), or nil.
+---@param link string?
+---@return integer?
+function Tab.SpellIDFromLink(link)
+    if type(link) ~= "string" or (issecretvalue ~= nil and issecretvalue(link)) then
+        return nil
+    end
+    return tonumber(link:match("|Hspell:(%d+)") or link:match("^spell:(%d+)"))
+end
+
+--- A shift-clicked spell goes into the box when it has the cursor: its ID, after a comma when
+--- there's text already.
+---@param link string?
+---@return boolean put
+function Tab.OnInsertLink(link)
+    local v = Tab.frame
+    local id = Tab.SpellIDFromLink(link)
+    if not (v and id and v.input:IsVisible() and v.input:HasFocus()) then
+        return false
+    end
+    local text = v.input:GetText():gsub("[,%s]+$", "")
+    v.input:SetText(text == "" and tostring(id) or (text .. ", " .. id))
+    v.input:SetCursorPosition(#v.input:GetText())
+    return true
+end
+
+local hooked = false
+local function hookLinks()
+    if hooked then
+        return
+    end
+    hooked = true
+    -- After Blizzard's own handling: nothing of it is replaced.
+    if ChatFrameUtil and ChatFrameUtil.InsertLink then
+        hooksecurefunc(ChatFrameUtil, "InsertLink", Tab.OnInsertLink)
+    elseif ChatEdit_InsertLink then
+        hooksecurefunc("ChatEdit_InsertLink", Tab.OnInsertLink)
+    end
 end
 
 -- "From the target": a menu with the target's debuffs, to add one.
@@ -187,6 +229,7 @@ function Tab.Build(parent, setHeight)
     v.intro:SetText(L.SPELLS_INTRO)
 
     v.input = Widgets.Input(v, Tab.AddText, L.SPELL_ID)
+    hookLinks()
     v.input:SetHeight(BAR)
     v.input:SetWidth(200)
     v.input:SetPoint("TOPLEFT", v.intro, "BOTTOMLEFT", 0, -GAP)

@@ -184,3 +184,29 @@ local function container()
     expect(m.container:IsAuraGroupEnabled("tracked")).toBe(false)
     m.Spells.Clear()
 end
+
+@test("a shift-clicked spell link fills the box while it has the cursor")
+local function links()
+    local m = module()
+    local tab = m.SpellsTab
+    expect(tab.SpellIDFromLink("|cff71d5ff|Hspell:7386:0|h[Sunder Armor]|h|r")).toBe(7386)
+    expect(tab.SpellIDFromLink("|cffffffff|Hitem:6948::::::::|h[Hearthstone]|h|r") == nil).toBe(true)
+    if not tab.frame then
+        local area = CreateFrame("ScrollFrame", nil, UIParent)
+        area:SetSize(800, 500)
+        local child = CreateFrame("Frame", nil, area)
+        child:SetSize(780, 1)
+        tab.Build(child, function() end)
+    end
+    local box = tab.frame.input
+    box:SetText("")
+    -- Without the cursor in the box, nothing is put.
+    box:ClearFocus()
+    expect(tab.OnInsertLink("|Hspell:7386:0|h[Sunder Armor]|h")).toBe(false)
+    box:SetFocus()
+    expect(tab.OnInsertLink("|Hspell:7386:0|h[Sunder Armor]|h")).toBe(true)
+    expect(tab.OnInsertLink("|Hspell:7405:0|h[Sunder Armor]|h")).toBe(true)
+    expect(box:GetText()).toBe("7386, 7405")
+    box:ClearFocus()
+    box:SetText("")
+end
