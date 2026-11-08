@@ -112,8 +112,18 @@
           "default": false,
           "label": { "enUS": "Show the spell ID", "esES": "Mostrar el ID del hechizo" },
           "description": {
-            "enUS": "Not on auras: their data can be secret.",
-            "esES": "No en las auras: sus datos pueden ser secretos."
+            "enUS": "Also on buffs and debuffs, while the game lets addons read them (out of combat, as a rule).",
+            "esES": "También en los bufos y perjuicios, mientras el juego deje leerlos a los addons (por lo general, fuera de combate)."
+          }
+        },
+        {
+          "id": "otherId",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Show other IDs", "esES": "Mostrar otros ID" },
+          "description": {
+            "enUS": "Creatures (NPC ID), currencies, mounts, pets, toys, achievements and quests.",
+            "esES": "Criaturas (ID de PNJ), monedas, monturas, mascotas, juguetes, logros y misiones."
           }
         }
       ]

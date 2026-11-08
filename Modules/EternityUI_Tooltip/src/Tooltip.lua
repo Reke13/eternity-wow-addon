@@ -213,6 +213,46 @@ function Tooltip:OnSpell(tip, data)
     end
 end
 
+-- Buffs and debuffs: their spell ID, only while the game lets addons read it (out of combat, as
+-- a rule). A secret one is left out, never compared.
+function Tooltip:OnAura(tip, data)
+    self:OnSpell(tip, data)
+end
+
+-- Currencies, mounts, achievements, quests, toys...: the ID the tooltip data carries.
+function Tooltip:OnOther(tip, data)
+    if self.running and self.skinned[tip] and data and not secret(data.id) and data.id and opt("info.otherId") then
+        addId(tip, data.id)
+    end
+end
+
+--- The NPC ID inside a creature's GUID ("Creature-0-1-2-3-<npc>-..."), or nil.
+---@param guid string?
+---@return integer?
+function Tooltip.NpcID(guid)
+    if type(guid) ~= "string" or secret(guid) then
+        return nil
+    end
+    local kind, npc = guid:match("^(%a+)%-%d+%-%d+%-%d+%-%d+%-(%d+)")
+    if kind == "Creature" or kind == "Vehicle" or kind == "Pet" then
+        return tonumber(npc)
+    end
+end
+
+function Tooltip:OnUnitId(tip)
+    if not self.running or not self.skinned[tip] or not opt("info.otherId") then
+        return
+    end
+    local _, unit = tip:GetUnit()
+    if not unit or secret(unit) then
+        return
+    end
+    local id = Tooltip.NpcID(UnitGUID(unit))
+    if id then
+        addId(tip, id)
+    end
+end
+
 function Tooltip:OnUnit(tip)
     if not self.running or not self.skinned[tip] or not opt("look.classBorder") then
         return
@@ -313,7 +353,20 @@ function Tooltip:InstallHooks()
         end)
         TooltipDataProcessor.AddTooltipPostCall(types.Unit, function(tip)
             self:OnUnit(tip)
+            self:OnUnitId(tip)
         end)
+        if types.UnitAura then
+            TooltipDataProcessor.AddTooltipPostCall(types.UnitAura, function(tip, data)
+                self:OnAura(tip, data)
+            end)
+        end
+        for _, kind in ipairs({ "Currency", "Mount", "Achievement", "Quest", "Toy", "BattlePet", "CompanionPet" }) do
+            if types[kind] then
+                TooltipDataProcessor.AddTooltipPostCall(types[kind], function(tip, data)
+                    self:OnOther(tip, data)
+                end)
+            end
+        end
     end
     hooksecurefunc("GameTooltip_SetDefaultAnchor", function(tip, parent)
         self:OnDefaultAnchor(tip, parent)

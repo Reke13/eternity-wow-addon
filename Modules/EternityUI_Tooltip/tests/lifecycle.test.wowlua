@@ -15,3 +15,12 @@ local function cycle()
     EternityUI.store:SetModuleEnabled(NAME, true)
     expect(EternityUI:GetModule(NAME).active).toBe(true)
 end
+
+@test("creature GUIDs give their NPC ID; players and secrets give none")
+local function npcIds()
+    local tooltip = EternityUI:GetModule("EternityUI_Tooltip")
+    expect(tooltip.NpcID("Creature-0-1465-0-12-2589-0000ABCDEF")).toBe(2589)
+    expect(tooltip.NpcID("Vehicle-0-1465-0-12-33113-0000ABCDEF")).toBe(33113)
+    expect(tooltip.NpcID("Player-1305-0A1B2C3D") == nil).toBe(true)
+    expect(tooltip.NpcID(nil) == nil).toBe(true)
+end
