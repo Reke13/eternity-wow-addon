@@ -19,7 +19,7 @@
     "camelot": {}
   },
   "build": {
-    "load-order": ["src/Generated/Options.lua", "src/Locale.lua", "src/Perf.lua", "src/PerfTab.lua", "src/InfoBar.lua"]
+    "load-order": ["src/Generated/Options.lua", "src/Locale.lua", "src/Perf.lua", "src/PerfTab.lua", "src/ContentTab.lua", "src/InfoBar.lua"]
   },
   "test": {
     "blizzard-ui": true,

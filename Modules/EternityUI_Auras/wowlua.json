@@ -1,0 +1,32 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-auras",
+    "version": "0.1.6",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Auras",
+    "title": "Eternity Auras",
+    "notes": "Eternity module: the target's debuffs and your own buffs in frames of their own, each filtered by who cast them, their type and your own list of spells, in combat too.",
+    "saved-variables": ["EternityUIAurasDB"]
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": ["src/Generated/Options.lua", "src/Locale.lua", "src/Filters.lua", "src/Spells.lua", "src/SpellsTab.lua", "src/Frame.lua", "src/Auras.lua"]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": ["EternityUI", "EternityUIAurasDB", "SLASH_ETERNITYAURAS1", "SlashCmdList"]
+  }
+}

@@ -31,3 +31,88 @@ local function stops()
     expect(EternityUI.Mover.elements[NAME] == nil).toBe(true)
     EternityUI.store:SetModuleEnabled(NAME, true)
 end
+
+@test("bag slots, level progress and durability join the bar when switched on")
+local function newItems()
+    local store = EternityUI.store
+    local module = EternityUI:GetModule(NAME)
+    local before = #module:BuildItems()
+    store:Set(NAME, "content.bags", true)
+    store:Set(NAME, "content.durability", true)
+    local items = module:BuildItems()
+    local free, total = module.BagSlots()
+    expect(total >= free).toBe(true)
+    expect(#items >= before + 1).toBe(true)
+    expect(items[before + 1]:find(free .. "/" .. total, 1, true) ~= nil).toBe(true)
+    store:Set(NAME, "content.bagsFormat", "used")
+    expect(module:BuildItems()[before + 1]:find((total - free) .. "/" .. total, 1, true) ~= nil).toBe(true)
+    store:Reset(NAME)
+end
+
+@test("the items are laid out in rows: a number per row, or shared out among the rows")
+local function rows()
+    local store = EternityUI.store
+    local module = EternityUI:GetModule(NAME)
+    -- Four items: time, FPS, latency, gold.
+    expect(#module:BuildItems()).toBe(4)
+    expect(module.PerRow(4)).toBe(4)
+    store:Set(NAME, "layout.rows", 2)
+    expect(module.PerRow(4)).toBe(2)
+    module:Update()
+    expect(math.floor(module.bar:GetHeight() + 0.5)).toBe(2 * store:Get(NAME, "layout.height"))
+    store:Set(NAME, "layout.perRow", 3)
+    expect(module.PerRow(4)).toBe(3)
+    store:Set(NAME, "layout.height", 30)
+    module:Update()
+    expect(math.floor(module.bar:GetHeight() + 0.5)).toBe(60)
+    -- The third and fourth items start their rows at the same place.
+    local _, _, _, x1, y1 = module.cells[1]:GetPoint(1)
+    local _, _, _, x4, y4 = module.cells[4]:GetPoint(1)
+    expect(x1).toBe(x4)
+    expect(y4 < y1).toBe(true)
+    store:Set(NAME, "layout.width", 600)
+    module:Update()
+    expect(math.floor(module.bar:GetWidth() + 0.5)).toBe(600)
+    store:Reset(NAME)
+    module:Update()
+    expect(math.floor(module.bar:GetHeight() + 0.5)).toBe(26)
+end
+
+@test("the items follow the chosen order, and an order missing ids still has them all")
+local function order()
+    local store = EternityUI.store
+    local module = EternityUI:GetModule(NAME)
+    local tab = module.ContentTab
+    expect(table.concat(tab.Order("gold,clock"), ",")).toBe("gold,clock,fps,latency,bags,xp,durability")
+    expect(#tab.Order("nonsense,,gold,gold")).toBe(#tab.IDS)
+    local first = module:BuildItems()[1]
+    tab.Move("gold", -1)
+    tab.Move("gold", -1)
+    tab.Move("gold", -1)
+    expect(tab.Order()[1]).toBe("gold")
+    expect(module:BuildItems()[2]).toBe(first)
+    -- Can't go further up.
+    tab.Move("gold", -1)
+    expect(tab.Order()[1]).toBe("gold")
+    store:Reset(NAME)
+    expect(tab.Order()[1]).toBe("clock")
+end
+
+@test("the Content tab draws a row per item and switches them")
+local function contentTab()
+    local module = EternityUI:GetModule(NAME)
+    local tab = module.ContentTab
+    expect(module.tabs[1].key).toBe("content")
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 500)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    tab.Build(child, function() end)
+    expect(#tab.rows).toBe(#tab.IDS)
+    expect(tab.rows[1].up:IsEnabled()).toBe(false)
+    expect(tab.rows[#tab.IDS].down:IsEnabled()).toBe(false)
+    local before = #module:BuildItems()
+    tab.rows[1].toggle:Click()
+    expect(#module:BuildItems()).toBe(before - 1)
+    EternityUI.store:Reset(NAME)
+end

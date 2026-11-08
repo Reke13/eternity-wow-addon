@@ -9,8 +9,8 @@ ns.OptionsSchema = {
         esES = "Barra de información",
     },
     description = {
-        enUS = "A small bar with the time, FPS, latency and gold. Move it with the Mover; click it to open these options, right click for the Performance tab: where the FPS go.",
-        esES = "Una barra pequeña con la hora, los FPS, la latencia y el oro. Muévela con el Mover; haz clic para abrir estas opciones y clic derecho para la pestaña Rendimiento: a dónde se van los FPS.",
+        enUS = "A small bar with the time, FPS, latency, gold, bag slots, level progress and durability: pick which ones show and how they're laid out. Move it with the Mover; click it to open these options, right click for the Performance tab: where the FPS go.",
+        esES = "Una barra pequeña con la hora, los FPS, la latencia, el oro, los huecos de la bolsa, el progreso del nivel y la durabilidad: elige cuáles salen y cómo se colocan. Muévela con el Mover; haz clic para abrir estas opciones y clic derecho para la pestaña Rendimiento: a dónde se van los FPS.",
     },
     groups = {
         {
@@ -82,6 +82,69 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "bags",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Show bag slots",
+                        esES = "Mostrar los huecos de la bolsa",
+                    },
+                },
+                {
+                    id = "bagsFormat",
+                    type = "select",
+                    default = "free",
+                    label = {
+                        enUS = "Bag slots as",
+                        esES = "Huecos de la bolsa como",
+                    },
+                    visibleWhen = {
+                        ["content.bags"] = true,
+                    },
+                    values = {
+                        {
+                            value = "free",
+                            label = {
+                                enUS = "Free / total (12/80)",
+                                esES = "Libres / total (12/80)",
+                            },
+                        },
+                        {
+                            value = "used",
+                            label = {
+                                enUS = "Used / total (68/80)",
+                                esES = "Usados / total (68/80)",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "xp",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Show level progress (%)",
+                        esES = "Mostrar el progreso del nivel (%)",
+                    },
+                    description = {
+                        enUS = "How much of the current level is done. Hidden at the top level.",
+                        esES = "Cuánto llevas del nivel actual. No sale en el nivel máximo.",
+                    },
+                },
+                {
+                    id = "durability",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Show equipment durability (%)",
+                        esES = "Mostrar la durabilidad del equipo (%)",
+                    },
+                    description = {
+                        enUS = "Of everything you have equipped together. The tooltip tells the most worn piece.",
+                        esES = "De todo lo que llevas equipado junto. El tooltip dice la pieza más gastada.",
+                    },
+                },
+                {
                     id = "separator",
                     type = "text",
                     default = "·",
@@ -93,6 +156,20 @@ ns.OptionsSchema = {
                     description = {
                         enUS = "Text between items. Empty leaves just a gap.",
                         esES = "Texto entre los elementos. Vacío deja solo un hueco.",
+                    },
+                },
+                {
+                    id = "order",
+                    type = "text",
+                    default = "clock,fps,latency,gold,bags,xp,durability",
+                    maxLength = 200,
+                    label = {
+                        enUS = "Order",
+                        esES = "Orden",
+                    },
+                    description = {
+                        enUS = "The items' order, set in the Content tab.",
+                        esES = "El orden de los elementos, se elige en la pestaña Contenido.",
                     },
                 },
             },
@@ -126,6 +203,30 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "High latency above (ms)",
                         esES = "Latencia alta por encima de (ms)",
+                    },
+                },
+                {
+                    id = "fewSlots",
+                    type = "range",
+                    default = 5,
+                    min = 0,
+                    max = 30,
+                    step = 1,
+                    label = {
+                        enUS = "Few free bag slots (or fewer)",
+                        esES = "Pocos huecos libres en la bolsa (o menos)",
+                    },
+                },
+                {
+                    id = "lowDurability",
+                    type = "range",
+                    default = 25,
+                    min = 0,
+                    max = 100,
+                    step = 5,
+                    label = {
+                        enUS = "Low durability below (%)",
+                        esES = "Durabilidad baja por debajo de (%)",
                     },
                 },
                 {
@@ -175,6 +276,77 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Values in the accent color",
                         esES = "Valores en el color de acento",
+                    },
+                },
+                {
+                    id = "textSize",
+                    type = "range",
+                    default = 13,
+                    min = 9,
+                    max = 24,
+                    step = 1,
+                    label = {
+                        enUS = "Text size",
+                        esES = "Tamaño del texto",
+                    },
+                },
+                {
+                    id = "height",
+                    type = "range",
+                    default = 26,
+                    min = 16,
+                    max = 60,
+                    step = 1,
+                    label = {
+                        enUS = "Row height",
+                        esES = "Altura de cada fila",
+                    },
+                },
+                {
+                    id = "width",
+                    type = "range",
+                    default = 0,
+                    min = 0,
+                    max = 1200,
+                    step = 10,
+                    label = {
+                        enUS = "Width",
+                        esES = "Anchura",
+                    },
+                    description = {
+                        enUS = "0 fits the bar to what it shows. Any other value fixes it, and the items share it evenly.",
+                        esES = "0 ajusta la barra a lo que muestra. Cualquier otro valor la fija, y los elementos se la reparten a partes iguales.",
+                    },
+                },
+                {
+                    id = "perRow",
+                    type = "range",
+                    default = 0,
+                    min = 0,
+                    max = 7,
+                    step = 1,
+                    label = {
+                        enUS = "Items per row",
+                        esES = "Elementos por fila",
+                    },
+                    description = {
+                        enUS = "0 shares them out among the rows set below.",
+                        esES = "0 los reparte entre las filas de abajo.",
+                    },
+                },
+                {
+                    id = "rows",
+                    type = "range",
+                    default = 1,
+                    min = 1,
+                    max = 7,
+                    step = 1,
+                    label = {
+                        enUS = "Rows",
+                        esES = "Filas",
+                    },
+                    visibleWhen = {
+                        ["layout.perRow"] = 0,
                     },
                 },
             },

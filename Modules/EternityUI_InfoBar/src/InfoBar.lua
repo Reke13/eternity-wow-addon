@@ -1,26 +1,37 @@
--- EternityUI_InfoBar: a small bar with the time, FPS, latency and gold. The Mover places it; a
--- click opens its options, a right click its "Performance" tab (Perf.lua, PerfTab.lua), which
--- tells where the FPS go.
+-- EternityUI_InfoBar: a small bar with the time, FPS, latency, gold, bag slots, level progress
+-- and durability, each one switched on, in the order chosen in the "Content" tab
+-- (ContentTab.lua). The items are laid out in rows (a number
+-- per row, or shared out among a number of rows) and columns, with the bar's width fitted to
+-- them or fixed. The Mover places it; a click opens its options, a right click its
+-- "Performance" tab (Perf.lua, PerfTab.lua), which tells where the FPS go.
 
 ---@type string, EternityUIInfoBarNamespace
 local addonName, ns = ...
 local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
-local L, Perf, PerfTab = ns.L, ns.Perf, ns.PerfTab
+local L, Perf, PerfTab, ContentTab = ns.L, ns.Perf, ns.PerfTab, ns.ContentTab
 
-local TEXT_SIZE = 13
-local HEIGHT = 26
 local PADDING = 12
+local GAP = 16 -- between columns, besides the separator
 
 ---@class EternityUIInfoBarModule: EternityUIModuleDefinition
 ---@field bar table? the bar's frame (created the first time it's enabled)
+---@field cells table[] one text per item shown
+---@field separators table[] texts between the items of a row
 ---@field ticker table?
 ---@field running boolean? between OnEnable and OnDisable (active is still false inside OnEnable)
 local Module = {
     schema = ns.OptionsSchema,
-    tabs = { { key = PerfTab.TAB, text = L.TAB, build = PerfTab.Build } },
+    tabs = {
+        -- Its switches and the order leave General: they're in this tab.
+        { key = ContentTab.TAB, text = L.CONTENT_TAB, build = ContentTab.Build, paths = ContentTab.Paths() },
+        { key = PerfTab.TAB, text = L.TAB, build = PerfTab.Build },
+    },
     Perf = Perf,
     PerfTab = PerfTab,
+    ContentTab = ContentTab,
+    cells = {},
+    separators = {},
 }
 
 local opt = ns.opt
@@ -37,6 +48,58 @@ local function latency()
     return home, world or home
 end
 
+--- Bag slots: free and total, of the bags that hold anything (not quivers, soul bags...).
+---@return integer free
+---@return integer total
+function Module.BagSlots()
+    local free, total = 0, 0
+    for bag = 0, NUM_BAG_SLOTS or 4 do
+        local slots = C_Container.GetContainerNumSlots(bag) or 0
+        local empty, family = C_Container.GetContainerNumFreeSlots(bag)
+        if slots > 0 and (family == nil or family == 0) then
+            free = free + (empty or 0)
+            total = total + slots
+        end
+    end
+    return free, total
+end
+
+--- Durability of what's equipped, all together, as a fraction; and the most worn piece's.
+--- nil when nothing equipped wears out.
+---@return number? overall
+---@return number? worst
+---@return integer? worstSlot
+function Module.Durability()
+    local current, maximum, worst, worstSlot = 0, 0, nil, nil
+    for slot = INVSLOT_FIRST_EQUIPPED or 1, INVSLOT_LAST_EQUIPPED or 19 do
+        local now, most = GetInventoryItemDurability(slot)
+        if now and most and most > 0 then
+            current, maximum = current + now, maximum + most
+            local share = now / most
+            if not worst or share < worst then
+                worst, worstSlot = share, slot
+            end
+        end
+    end
+    if maximum == 0 then
+        return nil
+    end
+    return current / maximum, worst, worstSlot
+end
+
+--- Progress of the current level (0..1) and the level; nil at the top level.
+---@return number?
+---@return integer?
+function Module.LevelProgress()
+    local level = UnitLevel("player")
+    local top = GetMaxPlayerLevel and GetMaxPlayerLevel()
+    local most = UnitXPMax("player") or 0
+    if (top and level >= top) or most <= 0 then
+        return nil
+    end
+    return (UnitXP("player") or 0) / most, level
+end
+
 local function clockText()
     if opt("content.clockFormat") == "12h" then
         local hour = tonumber(date("%H"))
@@ -45,43 +108,183 @@ local function clockText()
     return date("%H:%M")
 end
 
---- The bar's text with the current configuration (empty if everything is disabled).
----@return string
-function Module:BuildText()
+--- The texts of the items switched on, in order (empty if everything is off).
+---@return string[]
+-- Each item's text from the value and alert color codes, or nil when it has nothing to show.
+local ITEMS = {
+    clock = function(value)
+        return value .. clockText() .. "|r"
+    end,
+    fps = function(value, alert)
+        local fps = math.floor(GetFramerate() + 0.5)
+        return (fps < opt("alerts.lowFps") and alert or value) .. fps .. "|r FPS"
+    end,
+    latency = function(value, alert)
+        local ms = math.max(latency())
+        return (ms > opt("alerts.highLatency") and alert or value) .. ms .. "|r MS"
+    end,
+    gold = function(value)
+        return value .. C_CurrencyInfo.GetCoinTextureString(GetMoney(), opt("layout.textSize")) .. "|r"
+    end,
+    bags = function(value, alert)
+        local free, total = Module.BagSlots()
+        local shown = opt("content.bagsFormat") == "used" and (total - free) or free
+        local color = free <= opt("alerts.fewSlots") and alert or value
+        return L.BAGS .. " " .. color .. shown .. "/" .. total .. "|r"
+    end,
+    xp = function(value)
+        local progress, level = Module.LevelProgress()
+        if progress then
+            return L.LEVEL:format(level) .. " " .. value .. math.floor(progress * 100) .. "%|r"
+        end
+    end,
+    durability = function(value, alert)
+        local overall = Module.Durability()
+        if overall then
+            local percent = math.floor(overall * 100 + 0.5)
+            local color = percent < opt("alerts.lowDurability") and alert or value
+            return L.DURABILITY .. " " .. color .. percent .. "%|r"
+        end
+    end,
+}
+
+--- The texts of the items switched on, in the chosen order (empty if everything is off).
+---@return string[]
+function Module:BuildItems()
     local value = code(opt("layout.accentValues") and "accentText" or "text")
     local alert = code(opt("alerts.color"))
     local items = {}
-    if opt("content.clock") then
-        items[#items + 1] = value .. clockText() .. "|r"
+    for _, id in ipairs(ContentTab.Order()) do
+        if opt("content." .. id) then
+            local text = ITEMS[id](value, alert)
+            if text then
+                items[#items + 1] = text
+            end
+        end
     end
-    if opt("content.fps") then
-        local fps = math.floor(GetFramerate() + 0.5)
-        items[#items + 1] = (fps < opt("alerts.lowFps") and alert or value) .. fps .. "|r FPS"
-    end
-    if opt("content.latency") then
-        local ms = math.max(latency())
-        items[#items + 1] = (ms > opt("alerts.highLatency") and alert or value) .. ms .. "|r MS"
-    end
-    if opt("content.gold") then
-        local money = C_CurrencyInfo.GetCoinTextureString(GetMoney(), TEXT_SIZE)
-        items[#items + 1] = value .. money .. "|r"
-    end
-    -- User text: "|" is escaped ("||") so it doesn't break the color codes.
-    local separator = opt("content.separator"):gsub("|", "||")
-    local joiner = separator == "" and "    " or ("  " .. code("textMuted") .. separator .. "|r  ")
-    return table.concat(items, joiner)
+    return items
 end
 
---- Refreshes the text and adjusts the width. The bar hides if there's nothing to show.
+-- The separator between the items of a row, or nil for just a gap.
+local function separatorText()
+    -- User text: "|" is escaped ("||") so it doesn't break the color codes.
+    local separator = opt("content.separator"):gsub("|", "||")
+    if separator == "" then
+        return nil
+    end
+    return code("textMuted") .. separator .. "|r"
+end
+
+--- The bar's items in one line (empty if everything is off).
+---@return string
+function Module:BuildText()
+    local separator = separatorText()
+    return table.concat(self:BuildItems(), separator and ("  " .. separator .. "  ") or "    ")
+end
+
+--- How many items go in each row, for n items: the number set, or them shared out among the
+--- rows set.
+---@param n integer
+---@return integer
+function Module.PerRow(n)
+    local perRow = opt("layout.perRow")
+    if perRow <= 0 then
+        perRow = math.ceil(n / math.max(opt("layout.rows"), 1))
+    end
+    return math.max(math.min(perRow, n), 1)
+end
+
+local function pooled(bar, pool, index)
+    local text = pool[index]
+    if not text then
+        text = Widgets.Text(bar, opt("layout.textSize"), "muted")
+        text:SetWordWrap(false)
+        pool[index] = text
+    end
+    return text
+end
+
+--- Refreshes the items and lays them out in rows and columns. The bar hides if there's nothing
+--- to show.
 function Module:Update()
     local bar = self.bar
     if not bar then
         return
     end
-    local text = self:BuildText()
-    bar.text:SetText(text)
-    bar:SetSize(math.ceil(bar.text:GetStringWidth()) + PADDING * 2, HEIGHT)
-    bar:SetShown(self.running and text ~= "")
+    local items = self:BuildItems()
+    local n = #items
+    local size, height = opt("layout.textSize"), opt("layout.height")
+    local perRow = Module.PerRow(n)
+    local rows = math.max(math.ceil(n / perRow), 1)
+    local separator = separatorText()
+
+    -- Measure: each column as wide as its widest item.
+    local widths = {}
+    for i, text in ipairs(items) do
+        local cell = pooled(bar, self.cells, i)
+        Widgets.SetTextSize(cell, size)
+        cell:SetWidth(0)
+        cell:SetText(text)
+        local column = (i - 1) % perRow + 1
+        widths[column] = math.max(widths[column] or 0, math.ceil(cell:GetStringWidth()))
+    end
+    local between = GAP
+    if separator then
+        local probe = pooled(bar, self.separators, 1)
+        Widgets.SetTextSize(probe, size)
+        probe:SetText(separator)
+        between = math.ceil(probe:GetStringWidth()) + GAP
+    end
+    local columns = perRow
+    local width = opt("layout.width")
+    if width > 0 then
+        -- Fixed: the columns share the room evenly.
+        local each = (width - PADDING * 2 - (columns - 1) * between) / columns
+        for c = 1, columns do
+            widths[c] = math.max(each, 1)
+        end
+    else
+        width = PADDING * 2 + (columns - 1) * between
+        for c = 1, columns do
+            width = width + (widths[c] or 0)
+        end
+    end
+
+    -- Place.
+    local used = 0
+    for i = 1, n do
+        local cell = self.cells[i]
+        local column, row = (i - 1) % perRow + 1, math.floor((i - 1) / perRow)
+        local x = PADDING
+        for c = 1, column - 1 do
+            x = x + widths[c] + between
+        end
+        local y = -(row * height + height / 2)
+        cell:ClearAllPoints()
+        cell:SetWidth(widths[column])
+        cell:SetJustifyH("CENTER")
+        cell:SetPoint("LEFT", bar, "TOPLEFT", x, y)
+        cell:Show()
+        -- A separator after it when another item follows in the same row.
+        if separator and column < perRow and i < n then
+            used = used + 1
+            local sep = pooled(bar, self.separators, used)
+            Widgets.SetTextSize(sep, size)
+            sep:SetWidth(0)
+            sep:SetText(separator)
+            sep:ClearAllPoints()
+            sep:SetPoint("CENTER", bar, "TOPLEFT", x + widths[column] + between / 2, y)
+            sep:Show()
+        end
+    end
+    for i = n + 1, #self.cells do
+        self.cells[i]:Hide()
+    end
+    for i = used + 1, #self.separators do
+        self.separators[i]:Hide()
+    end
+    bar:SetSize(math.max(width, 1), rows * height)
+    bar:SetShown(self.running and n > 0)
 end
 
 --- Scale and background. The position belongs to the Mover.
@@ -107,6 +310,14 @@ local function buildTooltip(tip)
     if share then
         tip:AddDoubleLine(L.ADDONS_LINE, string.format("%.2f ms (%d%%)", addons, math.floor(share * 100 + 0.5)))
     end
+    local overall, worst, slot = Module.Durability()
+    if overall then
+        tip:AddDoubleLine(L.DURABILITY_LINE, math.floor(overall * 100 + 0.5) .. "%")
+        local link = slot and GetInventoryItemLink("player", slot)
+        if link and worst and worst < 1 then
+            tip:AddDoubleLine(L.WORST_PIECE, link .. " " .. math.floor(worst * 100 + 0.5) .. "%")
+        end
+    end
     tip:AddHint(L.HINT)
 end
 
@@ -116,8 +327,6 @@ local function createBar(self)
     bar:SetClampedToScreen(true)
     bar:EnableMouse(true)
     bar.shape = Shape.New(bar)
-    bar.text = Widgets.Text(bar, TEXT_SIZE, "muted")
-    bar.text:SetPoint("CENTER")
 
     function bar.Paint(frame)
         if opt("layout.background") then
@@ -181,6 +390,9 @@ function Module:OnConfigChanged(path)
         self:ApplyLayout()
     end
     self:Update()
+    if ContentTab.frame and ContentTab.frame:IsVisible() then
+        ContentTab.Refresh()
+    end
 end
 
 E:RegisterModule(addonName, Module)

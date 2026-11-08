@@ -1,6 +1,8 @@
 -- A module's page, built from its schema: the Enabled switch and General, Appearance and module
 -- tabs. A group's "tab" field places it; a module tab with `groups` lists them in a picker and
--- shows one at a time, with an optional live preview above. Rows only exist for tabs that open.
+-- shows one at a time, with an optional live preview above (the picker goes on the left, or on
+-- top with `picker = "top"`). A tab that draws itself (`build`) may name in `paths` the options
+-- it sets, which then leave General and Appearance. Rows only exist for tabs that open.
 ---@type string, table
 local _, ns = ...
 local L = ns.L
@@ -163,8 +165,11 @@ local function refreshList(list, module)
     list.scroll:SetContentHeight(-y + 8)
 end
 
--- A tab with a picker: buttons on the left, the chosen view on the right. views = { { id, text,
--- sections } }.
+-- A tab with a picker: buttons on the left, the chosen view on the right; or, with
+-- tab.picker = "top", a row of choices on top and the view under it, full width. views = { { id,
+-- text, sections } }. tab.onPick(id) is told when another view is chosen.
+local TOP_PICKER = 30 + 14
+
 local function buildPicked(tab, frame, page, views)
     local top = 0
     if tab.preview then
@@ -175,18 +180,23 @@ local function buildPicked(tab, frame, page, views)
     end
     page.pickButtons = {}
     page.pickLists = {}
+    local onTop = tab.picker == "top"
     local holder = CreateFrame("Frame", nil, frame)
-    holder:SetPoint("TOPLEFT", 186, top)
+    holder:SetPoint("TOPLEFT", onTop and 0 or 186, onTop and top - TOP_PICKER or top)
     holder:SetPoint("BOTTOMRIGHT")
     local byView = {}
     for _, view in ipairs(views) do
         byView[view.id] = view
     end
 
+    local segmented
     function page.Pick(id)
         page.picked = id
         for key, button in pairs(page.pickButtons) do
             button:SetActive(key == id)
+        end
+        if segmented then
+            segmented:SetValue(id)
         end
         if not page.pickLists[id] then
             local list = newList(holder, page, byView[id].sections)
@@ -197,6 +207,20 @@ local function buildPicked(tab, frame, page, views)
             list.scroll:SetShown(key == id)
         end
         page.Refresh()
+        if tab.onPick then
+            tab.onPick(id)
+        end
+    end
+
+    if onTop then
+        local choices = {}
+        for _, view in ipairs(views) do
+            choices[#choices + 1] = { view.id, view.text }
+        end
+        segmented = Widgets.Segmented(frame, choices, page.Pick)
+        segmented:SetPoint("TOPLEFT", 0, top)
+        page.Pick(views[1].id)
+        return
     end
 
     for i, view in ipairs(views) do
@@ -256,6 +280,9 @@ local function placeOptions(module)
     end
     local tabViews = {}
     for _, tab in ipairs(module.tabs or {}) do
+        for _, path in ipairs(tab.paths or {}) do
+            used[path] = true
+        end
         if tab.groups or tab.views then
             tabViews[tab] = viewsOf(tab, byId, byPath, used)
         end
