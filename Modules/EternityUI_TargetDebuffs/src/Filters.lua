@@ -1,8 +1,9 @@
--- What the container shows, from the options: pure data, no frames. Two aura groups:
---   * "tracked": the spells of the player's list (Spells.lua) to always show, whoever cast them,
---     first.
+-- What the container shows, from the options: pure data, no frames. Three aura groups:
+--   * "tracked": the spells of the player's list (Spells.lua) shown whoever cast them, first.
+--   * "mine": the spells of the list shown only when the player cast them, next.
 --   * "main": the rest, narrowed by the game's filter string (who cast it, crowd control,
---     dispellable) and without the tracked and hidden spells.
+--     dispellable) and without any spell of the list: a "mine" one cast by someone else doesn't
+--     show at all.
 -- Both kinds of filter are evaluated by Blizzard's aura container, not here: the filter string
 -- by the game, and the spell ID lists by the container's own code, which may match spell IDs
 -- of debuffs on enemies even while they're secret to addons. That's why it works in combat.
@@ -68,30 +69,42 @@ function Filters.MainFilter(o)
     return table.concat(tokens, "|")
 end
 
---- Both groups from the options and the list of spells.
----@param o table { origin, crowdControl, dispellable, max, show = set, hide = set }
----@return table groups { tracked = { enabled, filter, candidate, max }, main = { filter, candidate, max } }
+local function listGroup(ids, filter)
+    local count = 0
+    for _ in pairs(ids) do
+        count = count + 1
+    end
+    return {
+        enabled = count > 0,
+        filter = filter,
+        candidate = count > 0 and { includeSpellIDs = ids } or nil,
+        -- A spell may be on the target more than once (several casters).
+        max = math.max(count * 2, 1),
+    }
+end
+
+--- The three groups from the options and the list of spells.
+---@param o table { origin, crowdControl, dispellable, max, always = set, mine = set }
+---@return table groups { tracked, mine, main = { enabled?, filter, candidate, max } }
 function Filters.Groups(o)
-    local show, hide = o.show or {}, o.hide or {}
-    -- A spell both shown and hidden stays hidden.
-    local include, count = {}, 0
-    for id in pairs(show) do
-        if not hide[id] then
-            include[id] = true
-            count = count + 1
+    local always, mine = {}, {}
+    for id in pairs(o.always or {}) do
+        always[id] = true
+    end
+    -- A spell in both stays "always".
+    for id in pairs(o.mine or {}) do
+        if not always[id] then
+            mine[id] = true
         end
     end
-    local skip = union(include, hide)
+    local skip = union(always, mine)
     return {
-        tracked = {
-            enabled = count > 0,
-            filter = "HARMFUL",
-            candidate = count > 0 and { includeSpellIDs = include } or nil,
-            max = math.max(count, 1),
-        },
+        tracked = listGroup(always, "HARMFUL"),
+        mine = listGroup(mine, "HARMFUL|PLAYER"),
         main = {
+            enabled = true,
             filter = Filters.MainFilter(o),
-            -- The tracked ones are already shown, and the hidden never are.
+            -- The listed ones show in their own groups, or not at all.
             candidate = skip and { excludeSpellIDs = skip } or nil,
             max = o.max,
         },

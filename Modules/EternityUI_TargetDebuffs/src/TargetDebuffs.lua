@@ -2,8 +2,8 @@
 -- The icons live in Blizzard's custom aura container (CreateFrame("AuraContainer", ...,
 -- "CustomAuraContainerTemplate")): it reads, filters, sorts and draws the auras itself, so it
 -- keeps working in combat, when aura data is secret to addons. This file only configures it:
---   * Two aura groups (Filters.lua): the player's list of spells (Spells.lua, edited in the
---     "Spells" tab) first, then the rest.
+--   * Three aura groups (Filters.lua): the player's list of spells (Spells.lua, edited in the
+--     "Spells" tab) first, whoever cast them or only when mine, then the rest.
 --   * The buttons get our regions (icon, time shadow and text, stacks, dispel border) through
 --     the container's initializer and setters; the container fills them.
 -- Blizzard's target frame is never touched. Its own auras keep showing.
@@ -18,6 +18,8 @@ local L, Filters, Spells, SpellsTab, opt = ns.L, ns.Filters, ns.Spells, ns.Spell
 
 local SAMPLE_ICON = 136118 -- a generic debuff icon for the Mover's samples
 local SAMPLE_ROWS = 2
+-- The container's aura groups, in the order they're laid out.
+local GROUPS = { "tracked", "mine", "main" }
 
 ---@class EternityUITargetDebuffsModule: EternityUIModuleDefinition
 ---@field holder table? our frame, moved by the Mover
@@ -52,14 +54,14 @@ local function sortDirection()
 end
 
 local function options()
-    local show, hide = Spells.Sets()
+    local always, mine = Spells.Sets()
     return {
         origin = opt("show.origin"),
         crowdControl = opt("show.crowdControl"),
         dispellable = opt("show.dispellable"),
         max = opt("show.max"),
-        show = show,
-        hide = hide,
+        always = always,
+        mine = mine,
     }
 end
 
@@ -188,9 +190,10 @@ function Module:CreateContainer()
     self.container = container
     container:SetUnit("target")
     local groups = Filters.Groups(options())
-    container:AddAuraGroup("tracked", groups.tracked.filter, groupOptions(groups.tracked, 1))
-    container:AddAuraGroup("main", groups.main.filter, groupOptions(groups.main, 2))
-    container:SetAuraGroupEnabled("tracked", groups.tracked.enabled)
+    for index, key in ipairs(GROUPS) do
+        container:AddAuraGroup(key, groups[key].filter, groupOptions(groups[key], index))
+        container:SetAuraGroupEnabled(key, groups[key].enabled)
+    end
     return true
 end
 
@@ -202,13 +205,14 @@ function Module:ApplyFilters()
     end
     local groups = Filters.Groups(options())
     local method, direction = sortMethod(opt("show.sort")), sortDirection()
-    for key, group in pairs(groups) do
+    for _, key in ipairs(GROUPS) do
+        local group = groups[key]
         container:SetAuraGroupFilterString(key, group.filter)
         container:SetAuraGroupCandidateFilters(key, group.candidate)
         container:SetAuraGroupMaxFrameCount(key, group.max)
         container:SetAuraGroupSortMethod(key, method, direction)
+        container:SetAuraGroupEnabled(key, group.enabled)
     end
-    container:SetAuraGroupEnabled("tracked", groups.tracked.enabled)
 end
 
 --- Sizes, growth and the holder the Mover moves.
@@ -237,9 +241,9 @@ function Module:ApplyLayout()
         if container.SetFlowLayoutMaximumLineSize then
             container:SetFlowLayoutMaximumLineSize(width)
         end
-        for _, key in ipairs({ "tracked", "main" }) do
+        for index, key in ipairs(GROUPS) do
             local layout = groupLayout()
-            layout.layoutIndex = key == "tracked" and 1 or 2
+            layout.layoutIndex = index
             container:SetAuraGroupLayout(key, layout)
         end
     end

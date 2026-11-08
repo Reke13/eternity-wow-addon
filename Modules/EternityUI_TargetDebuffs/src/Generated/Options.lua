@@ -9,8 +9,8 @@ ns.OptionsSchema = {
         esES = "Perjuicios del objetivo",
     },
     description = {
-        enUS = "The target's debuffs in a frame of their own, placed with the Mover. The game filters them, so it works in combat too. The Spells tab keeps your own list of spell IDs to always or never show.",
-        esES = "Los perjuicios del objetivo en un marco propio, colocado con el Mover. Los filtra el propio juego, así que funciona también en combate. La pestaña Hechizos guarda tu lista de números de hechizo para mostrar siempre o nunca.",
+        enUS = "The target's debuffs in a frame of their own, placed with the Mover. The game filters them, so it works in combat too. The Spells tab keeps your own list of spell IDs to show first, whoever cast them or only yours.",
+        esES = "Los perjuicios del objetivo en un marco propio, colocado con el Mover. Los filtra el propio juego, así que funciona también en combate. La pestaña Hechizos guarda tu lista de números de hechizo que salen primero, los ponga quien los ponga o solo los tuyos.",
     },
     groups = {
         {

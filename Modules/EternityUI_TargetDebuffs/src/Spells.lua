@@ -1,7 +1,7 @@
--- The player's list of spells (EternityUITargetDebuffsDB, for the account): spell IDs that are
--- always shown first, whoever cast them, or never shown. Each one can be switched off without
--- losing it. The "Spells" tab edits it (SpellsTab.lua); Filters.lua turns it into the
--- container's candidate filters.
+-- The player's list of spells (EternityUITargetDebuffsDB, for the account): spell IDs shown
+-- first, whoever cast them ("always") or only when the player cast them ("only mine"). Each one
+-- can be switched off without losing it. The "Spells" tab edits it (SpellsTab.lua); Filters.lua
+-- turns it into the container's candidate filters.
 
 ---@type string, EternityUITargetDebuffsNamespace
 local _, ns = ...
@@ -9,7 +9,7 @@ local _, ns = ...
 ---@class EternityUITargetDebuffsSpell
 ---@field id integer
 ---@field enabled boolean
----@field hide boolean? never show it, instead of always
+---@field mine boolean? only when the player (or their pet) cast it
 
 ---@class EternityUITargetDebuffsSpells
 ---@field onChange fun()? called after every change
@@ -24,6 +24,12 @@ local function db()
     end
     if type(saved.spells) ~= "table" then
         saved.spells = {}
+    end
+    -- "Never" became "only mine": switching a spell off already keeps it from showing first.
+    for _, spell in ipairs(saved.spells) do
+        if spell.hide then
+            spell.hide, spell.mine = nil, true
+        end
     end
     return saved
 end
@@ -79,10 +85,10 @@ function Spells.SetEnabled(id, enabled)
     end
 end
 
-function Spells.SetHidden(id, hide)
+function Spells.SetMine(id, mine)
     local spell = Spells.Find(id)
     if spell then
-        spell.hide = hide and true or nil
+        spell.mine = mine and true or nil
         changed()
     end
 end
@@ -92,21 +98,21 @@ function Spells.Clear()
     changed()
 end
 
---- The switched-on spells: the ones to always show and the ones to never show, as sets.
----@return table<integer, boolean> show
----@return table<integer, boolean> hide
+--- The switched-on spells: the ones shown whoever cast them and the ones shown only when mine.
+---@return table<integer, boolean> always
+---@return table<integer, boolean> mine
 function Spells.Sets()
-    local show, hide = {}, {}
+    local always, mine = {}, {}
     for _, spell in ipairs(Spells.List()) do
         if spell.enabled then
-            if spell.hide then
-                hide[spell.id] = true
+            if spell.mine then
+                mine[spell.id] = true
             else
-                show[spell.id] = true
+                always[spell.id] = true
             end
         end
     end
-    return show, hide
+    return always, mine
 end
 
 local function secret(value)

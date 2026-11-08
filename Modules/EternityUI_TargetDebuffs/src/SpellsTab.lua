@@ -1,5 +1,5 @@
 -- The module's "Spells" tab in the options: the player's list of spell IDs. Each one has its
--- switch, whether it's always shown or never shown, and a button to take it out. IDs are typed
+-- switch, whether it shows whoever cast it or only when it's mine, and a button to take it out. IDs are typed
 -- (several at once, separated by commas), picked from the target's debuffs, or put in the box by
 -- shift-clicking a spell anywhere (spellbook, action bar, a link in the chat) while it has the
 -- cursor: the game hands that click to ChatFrameUtil.InsertLink, which we only follow.
@@ -147,8 +147,8 @@ local function newRow(parent)
     row.remove:SetHeight(26)
     row.remove:SetWidth(row.remove.label:GetStringWidth() + 24)
     row.remove:SetPoint("RIGHT")
-    row.mode = Widgets.Segmented(row, { { "show", L.MODE_SHOW }, { "hide", L.MODE_HIDE } }, function(value)
-        Spells.SetHidden(row.spellID, value == "hide")
+    row.mode = Widgets.Segmented(row, { { "always", L.MODE_ALWAYS }, { "mine", L.MODE_MINE } }, function(value)
+        Spells.SetMine(row.spellID, value == "mine")
     end)
     row.mode.buttonHeight = 26
     row.mode:SetPoint("RIGHT", row.remove, "LEFT", -10, 0)
@@ -173,7 +173,7 @@ local function fillRow(row, spell)
     row.name:SetText(name or L.UNKNOWN_SPELL)
     row.id:SetText(L.SPELL_ID_N:format(spell.id))
     row.toggle:SetValue(spell.enabled)
-    row.mode:SetValue(spell.hide and "hide" or "show")
+    row.mode:SetValue(spell.mine and "mine" or "always")
     row.mode:Paint()
     row:SetAlpha(spell.enabled and 1 or 0.55)
 end

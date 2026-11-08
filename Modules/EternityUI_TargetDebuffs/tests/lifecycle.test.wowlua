@@ -9,7 +9,7 @@ local function module()
 end
 
 local function base(extra)
-    local o = { origin = "all", crowdControl = "show", dispellable = false, max = 16, show = {}, hide = {} }
+    local o = { origin = "all", crowdControl = "show", dispellable = false, max = 16, always = {}, mine = {} }
     for k, v in pairs(extra or {}) do
         o[k] = v
     end
@@ -43,18 +43,19 @@ local function mainFilter()
     end
 end
 
-@test("the shown spells go first, any caster, and leave the main group; hidden ones never show")
+@test("listed spells go first: Always for any caster, Only mine with PLAYER; none reach the main group")
 local function groups()
     local filters = module().Filters
-    local g = filters.Groups(base({ show = { [7386] = true, [12345] = true, [11597] = true }, hide = { [11597] = true, [999] = true } }))
+    local g = filters.Groups(base({ always = { [7386] = true, [11597] = true }, mine = { [11597] = true, [999] = true } }))
     expect(g.tracked.enabled).toBe(true)
     expect(g.tracked.filter).toBe("HARMFUL")
-    local include = g.tracked.candidate.includeSpellIDs
-    expect(include[7386]).toBe(true)
-    expect(include[12345]).toBe(true)
-    -- Hidden wins over shown.
-    expect(include[11597] == nil).toBe(true)
-    expect(g.tracked.max).toBe(2)
+    expect(g.tracked.candidate.includeSpellIDs[7386]).toBe(true)
+    -- In both lists: Always wins.
+    expect(g.tracked.candidate.includeSpellIDs[11597]).toBe(true)
+    expect(g.mine.enabled).toBe(true)
+    expect(g.mine.filter).toBe("HARMFUL|PLAYER")
+    expect(g.mine.candidate.includeSpellIDs[999]).toBe(true)
+    expect(g.mine.candidate.includeSpellIDs[11597] == nil).toBe(true)
     local skip = g.main.candidate.excludeSpellIDs
     expect(skip[7386]).toBe(true)
     expect(skip[999]).toBe(true)
@@ -62,7 +63,7 @@ local function groups()
     expect(g.main.max).toBe(16)
 end
 
-@test("the list of spells adds, switches, hides and removes spell IDs")
+@test("the list of spells adds, switches, marks as mine and removes spell IDs")
 local function list()
     local spells = module().Spells
     spells.Clear()
@@ -70,15 +71,15 @@ local function list()
     expect(spells.Add(7386)).toBe(false)
     expect(spells.Add(0)).toBe(false)
     expect(spells.Add(999)).toBe(true)
-    local show, hide = spells.Sets()
-    expect(show[7386]).toBe(true)
+    local always, mine = spells.Sets()
+    expect(always[7386]).toBe(true)
     spells.SetEnabled(7386, false)
-    show = spells.Sets()
-    expect(show[7386] == nil).toBe(true)
-    spells.SetHidden(999, true)
-    show, hide = spells.Sets()
-    expect(show[999] == nil).toBe(true)
-    expect(hide[999]).toBe(true)
+    always = spells.Sets()
+    expect(always[7386] == nil).toBe(true)
+    spells.SetMine(999, true)
+    always, mine = spells.Sets()
+    expect(always[999] == nil).toBe(true)
+    expect(mine[999]).toBe(true)
     spells.Remove(999)
     expect(#spells.List()).toBe(1)
     expect(type(EternityUITargetDebuffsDB.spells)).toBe("table")
@@ -114,6 +115,7 @@ local function empty()
     local g = module().Filters.Groups(base())
     expect(g.tracked.enabled).toBe(false)
     expect(g.tracked.candidate == nil).toBe(true)
+    expect(g.mine.enabled).toBe(false)
     expect(g.main.candidate == nil).toBe(true)
 end
 
@@ -174,14 +176,18 @@ local function container()
         return
     end
     expect(m.container:HasAuraGroup("tracked")).toBe(true)
+    expect(m.container:HasAuraGroup("mine")).toBe(true)
     expect(m.container:HasAuraGroup("main")).toBe(true)
     expect(m.container:GetUnit()).toBe("target")
     m.Spells.Clear()
     expect(m.container:IsAuraGroupEnabled("tracked")).toBe(false)
     m.Spells.Add(7386)
     expect(m.container:IsAuraGroupEnabled("tracked")).toBe(true)
-    m.Spells.SetEnabled(7386, false)
+    m.Spells.SetMine(7386, true)
     expect(m.container:IsAuraGroupEnabled("tracked")).toBe(false)
+    expect(m.container:IsAuraGroupEnabled("mine")).toBe(true)
+    m.Spells.SetEnabled(7386, false)
+    expect(m.container:IsAuraGroupEnabled("mine")).toBe(false)
     m.Spells.Clear()
 end
 
@@ -209,4 +215,13 @@ local function links()
     expect(box:GetText()).toBe("7386, 7405")
     box:ClearFocus()
     box:SetText("")
+end
+
+@test("an old Never entry becomes Only mine")
+local function migrate()
+    EternityUITargetDebuffsDB = { spells = { { id = 555, enabled = true, hide = true } } }
+    local spell = module().Spells.Find(555)
+    expect(spell.mine).toBe(true)
+    expect(spell.hide == nil).toBe(true)
+    module().Spells.Clear()
 end
