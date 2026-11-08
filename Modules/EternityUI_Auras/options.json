@@ -1,0 +1,684 @@
+{
+  "format": 1,
+  "module": "EternityUI_Auras",
+  "title": {
+    "enUS": "Auras",
+    "esES": "Auras"
+  },
+  "description": {
+    "enUS": "The target's debuffs and your own buffs, each in a frame of its own placed with the Mover. The game filters them, so it works in combat too. The Spells tab keeps, for each frame, your own list of spells to show first, whoever cast them or only yours.",
+    "esES": "Los perjuicios del objetivo y tus propios bufos, cada uno en un marco propio colocado con el Mover. Los filtra el propio juego, así que funciona también en combate. La pestaña Hechizos guarda, para cada marco, tu lista de hechizos que salen primero, los ponga quien los ponga o solo los tuyos."
+  },
+  "groups": [
+    {
+      "id": "target",
+      "label": {
+        "enUS": "What to show",
+        "esES": "Qué mostrar"
+      },
+      "options": [
+        {
+          "id": "enabled",
+          "type": "toggle",
+          "default": true,
+          "label": {
+            "enUS": "Show this frame",
+            "esES": "Mostrar este marco"
+          }
+        },
+        {
+          "id": "onlyList",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Only the spells of my list",
+            "esES": "Solo los hechizos de mi lista"
+          },
+          "description": {
+            "enUS": "Shows nothing but the spells added for this frame in the Spells tab. The filters below then don't apply.",
+            "esES": "No muestra más que los hechizos añadidos para este marco en la pestaña Hechizos. Los filtros de abajo dejan de aplicarse."
+          }
+        },
+        {
+          "id": "origin",
+          "type": "select",
+          "default": "all",
+          "label": {
+            "enUS": "Cast by",
+            "esES": "Puestos por"
+          },
+          "values": [
+            {
+              "value": "all",
+              "label": {
+                "enUS": "Anyone",
+                "esES": "Cualquiera"
+              }
+            },
+            {
+              "value": "mine",
+              "label": {
+                "enUS": "Me (and my pet)",
+                "esES": "Mí (y mi mascota)"
+              }
+            },
+            {
+              "value": "others",
+              "label": {
+                "enUS": "Others",
+                "esES": "Otros"
+              }
+            }
+          ]
+        },
+        {
+          "id": "crowdControl",
+          "type": "select",
+          "default": "show",
+          "label": {
+            "enUS": "Crowd control",
+            "esES": "Control de masas"
+          },
+          "values": [
+            {
+              "value": "show",
+              "label": {
+                "enUS": "Show",
+                "esES": "Mostrar"
+              }
+            },
+            {
+              "value": "hide",
+              "label": {
+                "enUS": "Hide",
+                "esES": "Ocultar"
+              }
+            },
+            {
+              "value": "only",
+              "label": {
+                "enUS": "Only crowd control",
+                "esES": "Solo control de masas"
+              }
+            }
+          ],
+          "description": {
+            "enUS": "Stuns, fears, roots, polymorphs...",
+            "esES": "Aturdimientos, miedos, raíces, polimorfias..."
+          }
+        },
+        {
+          "id": "dispellable",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Only dispellable ones",
+            "esES": "Solo los que se pueden disipar"
+          }
+        },
+        {
+          "id": "sort",
+          "type": "select",
+          "default": "expiration",
+          "label": {
+            "enUS": "Order",
+            "esES": "Orden"
+          },
+          "values": [
+            {
+              "value": "expiration",
+              "label": {
+                "enUS": "Mine first, then the ones ending soonest",
+                "esES": "Los míos primero y luego los que acaban antes"
+              }
+            },
+            {
+              "value": "default",
+              "label": {
+                "enUS": "Mine first, then as they were cast",
+                "esES": "Los míos primero y luego según se pusieron"
+              }
+            },
+            {
+              "value": "name",
+              "label": {
+                "enUS": "Mine first, then by name",
+                "esES": "Los míos primero y luego por nombre"
+              }
+            }
+          ]
+        },
+        {
+          "id": "max",
+          "type": "range",
+          "default": 16,
+          "min": 1,
+          "max": 40,
+          "step": 1,
+          "label": {
+            "enUS": "Most debuffs shown",
+            "esES": "Máximo de perjuicios"
+          }
+        },
+        {
+          "id": "inCombatOnly",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Only in combat",
+            "esES": "Solo en combate"
+          }
+        }
+      ]
+    },
+    {
+      "id": "targetFrame",
+      "label": {
+        "enUS": "Frame",
+        "esES": "Marco"
+      },
+      "options": [
+        {
+          "id": "scale",
+          "type": "range",
+          "default": 1,
+          "min": 0.5,
+          "max": 3,
+          "step": 0.05,
+          "label": {
+            "enUS": "Zoom",
+            "esES": "Zoom"
+          },
+          "description": {
+            "enUS": "Makes the whole frame bigger or smaller. Its place is set with the Mover (Spells tab > Place the frames, or /et move).",
+            "esES": "Hace todo el marco más grande o más pequeño. Su sitio se elige con el Mover (pestaña Hechizos > Colocar los marcos, o /et move)."
+          }
+        },
+        {
+          "id": "durationText",
+          "type": "toggle",
+          "default": true,
+          "label": {
+            "enUS": "Time left as text",
+            "esES": "Tiempo restante en texto"
+          }
+        },
+        {
+          "id": "swipe",
+          "type": "toggle",
+          "default": true,
+          "label": {
+            "enUS": "Time left as a shadow",
+            "esES": "Tiempo restante como sombra"
+          }
+        },
+        {
+          "id": "dispelBorder",
+          "type": "toggle",
+          "default": true,
+          "label": {
+            "enUS": "Border in the debuff type's color",
+            "esES": "Borde del color del tipo de perjuicio"
+          }
+        }
+      ]
+    },
+    {
+      "id": "targetLook",
+      "label": {
+        "enUS": "Icons",
+        "esES": "Iconos"
+      },
+      "options": [
+        {
+          "id": "size",
+          "type": "range",
+          "default": 30,
+          "min": 16,
+          "max": 64,
+          "step": 1,
+          "label": {
+            "enUS": "Size",
+            "esES": "Tamaño"
+          }
+        },
+        {
+          "id": "spacing",
+          "type": "range",
+          "default": 4,
+          "min": 0,
+          "max": 16,
+          "step": 1,
+          "label": {
+            "enUS": "Spacing",
+            "esES": "Separación"
+          }
+        },
+        {
+          "id": "perRow",
+          "type": "range",
+          "default": 8,
+          "min": 1,
+          "max": 20,
+          "step": 1,
+          "label": {
+            "enUS": "Icons per row",
+            "esES": "Iconos por fila"
+          }
+        },
+        {
+          "id": "growth",
+          "type": "select",
+          "default": "right",
+          "label": {
+            "enUS": "They grow",
+            "esES": "Crecen hacia"
+          },
+          "values": [
+            {
+              "value": "right",
+              "label": {
+                "enUS": "To the right",
+                "esES": "La derecha"
+              }
+            },
+            {
+              "value": "left",
+              "label": {
+                "enUS": "To the left",
+                "esES": "La izquierda"
+              }
+            }
+          ]
+        },
+        {
+          "id": "wrap",
+          "type": "select",
+          "default": "down",
+          "label": {
+            "enUS": "New rows go",
+            "esES": "Las filas nuevas van"
+          },
+          "values": [
+            {
+              "value": "down",
+              "label": {
+                "enUS": "Below",
+                "esES": "Debajo"
+              }
+            },
+            {
+              "value": "up",
+              "label": {
+                "enUS": "Above",
+                "esES": "Encima"
+              }
+            }
+          ]
+        },
+        {
+          "id": "textSize",
+          "type": "range",
+          "default": 11,
+          "min": 8,
+          "max": 20,
+          "step": 1,
+          "label": {
+            "enUS": "Time text size",
+            "esES": "Tamaño del texto del tiempo"
+          }
+        },
+        {
+          "id": "countSize",
+          "type": "range",
+          "default": 12,
+          "min": 8,
+          "max": 20,
+          "step": 1,
+          "label": {
+            "enUS": "Stacks text size",
+            "esES": "Tamaño del texto de las cargas"
+          }
+        }
+      ]
+    },
+    {
+      "id": "player",
+      "label": {
+        "enUS": "What to show",
+        "esES": "Qué mostrar"
+      },
+      "options": [
+        {
+          "id": "enabled",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Show this frame",
+            "esES": "Mostrar este marco"
+          }
+        },
+        {
+          "id": "onlyList",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Only the spells of my list",
+            "esES": "Solo los hechizos de mi lista"
+          },
+          "description": {
+            "enUS": "Shows nothing but the spells added for this frame in the Spells tab. The filters below then don't apply.",
+            "esES": "No muestra más que los hechizos añadidos para este marco en la pestaña Hechizos. Los filtros de abajo dejan de aplicarse."
+          }
+        },
+        {
+          "id": "origin",
+          "type": "select",
+          "default": "all",
+          "label": {
+            "enUS": "Cast by",
+            "esES": "Puestos por"
+          },
+          "values": [
+            {
+              "value": "all",
+              "label": {
+                "enUS": "Anyone",
+                "esES": "Cualquiera"
+              }
+            },
+            {
+              "value": "mine",
+              "label": {
+                "enUS": "Me (and my pet)",
+                "esES": "Mí (y mi mascota)"
+              }
+            },
+            {
+              "value": "others",
+              "label": {
+                "enUS": "Others",
+                "esES": "Otros"
+              }
+            }
+          ]
+        },
+        {
+          "id": "duration",
+          "type": "select",
+          "default": "all",
+          "label": {
+            "enUS": "Duration",
+            "esES": "Duración"
+          },
+          "values": [
+            {
+              "value": "all",
+              "label": {
+                "enUS": "Any",
+                "esES": "Cualquiera"
+              }
+            },
+            {
+              "value": "timed",
+              "label": {
+                "enUS": "Only the ones that run out",
+                "esES": "Solo los que se acaban"
+              }
+            },
+            {
+              "value": "short",
+              "label": {
+                "enUS": "Only the short ones",
+                "esES": "Solo los cortos"
+              }
+            }
+          ],
+          "description": {
+            "enUS": "Buffs that don't run out are forms, auras, mounts...",
+            "esES": "Los que no se acaban son formas, auras, monturas..."
+          }
+        },
+        {
+          "id": "maxMinutes",
+          "type": "range",
+          "default": 5,
+          "min": 1,
+          "max": 60,
+          "step": 1,
+          "label": {
+            "enUS": "Short: up to (minutes)",
+            "esES": "Cortos: hasta (minutos)"
+          },
+          "visibleWhen": {
+            "player.duration": "short"
+          }
+        },
+        {
+          "id": "sort",
+          "type": "select",
+          "default": "expiration",
+          "label": {
+            "enUS": "Order",
+            "esES": "Orden"
+          },
+          "values": [
+            {
+              "value": "expiration",
+              "label": {
+                "enUS": "Mine first, then the ones ending soonest",
+                "esES": "Los míos primero y luego los que acaban antes"
+              }
+            },
+            {
+              "value": "default",
+              "label": {
+                "enUS": "Mine first, then as they were cast",
+                "esES": "Los míos primero y luego según se pusieron"
+              }
+            },
+            {
+              "value": "name",
+              "label": {
+                "enUS": "Mine first, then by name",
+                "esES": "Los míos primero y luego por nombre"
+              }
+            }
+          ]
+        },
+        {
+          "id": "max",
+          "type": "range",
+          "default": 16,
+          "min": 1,
+          "max": 40,
+          "step": 1,
+          "label": {
+            "enUS": "Most buffs shown",
+            "esES": "Máximo de bufos"
+          }
+        },
+        {
+          "id": "inCombatOnly",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Only in combat",
+            "esES": "Solo en combate"
+          }
+        }
+      ]
+    },
+    {
+      "id": "playerFrame",
+      "label": {
+        "enUS": "Frame",
+        "esES": "Marco"
+      },
+      "options": [
+        {
+          "id": "scale",
+          "type": "range",
+          "default": 1,
+          "min": 0.5,
+          "max": 3,
+          "step": 0.05,
+          "label": {
+            "enUS": "Zoom",
+            "esES": "Zoom"
+          },
+          "description": {
+            "enUS": "Makes the whole frame bigger or smaller. Its place is set with the Mover (Spells tab > Place the frames, or /et move).",
+            "esES": "Hace todo el marco más grande o más pequeño. Su sitio se elige con el Mover (pestaña Hechizos > Colocar los marcos, o /et move)."
+          }
+        },
+        {
+          "id": "durationText",
+          "type": "toggle",
+          "default": true,
+          "label": {
+            "enUS": "Time left as text",
+            "esES": "Tiempo restante en texto"
+          }
+        },
+        {
+          "id": "swipe",
+          "type": "toggle",
+          "default": true,
+          "label": {
+            "enUS": "Time left as a shadow",
+            "esES": "Tiempo restante como sombra"
+          }
+        },
+        {
+          "id": "dispelBorder",
+          "type": "toggle",
+          "default": true,
+          "label": {
+            "enUS": "Border in the buff type's color",
+            "esES": "Borde del color del tipo de bufo"
+          }
+        }
+      ]
+    },
+    {
+      "id": "playerLook",
+      "label": {
+        "enUS": "Icons",
+        "esES": "Iconos"
+      },
+      "options": [
+        {
+          "id": "size",
+          "type": "range",
+          "default": 30,
+          "min": 16,
+          "max": 64,
+          "step": 1,
+          "label": {
+            "enUS": "Size",
+            "esES": "Tamaño"
+          }
+        },
+        {
+          "id": "spacing",
+          "type": "range",
+          "default": 4,
+          "min": 0,
+          "max": 16,
+          "step": 1,
+          "label": {
+            "enUS": "Spacing",
+            "esES": "Separación"
+          }
+        },
+        {
+          "id": "perRow",
+          "type": "range",
+          "default": 8,
+          "min": 1,
+          "max": 20,
+          "step": 1,
+          "label": {
+            "enUS": "Icons per row",
+            "esES": "Iconos por fila"
+          }
+        },
+        {
+          "id": "growth",
+          "type": "select",
+          "default": "right",
+          "label": {
+            "enUS": "They grow",
+            "esES": "Crecen hacia"
+          },
+          "values": [
+            {
+              "value": "right",
+              "label": {
+                "enUS": "To the right",
+                "esES": "La derecha"
+              }
+            },
+            {
+              "value": "left",
+              "label": {
+                "enUS": "To the left",
+                "esES": "La izquierda"
+              }
+            }
+          ]
+        },
+        {
+          "id": "wrap",
+          "type": "select",
+          "default": "down",
+          "label": {
+            "enUS": "New rows go",
+            "esES": "Las filas nuevas van"
+          },
+          "values": [
+            {
+              "value": "down",
+              "label": {
+                "enUS": "Below",
+                "esES": "Debajo"
+              }
+            },
+            {
+              "value": "up",
+              "label": {
+                "enUS": "Above",
+                "esES": "Encima"
+              }
+            }
+          ]
+        },
+        {
+          "id": "textSize",
+          "type": "range",
+          "default": 11,
+          "min": 8,
+          "max": 20,
+          "step": 1,
+          "label": {
+            "enUS": "Time text size",
+            "esES": "Tamaño del texto del tiempo"
+          }
+        },
+        {
+          "id": "countSize",
+          "type": "range",
+          "default": 12,
+          "min": 8,
+          "max": 20,
+          "step": 1,
+          "label": {
+            "enUS": "Stacks text size",
+            "esES": "Tamaño del texto de las cargas"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,362 @@
+-- The filters built from the options and the lists of spells, the Spells tab, and the module's
+-- two frames in the Mover.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Auras"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function base(extra)
+    local o = { filter = "HARMFUL", origin = "all", crowdControl = "show", dispellable = false, max = 16, always = {}, mine = {} }
+    for k, v in pairs(extra or {}) do
+        o[k] = v
+    end
+    return o
+end
+
+local function newView(tab)
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 500)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    local height
+    local view = tab.Build(child, function(h)
+        height = h
+    end)
+    return view, function()
+        return height
+    end
+end
+
+@test("spell ID lists are read from text, skipping what isn't an ID")
+local function parse()
+    local filters = module().Filters
+    local ids, count, invalid = filters.ParseIDs("7386, 11597;  7386 abc 0 1.5")
+    expect(count).toBe(2)
+    expect(ids[7386]).toBe(true)
+    expect(ids[11597]).toBe(true)
+    expect(#invalid).toBe(3)
+    local _, none = filters.ParseIDs("")
+    expect(none).toBe(0)
+end
+
+@test("the main filter string follows the kind, who cast it, crowd control and dispellable")
+local function mainFilter()
+    local filters = module().Filters
+    expect(filters.MainFilter(base())).toBe("HARMFUL")
+    expect(filters.MainFilter(base({ origin = "mine" }))).toBe("HARMFUL|PLAYER")
+    expect(filters.MainFilter(base({ origin = "others", crowdControl = "hide" }))).toBe("HARMFUL|!PLAYER|!CROWD_CONTROL")
+    expect(filters.MainFilter(base({ crowdControl = "only", dispellable = true }))).toBe("HARMFUL|CROWD_CONTROL|DISPELLABLE")
+    expect(filters.MainFilter({ filter = "HELPFUL", origin = "others" })).toBe("HELPFUL|!PLAYER")
+    -- Every string is one the game accepts.
+    if AuraUtil and AuraUtil.IsValidFilterString then
+        for _, o in ipairs({
+            base({ origin = "others", crowdControl = "hide", dispellable = true }),
+            base({ origin = "mine", crowdControl = "only" }),
+            { filter = "HELPFUL", origin = "mine" },
+            { filter = "HELPFUL", origin = "others" },
+        }) do
+            expect(AuraUtil.IsValidFilterString(filters.MainFilter(o))).toBe(true)
+        end
+    end
+end
+
+@test("listed spells go first: Always for any caster, Only mine with PLAYER; none reach the main group")
+local function groups()
+    local filters = module().Filters
+    local g = filters.Groups(base({ always = { [7386] = true, [11597] = true }, mine = { [11597] = true, [999] = true } }))
+    expect(g.tracked.enabled).toBe(true)
+    expect(g.tracked.filter).toBe("HARMFUL")
+    expect(g.tracked.candidate.includeSpellIDs[7386]).toBe(true)
+    -- In both lists: Always wins.
+    expect(g.tracked.candidate.includeSpellIDs[11597]).toBe(true)
+    expect(g.mine.enabled).toBe(true)
+    expect(g.mine.filter).toBe("HARMFUL|PLAYER")
+    expect(g.mine.candidate.includeSpellIDs[999]).toBe(true)
+    expect(g.mine.candidate.includeSpellIDs[11597] == nil).toBe(true)
+    local skip = g.main.candidate.excludeSpellIDs
+    expect(skip[7386]).toBe(true)
+    expect(skip[999]).toBe(true)
+    expect(skip[11597]).toBe(true)
+    expect(g.main.max).toBe(16)
+end
+
+@test("buffs: the groups are HELPFUL, and the duration option sets the main group's longest one")
+local function buffs()
+    local filters = module().Filters
+    local g = filters.Groups({ filter = "HELPFUL", origin = "all", duration = "all", max = 10, always = { [1243] = true }, mine = {} })
+    expect(g.tracked.filter).toBe("HELPFUL")
+    expect(g.mine.filter).toBe("HELPFUL|PLAYER")
+    expect(g.main.filter).toBe("HELPFUL")
+    expect(g.main.candidate.maxDuration == nil).toBe(true)
+    local timed = filters.Groups({ filter = "HELPFUL", origin = "all", duration = "timed", max = 10 })
+    expect(timed.main.candidate.maxDuration > 24 * 3600).toBe(true)
+    expect(timed.main.candidate.excludeSpellIDs == nil).toBe(true)
+    local short = filters.Groups({ filter = "HELPFUL", origin = "all", duration = "short", maxMinutes = 3, max = 10 })
+    expect(short.main.candidate.maxDuration).toBe(180)
+    expect(filters.Groups({ filter = "HELPFUL", duration = "all" }).main.candidate == nil).toBe(true)
+end
+
+@test("each frame has its own list, which adds, switches, marks as mine and removes spell IDs")
+local function list()
+    local spells = module().Spells
+    local target, player = spells.lists.target, spells.lists.player
+    target:Clear()
+    player:Clear()
+    expect(target:Add(7386)).toBe(true)
+    expect(target:Add(7386)).toBe(false)
+    expect(target:Add(0)).toBe(false)
+    expect(target:Add(999)).toBe(true)
+    expect(player:Add(7386)).toBe(true)
+    expect(#player:List()).toBe(1)
+    local always, mine = target:Sets()
+    expect(always[7386]).toBe(true)
+    target:SetEnabled(7386, false)
+    always = target:Sets()
+    expect(always[7386] == nil).toBe(true)
+    -- The other list doesn't change.
+    expect(player:Sets()[7386]).toBe(true)
+    target:SetMine(999, true)
+    always, mine = target:Sets()
+    expect(always[999] == nil).toBe(true)
+    expect(mine[999]).toBe(true)
+    target:Remove(999)
+    expect(#target:List()).toBe(1)
+    expect(type(EternityUIAurasDB.target.spells)).toBe("table")
+    expect(type(EternityUIAurasDB.player.spells)).toBe("table")
+    target:Clear()
+    player:Clear()
+end
+
+@test("the Spells tab adds typed IDs to the picked frame's list and draws a row for each")
+local function tab()
+    local m = module()
+    local target, player = m.Spells.lists.target, m.Spells.lists.player
+    target:Clear()
+    player:Clear()
+    expect(m.tabs[1].key).toBe("frames")
+    expect(m.tabs[2].key).toBe("spells")
+    local view, height = newView(m.SpellsTab)
+    m.SpellsTab.Pick("target")
+    m.SpellsTab.AddText("7386, 7405 abc")
+    expect(#target:List()).toBe(2)
+    expect(m.SpellsTab.rows[1]:IsShown()).toBe(true)
+    expect(m.SpellsTab.rows[2].spellID).toBe(7405)
+    expect(view.status:GetText():find("abc", 1, true) ~= nil).toBe(true)
+    expect(height() > 100).toBe(true)
+    -- The character's list is another one.
+    m.SpellsTab.Pick("player")
+    expect(m.SpellsTab.rows[1]:IsShown()).toBe(false)
+    m.SpellsTab.AddText("1243")
+    expect(#player:List()).toBe(1)
+    expect(#target:List()).toBe(2)
+    expect(m.SpellsTab.rows[1].spellID).toBe(1243)
+    m.SpellsTab.Pick("target")
+    expect(m.SpellsTab.rows[2]:IsShown()).toBe(true)
+    target:Clear()
+    player:Clear()
+    m.SpellsTab.Refresh()
+    expect(m.SpellsTab.rows[1]:IsShown()).toBe(false)
+end
+
+@test("with no list, the list groups are off and the main one has no candidate filter")
+local function empty()
+    local g = module().Filters.Groups(base())
+    expect(g.tracked.enabled).toBe(false)
+    expect(g.tracked.candidate == nil).toBe(true)
+    expect(g.mine.enabled).toBe(false)
+    expect(g.main.candidate == nil).toBe(true)
+end
+
+@test("the target's frame is in the Mover, sized by its options, and goes away when disabled")
+local function lifecycle()
+    local m = module()
+    local frame = m.frames.target
+    local key = NAME .. "_target"
+    expect(m.active).toBe(true)
+    expect(EternityUI.Mover.elements[key] ~= nil).toBe(true)
+    local store = EternityUI.store
+    store:Set(NAME, "targetLook.size", 20)
+    store:Set(NAME, "targetLook.spacing", 2)
+    store:Set(NAME, "targetLook.perRow", 5)
+    expect(math.floor(frame.holder:GetWidth() + 0.5)).toBe(5 * 20 + 4 * 2)
+    store:Set(NAME, "targetFrame.scale", 2)
+    expect(frame.holder:GetScale()).toBe(2)
+    store:Reset(NAME)
+    store:SetModuleEnabled(NAME, false)
+    expect(frame.holder:IsShown()).toBe(false)
+    expect(EternityUI.Mover.elements[key] == nil).toBe(true)
+    store:SetModuleEnabled(NAME, true)
+    expect(frame.holder:IsShown()).toBe(true)
+end
+
+@test("the character's frame starts switched off and runs when Show this frame is on")
+local function playerFrame()
+    local m = module()
+    local frame = m.frames.player
+    local key = NAME .. "_player"
+    local store = EternityUI.store
+    expect(store:Get(NAME, "player.enabled")).toBe(false)
+    expect(frame.running == true).toBe(false)
+    expect(EternityUI.Mover.elements[key] == nil).toBe(true)
+    store:Set(NAME, "player.enabled", true)
+    expect(frame.running).toBe(true)
+    expect(frame.holder:IsShown()).toBe(true)
+    expect(EternityUI.Mover.elements[key] ~= nil).toBe(true)
+    -- Its icons have their own options.
+    store:Set(NAME, "playerLook.size", 40)
+    store:Set(NAME, "playerLook.perRow", 2)
+    store:Set(NAME, "playerLook.spacing", 0)
+    expect(math.floor(frame.holder:GetWidth() + 0.5)).toBe(80)
+    expect(math.floor(m.frames.target.holder:GetWidth() + 0.5) ~= 80).toBe(true)
+    if frame.container then
+        expect(frame.container:GetUnit()).toBe("player")
+        expect(frame.container:HasAuraGroup("main")).toBe(true)
+    end
+    -- Switching the target's frame off leaves this one on.
+    store:Set(NAME, "target.enabled", false)
+    expect(m.frames.target.running).toBe(false)
+    expect(m.frames.target.holder:IsShown()).toBe(false)
+    expect(frame.running).toBe(true)
+    store:Reset(NAME)
+    expect(frame.running).toBe(false)
+    expect(m.frames.target.running).toBe(true)
+end
+
+@test("samples show while the Mover is open, only on running frames")
+local function samples()
+    local m = module()
+    EternityUI.Events.Send(EternityUI.Mover.TOGGLED, true)
+    local shown = 0
+    for _, s in ipairs(m.frames.target.samples) do
+        if s:IsShown() then
+            shown = shown + 1
+        end
+    end
+    expect(shown).toBe(EternityUI.store:Get(NAME, "targetLook.perRow") * 2)
+    for _, s in ipairs(m.frames.player.samples) do
+        expect(s:IsShown()).toBe(false)
+    end
+    EternityUI.Events.Send(EternityUI.Mover.TOGGLED, false)
+    for _, s in ipairs(m.frames.target.samples) do
+        expect(s:IsShown()).toBe(false)
+    end
+end
+
+@test("/etauras says to pick a target when there is none")
+local function ids()
+    local said
+    local print0 = print
+    print = function(text)
+        said = text
+    end
+    module().PrintIDs("")
+    print = print0
+    expect(type(said)).toBe("string")
+end
+
+@test("the target's aura container holds the groups, when the client has it")
+local function container()
+    local m = module()
+    local frame, list = m.frames.target, m.Spells.lists.target
+    if not frame.container then
+        expect(frame.noContainer).toBe(true)
+        return
+    end
+    expect(frame.container:HasAuraGroup("tracked")).toBe(true)
+    expect(frame.container:HasAuraGroup("mine")).toBe(true)
+    expect(frame.container:HasAuraGroup("main")).toBe(true)
+    expect(frame.container:GetUnit()).toBe("target")
+    list:Clear()
+    expect(frame.container:IsAuraGroupEnabled("tracked")).toBe(false)
+    list:Add(7386)
+    expect(frame.container:IsAuraGroupEnabled("tracked")).toBe(true)
+    list:SetMine(7386, true)
+    expect(frame.container:IsAuraGroupEnabled("tracked")).toBe(false)
+    expect(frame.container:IsAuraGroupEnabled("mine")).toBe(true)
+    list:SetEnabled(7386, false)
+    expect(frame.container:IsAuraGroupEnabled("mine")).toBe(false)
+    list:Clear()
+end
+
+@test("a shift-clicked spell link fills the box while it has the cursor")
+local function links()
+    local m = module()
+    local tab = m.SpellsTab
+    expect(tab.SpellIDFromLink("|cff71d5ff|Hspell:7386:0|h[Sunder Armor]|h|r")).toBe(7386)
+    expect(tab.SpellIDFromLink("|cffffffff|Hitem:6948::::::::|h[Hearthstone]|h|r") == nil).toBe(true)
+    if not tab.frame then
+        newView(tab)
+    end
+    local box = tab.frame.input
+    box:SetText("")
+    -- Without the cursor in the box, nothing is put.
+    box:ClearFocus()
+    expect(tab.OnInsertLink("|Hspell:7386:0|h[Sunder Armor]|h")).toBe(false)
+    box:SetFocus()
+    expect(tab.OnInsertLink("|Hspell:7386:0|h[Sunder Armor]|h")).toBe(true)
+    expect(tab.OnInsertLink("|Hspell:7405:0|h[Sunder Armor]|h")).toBe(true)
+    expect(box:GetText()).toBe("7386, 7405")
+    box:ClearFocus()
+    box:SetText("")
+end
+
+@test("a spell added by name collects every ID with that name, and they reach the filters")
+local function byName()
+    local m = module()
+    local spells = m.Spells
+    local list = spells.lists.target
+    list:Clear()
+    -- A small spell list of our own: three ranks of "Test Sunder" among other spells.
+    local names = { [10] = "Test Sunder", [20] = "Other", [30] = "test sunder", [45] = "Test Sunder" }
+    local realName, realLast = C_Spell.GetSpellName, spells.SEARCH_LAST
+    C_Spell.GetSpellName = function(id)
+        if issecretvalue(id) then
+            return nil
+        end
+        return names[id]
+    end
+    spells.SEARCH_LAST = 50
+    local entry = list:AddName("  Test Sunder ")
+    expect(entry ~= false).toBe(true)
+    expect(entry.name).toBe("Test Sunder")
+    expect(list:AddName("TEST SUNDER")).toBe(false)
+    while spells.SearchStep(7) do
+    end
+    C_Spell.GetSpellName, spells.SEARCH_LAST = realName, realLast
+    expect(entry.searching == nil).toBe(true)
+    expect(#entry.ids).toBe(3)
+    expect(entry.ids[1]).toBe(10)
+    expect(entry.ids[3]).toBe(45)
+    local always, mine = list:Sets()
+    expect(always[30]).toBe(true)
+    list:SetMine(entry, true)
+    always, mine = list:Sets()
+    expect(mine[45]).toBe(true)
+    expect(always[45] == nil).toBe(true)
+    -- The tab takes a name typed in the box.
+    m.SpellsTab.Pick("target")
+    m.SpellsTab.AddText("Another Spell")
+    expect(list:FindName("another spell") ~= nil).toBe(true)
+    list:Remove(entry)
+    expect(list:FindName("Test Sunder") == nil).toBe(true)
+    list:Clear()
+end
+
+@test("Only my list switches the rest of the auras off")
+local function onlyList()
+    local m = module()
+    local g = m.Filters.Groups(base({ onlyList = true, always = { [7386] = true } }))
+    expect(g.main.enabled).toBe(false)
+    expect(g.tracked.enabled).toBe(true)
+    expect(m.Filters.Groups(base()).main.enabled).toBe(true)
+    local container = m.frames.target.container
+    if container then
+        EternityUI.store:Set(NAME, "target.onlyList", true)
+        expect(container:IsAuraGroupEnabled("main")).toBe(false)
+        EternityUI.store:Set(NAME, "target.onlyList", false)
+        expect(container:IsAuraGroupEnabled("main")).toBe(true)
+    end
+end
