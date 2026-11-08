@@ -1,0 +1,140 @@
+{
+  "format": 1,
+  "module": "EternityUI_TargetDebuffs",
+  "title": { "enUS": "Target debuffs", "esES": "Perjuicios del objetivo" },
+  "description": {
+    "enUS": "The target's debuffs in a frame of their own, placed with the Mover. The game filters them, so it works in combat too. /etdebuffs lists the target's debuffs with their spell IDs.",
+    "esES": "Los perjuicios del objetivo en un marco propio, colocado con el Mover. Los filtra el propio juego, así que funciona también en combate. /etdebuffs lista los perjuicios del objetivo con su número de hechizo."
+  },
+  "groups": [
+    {
+      "id": "show",
+      "label": { "enUS": "What to show", "esES": "Qué mostrar" },
+      "options": [
+        {
+          "id": "origin",
+          "type": "select",
+          "default": "all",
+          "label": { "enUS": "Cast by", "esES": "Puestos por" },
+          "values": [
+            { "value": "all", "label": { "enUS": "Anyone", "esES": "Cualquiera" } },
+            { "value": "mine", "label": { "enUS": "Me (and my pet)", "esES": "Mí (y mi mascota)" } },
+            { "value": "others", "label": { "enUS": "Others", "esES": "Otros" } }
+          ]
+        },
+        {
+          "id": "crowdControl",
+          "type": "select",
+          "default": "show",
+          "label": { "enUS": "Crowd control", "esES": "Control de masas" },
+          "description": {
+            "enUS": "Stuns, fears, roots, polymorphs...",
+            "esES": "Aturdimientos, miedos, raíces, polimorfias..."
+          },
+          "values": [
+            { "value": "show", "label": { "enUS": "Show", "esES": "Mostrar" } },
+            { "value": "hide", "label": { "enUS": "Hide", "esES": "Ocultar" } },
+            { "value": "only", "label": { "enUS": "Only crowd control", "esES": "Solo control de masas" } }
+          ]
+        },
+        {
+          "id": "dispellable",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Only dispellable ones", "esES": "Solo los que se pueden disipar" }
+        },
+        {
+          "id": "sort",
+          "type": "select",
+          "default": "expiration",
+          "label": { "enUS": "Order", "esES": "Orden" },
+          "values": [
+            { "value": "expiration", "label": { "enUS": "Mine first, then the ones ending soonest", "esES": "Los míos primero y luego los que acaban antes" } },
+            { "value": "default", "label": { "enUS": "Mine first, then as they were cast", "esES": "Los míos primero y luego según se pusieron" } },
+            { "value": "name", "label": { "enUS": "Mine first, then by name", "esES": "Los míos primero y luego por nombre" } }
+          ]
+        },
+        { "id": "max", "type": "range", "default": 16, "min": 1, "max": 40, "step": 1, "label": { "enUS": "Most debuffs shown", "esES": "Máximo de perjuicios" } },
+        {
+          "id": "inCombatOnly",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Only in combat", "esES": "Solo en combate" }
+        }
+      ]
+    },
+    {
+      "id": "spells",
+      "label": { "enUS": "Your list of spells", "esES": "Tu lista de hechizos" },
+      "options": [
+        {
+          "id": "sunder",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Sunder Armor, whoever cast it", "esES": "Hender armadura, la ponga quien la ponga" },
+          "description": {
+            "enUS": "Every rank, shown first with its stacks, also when a group mate started it.",
+            "esES": "Todos los rangos, primero y con sus cargas, también cuando la empezó un compañero."
+          }
+        },
+        {
+          "id": "tracked",
+          "type": "text",
+          "default": "",
+          "maxLength": 200,
+          "label": { "enUS": "Always show (spell IDs)", "esES": "Mostrar siempre (números de hechizo)" },
+          "description": {
+            "enUS": "Separated by commas. Shown first, whoever cast them and whatever the filters above. /etdebuffs prints the IDs of the target's debuffs.",
+            "esES": "Separados por comas. Salen primero, los ponga quien los ponga y sean cuales sean los filtros de arriba. /etdebuffs escribe los números de los perjuicios del objetivo."
+          }
+        },
+        {
+          "id": "excluded",
+          "type": "text",
+          "default": "",
+          "maxLength": 200,
+          "label": { "enUS": "Never show (spell IDs)", "esES": "No mostrar nunca (números de hechizo)" },
+          "description": {
+            "enUS": "Separated by commas.",
+            "esES": "Separados por comas."
+          }
+        }
+      ]
+    },
+    {
+      "id": "look",
+      "tab": "appearance",
+      "label": { "enUS": "Icons", "esES": "Iconos" },
+      "options": [
+        { "id": "size", "type": "range", "default": 30, "min": 16, "max": 64, "step": 1, "label": { "enUS": "Size", "esES": "Tamaño" } },
+        { "id": "spacing", "type": "range", "default": 4, "min": 0, "max": 16, "step": 1, "label": { "enUS": "Spacing", "esES": "Separación" } },
+        { "id": "perRow", "type": "range", "default": 8, "min": 1, "max": 20, "step": 1, "label": { "enUS": "Icons per row", "esES": "Iconos por fila" } },
+        {
+          "id": "growth",
+          "type": "select",
+          "default": "right",
+          "label": { "enUS": "They grow", "esES": "Crecen hacia" },
+          "values": [
+            { "value": "right", "label": { "enUS": "To the right", "esES": "La derecha" } },
+            { "value": "left", "label": { "enUS": "To the left", "esES": "La izquierda" } }
+          ]
+        },
+        {
+          "id": "wrap",
+          "type": "select",
+          "default": "down",
+          "label": { "enUS": "New rows go", "esES": "Las filas nuevas van" },
+          "values": [
+            { "value": "down", "label": { "enUS": "Below", "esES": "Debajo" } },
+            { "value": "up", "label": { "enUS": "Above", "esES": "Encima" } }
+          ]
+        },
+        { "id": "durationText", "type": "toggle", "default": true, "label": { "enUS": "Time left as text", "esES": "Tiempo restante en texto" } },
+        { "id": "swipe", "type": "toggle", "default": true, "label": { "enUS": "Time left as a shadow", "esES": "Tiempo restante como sombra" } },
+        { "id": "dispelBorder", "type": "toggle", "default": true, "label": { "enUS": "Border in the debuff type's color", "esES": "Borde del color del tipo de perjuicio" } },
+        { "id": "textSize", "type": "range", "default": 11, "min": 8, "max": 20, "step": 1, "label": { "enUS": "Time text size", "esES": "Tamaño del texto del tiempo" } },
+        { "id": "countSize", "type": "range", "default": 12, "min": 8, "max": 20, "step": 1, "label": { "enUS": "Stacks text size", "esES": "Tamaño del texto de las cargas" } }
+      ]
+    }
+  ]
+}

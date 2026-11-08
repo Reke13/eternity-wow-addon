@@ -1,0 +1,133 @@
+-- The filters built from the options, and the module's frame in the Mover.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_TargetDebuffs"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function base(extra)
+    local o = { origin = "all", crowdControl = "show", dispellable = false, max = 16, sunder = false, tracked = "", excluded = "" }
+    for k, v in pairs(extra or {}) do
+        o[k] = v
+    end
+    return o
+end
+
+@test("spell ID lists are read from text, skipping what isn't an ID")
+local function parse()
+    local filters = module().Filters
+    local ids, count, invalid = filters.ParseIDs("7386, 11597;  7386 abc 0 1.5")
+    expect(count).toBe(2)
+    expect(ids[7386]).toBe(true)
+    expect(ids[11597]).toBe(true)
+    expect(#invalid).toBe(3)
+    local _, none = filters.ParseIDs("")
+    expect(none).toBe(0)
+end
+
+@test("the main filter string follows who cast it, crowd control and dispellable")
+local function mainFilter()
+    local filters = module().Filters
+    expect(filters.MainFilter(base())).toBe("HARMFUL")
+    expect(filters.MainFilter(base({ origin = "mine" }))).toBe("HARMFUL|PLAYER")
+    expect(filters.MainFilter(base({ origin = "others", crowdControl = "hide" }))).toBe("HARMFUL|!PLAYER|!CROWD_CONTROL")
+    expect(filters.MainFilter(base({ crowdControl = "only", dispellable = true }))).toBe("HARMFUL|CROWD_CONTROL|DISPELLABLE")
+    -- Every string is one the game accepts.
+    if AuraUtil and AuraUtil.IsValidFilterString then
+        for _, o in ipairs({ base({ origin = "others", crowdControl = "hide", dispellable = true }), base({ origin = "mine", crowdControl = "only" }) }) do
+            expect(AuraUtil.IsValidFilterString(filters.MainFilter(o))).toBe(true)
+        end
+    end
+end
+
+@test("Sunder Armor and the own list go first, any caster, and leave the main group")
+local function groups()
+    local filters = module().Filters
+    local g = filters.Groups(base({ sunder = true, tracked = "12345", excluded = "11597, 999" }))
+    expect(g.tracked.enabled).toBe(true)
+    expect(g.tracked.filter).toBe("HARMFUL")
+    local include = g.tracked.candidate.includeSpellIDs
+    expect(include[7386]).toBe(true)
+    expect(include[12345]).toBe(true)
+    -- Excluded wins over tracked.
+    expect(include[11597] == nil).toBe(true)
+    expect(g.tracked.max).toBe(5)
+    local skip = g.main.candidate.excludeSpellIDs
+    expect(skip[7386]).toBe(true)
+    expect(skip[999]).toBe(true)
+    expect(skip[11597]).toBe(true)
+    expect(g.main.max).toBe(16)
+end
+
+@test("with no list, the tracked group is off and the main one has no candidate filter")
+local function empty()
+    local g = module().Filters.Groups(base())
+    expect(g.tracked.enabled).toBe(false)
+    expect(g.tracked.candidate == nil).toBe(true)
+    expect(g.main.candidate == nil).toBe(true)
+end
+
+@test("the frame is in the Mover, sized by the options, and goes away when disabled")
+local function lifecycle()
+    local m = module()
+    expect(m.active).toBe(true)
+    expect(EternityUI.Mover.elements[NAME] ~= nil).toBe(true)
+    local store = EternityUI.store
+    store:Set(NAME, "look.size", 20)
+    store:Set(NAME, "look.spacing", 2)
+    store:Set(NAME, "look.perRow", 5)
+    expect(math.floor(m.holder:GetWidth() + 0.5)).toBe(5 * 20 + 4 * 2)
+    store:Reset(NAME)
+    store:SetModuleEnabled(NAME, false)
+    expect(m.holder:IsShown()).toBe(false)
+    expect(EternityUI.Mover.elements[NAME] == nil).toBe(true)
+    store:SetModuleEnabled(NAME, true)
+    expect(m.holder:IsShown()).toBe(true)
+end
+
+@test("samples show while the Mover is open")
+local function samples()
+    local m = module()
+    EternityUI.Events.Send(EternityUI.Mover.TOGGLED, true)
+    local shown = 0
+    for _, s in ipairs(m.samples) do
+        if s:IsShown() then
+            shown = shown + 1
+        end
+    end
+    expect(shown).toBe(EternityUI.store:Get(NAME, "look.perRow") * 2)
+    EternityUI.Events.Send(EternityUI.Mover.TOGGLED, false)
+    for _, s in ipairs(m.samples) do
+        expect(s:IsShown()).toBe(false)
+    end
+end
+
+@test("/etdebuffs says to pick a target when there is none")
+local function ids()
+    local said
+    local print0 = print
+    print = function(text)
+        said = text
+    end
+    module().PrintIDs()
+    print = print0
+    expect(type(said)).toBe("string")
+end
+
+@test("the aura container holds both groups, when the client has it")
+local function container()
+    local m = module()
+    if not m.container then
+        expect(m.noContainer).toBe(true)
+        return
+    end
+    expect(m.container:HasAuraGroup("tracked")).toBe(true)
+    expect(m.container:HasAuraGroup("main")).toBe(true)
+    expect(m.container:GetUnit()).toBe("target")
+    EternityUI.store:Set(NAME, "spells.sunder", false)
+    expect(m.container:IsAuraGroupEnabled("tracked")).toBe(false)
+    EternityUI.store:Set(NAME, "spells.sunder", true)
+    expect(m.container:IsAuraGroupEnabled("tracked")).toBe(true)
+end

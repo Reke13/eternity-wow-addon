@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-targetdebuffs",
+    "version": "0.1.5",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_TargetDebuffs",
+    "title": "Eternity Target Debuffs",
+    "notes": "Eternity module: the target's debuffs in a frame of their own, filtered by who cast them, their type and your own list of spells, in combat too."
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": ["src/Generated/Options.lua", "src/Locale.lua", "src/Filters.lua", "src/TargetDebuffs.lua"]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": ["EternityUI", "SLASH_ETERNITYTARGETDEBUFFS1", "SlashCmdList"]
+  }
+}
