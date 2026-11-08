@@ -56,6 +56,7 @@ end
 local function options()
     local always, mine = Spells.Sets()
     return {
+        onlyList = opt("show.onlyList"),
         origin = opt("show.origin"),
         crowdControl = opt("show.crowdControl"),
         dispellable = opt("show.dispellable"),

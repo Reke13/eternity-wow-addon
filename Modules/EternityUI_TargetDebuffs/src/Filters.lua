@@ -84,7 +84,7 @@ local function listGroup(ids, filter)
 end
 
 --- The three groups from the options and the list of spells.
----@param o table { origin, crowdControl, dispellable, max, always = set, mine = set }
+---@param o table { onlyList, origin, crowdControl, dispellable, max, always = set, mine = set }
 ---@return table groups { tracked, mine, main = { enabled?, filter, candidate, max } }
 function Filters.Groups(o)
     local always, mine = {}, {}
@@ -102,7 +102,8 @@ function Filters.Groups(o)
         tracked = listGroup(always, "HARMFUL"),
         mine = listGroup(mine, "HARMFUL|PLAYER"),
         main = {
-            enabled = true,
+            -- "Only my list": the rest of the debuffs stay out.
+            enabled = not o.onlyList,
             filter = Filters.MainFilter(o),
             -- The listed ones show in their own groups, or not at all.
             candidate = skip and { excludeSpellIDs = skip } or nil,

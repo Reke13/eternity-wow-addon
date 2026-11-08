@@ -21,6 +21,19 @@ ns.OptionsSchema = {
             },
             options = {
                 {
+                    id = "onlyList",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Only the spells of my list",
+                        esES = "Solo los hechizos de mi lista",
+                    },
+                    description = {
+                        enUS = "Shows nothing but the spells added in the Spells tab. The filters below then don't apply.",
+                        esES = "No muestra más que los hechizos añadidos en la pestaña Hechizos. Los filtros de abajo dejan de aplicarse.",
+                    },
+                },
+                {
                     id = "origin",
                     type = "select",
                     default = "all",

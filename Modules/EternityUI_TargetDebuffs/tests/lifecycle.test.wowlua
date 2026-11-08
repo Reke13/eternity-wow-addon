@@ -265,3 +265,18 @@ local function byName()
     expect(spells.FindName("Test Sunder") == nil).toBe(true)
     spells.Clear()
 end
+
+@test("Only my list switches the rest of the debuffs off")
+local function onlyList()
+    local m = module()
+    local g = m.Filters.Groups(base({ onlyList = true, always = { [7386] = true } }))
+    expect(g.main.enabled).toBe(false)
+    expect(g.tracked.enabled).toBe(true)
+    expect(m.Filters.Groups(base()).main.enabled).toBe(true)
+    if m.container then
+        EternityUI.store:Set(NAME, "show.onlyList", true)
+        expect(m.container:IsAuraGroupEnabled("main")).toBe(false)
+        EternityUI.store:Set(NAME, "show.onlyList", false)
+        expect(m.container:IsAuraGroupEnabled("main")).toBe(true)
+    end
+end
