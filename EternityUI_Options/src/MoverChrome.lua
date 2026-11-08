@@ -26,14 +26,77 @@ local function surface(frame)
     Widgets.Track(frame)
 end
 
+-- Dragged from any empty spot; the spot is kept for the account (raw[key], offsets from the
+-- screen's top left). A right click puts it back where it starts (home).
+local function draggable(frame, root, key, home)
+    local function place()
+        local saved = E.store.raw[key]
+        frame:ClearAllPoints()
+        if saved then
+            frame:SetPoint("TOPLEFT", root, "TOPLEFT", saved.x, saved.y)
+        else
+            home(frame)
+        end
+    end
+    frame:SetMovable(true)
+    frame:SetClampedToScreen(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", frame.StartMoving)
+    frame:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        self:SetUserPlaced(false)
+        local left, top = self:GetLeft(), self:GetTop()
+        local rootLeft, rootTop = root:GetLeft(), root:GetTop()
+        if left and top and rootLeft and rootTop then
+            E.store.raw[key] = { x = left - rootLeft, y = top - rootTop }
+        end
+        place()
+    end)
+    frame:SetScript("OnMouseUp", function(_, button)
+        if button == "RightButton" then
+            E.store.raw[key] = nil
+            place()
+        end
+    end)
+    place()
+end
+
+-- A column of dots at the toolbar's left: where to grab it.
+local function grip(frame)
+    local dots = {}
+    for row = 0, 2 do
+        for column = 0, 1 do
+            local dot = frame:CreateTexture(nil, "OVERLAY")
+            dot:SetColorTexture(1, 1, 1, 1)
+            dot:SetSize(3, 3)
+            dot:SetPoint("LEFT", 9 + column * 5, (1 - row) * 6)
+            dots[#dots + 1] = dot
+        end
+    end
+    local paint = frame.Paint
+    function frame:Paint()
+        paint(self)
+        for _, dot in ipairs(dots) do
+            dot:SetVertexColor(Theme.Color("textMuted"))
+        end
+    end
+    if Theme.accent then
+        frame:Paint()
+    end
+end
+
 local function buildToolbar(root)
     toolbar = CreateFrame("Frame", nil, root)
-    toolbar:SetPoint("TOP", 0, -14)
     toolbar:SetHeight(46)
     toolbar:SetFrameLevel(root:GetFrameLevel() + 20)
     surface(toolbar)
+    grip(toolbar)
+    -- Moved like the panel, by the grip or any gap between the buttons (raw.moverToolbar).
+    draggable(toolbar, root, "moverToolbar", function(self)
+        self:SetPoint("TOP", 0, -14)
+    end)
 
-    local x = 8
+    local x = 24
     local function add(button, width)
         button:SetWidth(width or math.max(button.label:GetStringWidth() + 24, 70))
         button:SetPoint("LEFT", x, 0)
@@ -127,38 +190,10 @@ local function buildPanel(root)
     panel:SetFrameLevel(root:GetFrameLevel() + 20)
     surface(panel)
 
-    -- Dragged from any empty spot; the spot is kept for the account (raw.moverPanel, offsets from
-    -- the screen's top left). A right click puts it back in its corner.
-    local function place()
-        local saved = E.store.raw.moverPanel
-        panel:ClearAllPoints()
-        if saved then
-            panel:SetPoint("TOPLEFT", root, "TOPLEFT", saved.x, saved.y)
-        else
-            panel:SetPoint("TOPRIGHT", -16, -76)
-        end
-    end
-    panel:SetMovable(true)
-    panel:SetClampedToScreen(true)
-    panel:RegisterForDrag("LeftButton")
-    panel:SetScript("OnDragStart", panel.StartMoving)
-    panel:SetScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
-        self:SetUserPlaced(false)
-        local left, top = self:GetLeft(), self:GetTop()
-        local rootLeft, rootTop = root:GetLeft(), root:GetTop()
-        if left and top and rootLeft and rootTop then
-            E.store.raw.moverPanel = { x = left - rootLeft, y = top - rootTop }
-        end
-        place()
+    -- Moved by any empty spot (raw.moverPanel); a right click puts it back in its corner.
+    draggable(panel, root, "moverPanel", function(self)
+        self:SetPoint("TOPRIGHT", -16, -76)
     end)
-    panel:SetScript("OnMouseUp", function(_, button)
-        if button == "RightButton" then
-            E.store.raw.moverPanel = nil
-            place()
-        end
-    end)
-    place()
 
     panel.title = Widgets.Text(panel, 18, "text")
     panel.title:SetPoint("TOPLEFT", 14, -14)
