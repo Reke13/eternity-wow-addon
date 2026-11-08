@@ -390,14 +390,14 @@ ns.OptionsSchema = {
                 {
                     id = "mover",
                     type = "toggle",
-                    default = true,
+                    default = false,
                     label = {
                         enUS = "Move it with the Mover",
                         esES = "Moverlo con el Mover",
                     },
                     description = {
-                        enUS = "The tracker follows a frame you place with /et move. Off: Blizzard's Edit Mode places it. The tracker sits in Blizzard's managed right column, so moving it from an addon may cause \"action blocked\" errors: turn this off if they show up.",
-                        esES = "El seguimiento sigue a un marco que colocas con /et move. Desactivado: lo coloca el Modo Edición de Blizzard. El seguimiento está en la columna derecha gestionada de Blizzard, así que moverlo desde un addon puede dar errores de \"acción bloqueada\": desactívalo si aparecen.",
+                        enUS = "The tracker follows a frame you place with /et move. Only once you have moved it off its default spot in Blizzard's Edit Mode: at the default spot Blizzard places it again with every update and the two would fight. Off: Blizzard's Edit Mode places it. Moving it from an addon may cause \"action blocked\" errors: turn this off if they show up.",
+                        esES = "El seguimiento sigue a un marco que colocas con /et move. Solo cuando lo has sacado de su sitio por defecto en el Modo Edición de Blizzard: en el sitio por defecto Blizzard lo recoloca en cada actualización y los dos se pelearían. Desactivado: lo coloca el Modo Edición de Blizzard. Moverlo desde un addon puede dar errores de \"acción bloqueada\": desactívalo si aparecen.",
                     },
                 },
             },

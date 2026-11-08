@@ -1,10 +1,15 @@
 -- EternityUI_Objectives position: the tracker in the core's Mover, when the option asks for it.
 -- The tracker is a system of Blizzard's Edit Mode inside its managed right column, so the Mover
 -- doesn't register it: an invisible holder is moved instead and the tracker follows it by its top
--- right corner. When Blizzard places the tracker again (a layout of the right column, leaving Edit
--- Mode) it goes back to the holder on the next frame; while Edit Mode is open it's Blizzard's.
--- Known risk, accepted by the option: anchoring a frame of the managed right column from an addon
--- can taint Blizzard's next layout of that column. The scale stays the Size > Scale option.
+-- right corner. Only while the tracker is off its default spot in Edit Mode: at the default spot
+-- every tracker update ends in ManageFramePositions, which places it again, so the two fought and
+-- the tracker switched between both spots (seen on 2026-11-07). When Blizzard places it again
+-- (leaving Edit Mode, a layout) it goes back to the holder on the next frame, after combat if
+-- combat is on; while Edit Mode is open it's Blizzard's. Anchoring goes through Edit Mode's saved
+-- base setters, so our anchors don't run its snap and anchor-changed bookkeeping.
+-- Known risk, accepted by the option (off by default): anchoring a frame of the managed right
+-- column from an addon can taint Blizzard's next layout of that column. The scale stays the
+-- Size > Scale option.
 
 ---@type string, EternityUIObjectivesNamespace
 local addonName, ns = ...
@@ -21,6 +26,7 @@ local MIN_SIZE = 32
 ---@field busy boolean? we are anchoring the tracker ourselves
 ---@field hooked boolean?
 ---@field pending boolean?
+---@field watching boolean? the Edit Mode exit hook is set
 ---@field points table[]? the tracker's points as Blizzard last set them
 local Position = {}
 ns.Position = Position
@@ -63,6 +69,24 @@ local function remember(tracker)
     end
 end
 
+-- Anchors the tracker to these points with the frame's own setters: Edit Mode keeps them as
+-- SetPointBase and ClearAllPointsBase and puts its bookkeeping on SetPoint and ClearAllPoints.
+local function place(tracker, points)
+    local clear = tracker.ClearAllPointsBase or tracker.ClearAllPoints
+    local set = tracker.SetPointBase or tracker.SetPoint
+    Position.busy = true
+    clear(tracker)
+    for _, point in ipairs(points) do
+        set(tracker, unpack(point))
+    end
+    Position.busy = false
+end
+
+-- Whether Blizzard manages the tracker's spot itself (its default spot in Edit Mode).
+local function managed(tracker)
+    return tracker.IsInDefaultPosition ~= nil and tracker:IsInDefaultPosition() and true or false
+end
+
 --- Puts the tracker on its holder (after combat if it's on now).
 function Position:Follow()
     local tracker = Core.Tracker()
@@ -70,13 +94,10 @@ function Position:Follow()
         return
     end
     E.Combat.Run(self, function()
-        if not self.on or editModeActive() then
+        if not self.on or editModeActive() or managed(tracker) then
             return
         end
-        self.busy = true
-        tracker:ClearAllPoints()
-        tracker:SetPoint("TOPRIGHT", self.holder, "TOPRIGHT", 0, 0)
-        self.busy = false
+        place(tracker, { { "TOPRIGHT", self.holder, "TOPRIGHT", 0, 0 } })
     end)
 end
 
@@ -108,14 +129,26 @@ local function hook(tracker)
             syncSize(self)
         end
     end)
-    local manager = _G.EditModeManagerFrame
-    if manager and manager.ExitEditMode then
-        hooksecurefunc(manager, "ExitEditMode", function()
-            if Position.on then
-                Position:Schedule()
-            end
-        end)
+end
+
+-- Leaving Edit Mode may have moved the tracker to or off its default spot: decide again.
+local function watchEditMode()
+    if Position.watching then
+        return
     end
+    local manager = _G.EditModeManagerFrame
+    if not (manager and manager.ExitEditMode) then
+        return
+    end
+    Position.watching = true
+    hooksecurefunc(manager, "ExitEditMode", function()
+        local tracker = Core.Tracker()
+        if Core.running and tracker then
+            C_Timer.After(0, function()
+                Position:Apply(tracker)
+            end)
+        end
+    end)
 end
 
 -- Where the tracker is now, as an offset of its top right corner from the screen's: the default
@@ -176,19 +209,18 @@ function Position:Stop()
         return
     end
     E.Combat.Run(self, function()
-        self.busy = true
-        tracker:ClearAllPoints()
-        for _, point in ipairs(points) do
-            tracker:SetPoint(unpack(point))
+        -- Not when it was turned on again while this waited, nor over Blizzard's own placing.
+        if not self.on and not managed(tracker) then
+            place(tracker, points)
         end
-        self.busy = false
     end)
 end
 
---- In the Mover or not, from the option.
+--- In the Mover or not, from the option and whether the tracker is off its default spot.
 ---@param tracker table
 function Position:Apply(tracker)
-    if Core.running and opt("position.mover") then
+    watchEditMode()
+    if Core.running and opt("position.mover") and not managed(tracker) then
         start(tracker)
         syncSize(tracker)
     else

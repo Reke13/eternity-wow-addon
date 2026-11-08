@@ -43,13 +43,22 @@ local function choices(prefix, keys)
     return list
 end
 
-local function classChoices()
-    local list = { { "", L.ANY_CLASS } }
-    for i = 1, GetNumClasses() do
-        local info = C_CreatureInfo.GetClassInfo(i)
+-- Class IDs have gaps (Forever's druid is 11 of 9 classes), so GetNumClasses can't bound them.
+local MAX_CLASS_ID = 20
+
+--- The game's classes in Blizzard's order.
+---@return table[] choices { token, name }
+function Editor.ClassChoices()
+    local names = {}
+    for id = 1, MAX_CLASS_ID do
+        local info = C_CreatureInfo.GetClassInfo(id)
         if info then
-            list[#list + 1] = { info.classFile, info.className }
+            names[info.classFile] = info.className
         end
+    end
+    local list = { { "", L.ANY_CLASS } }
+    for _, token in ipairs(CLASS_SORT_ORDER) do
+        list[#list + 1] = { token, names[token] or token }
     end
     return list
 end
@@ -285,7 +294,7 @@ local function buildForm(view)
     slider(L.FIELD_COUNT, "threshold", 1, 200, tostring, { item = true })
 
     heading(L.WHEN)
-    dropdown(L.FIELD_CLASS, "class", classChoices())
+    dropdown(L.FIELD_CLASS, "class", Editor.ClassChoices())
     slider(L.FIELD_LEVEL, "minLevel", 0, GetMaxPlayerLevel(), function(value)
         return value == 0 and L.ANY_LEVEL or tostring(value)
     end)

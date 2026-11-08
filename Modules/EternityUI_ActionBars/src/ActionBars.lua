@@ -23,6 +23,7 @@ end
 ---@field events table? event frame (created the first time it's enabled)
 ---@field running boolean?
 ---@field scheduled boolean?
+---@field loud boolean? a scheduled apply was asked for by the player (see Schedule)
 ---@field warned boolean? the "after combat" notice was printed for the pending change
 local Module = {
     schema = ns.OptionsSchema,
@@ -77,8 +78,10 @@ local function say(text)
     print("|cff8b5cf6Eternity Action Bars|r: " .. text)
 end
 
---- Applies everything (or leaves it for after combat).
-function Module:Apply()
+--- Applies everything (or leaves it for after combat). quiet: the game asked for it (a pet or
+--- form change), not the player, so leaving it for after combat says nothing.
+---@param quiet boolean?
+function Module:Apply(quiet)
     if not self.running then
         return
     end
@@ -87,21 +90,25 @@ function Module:Apply()
         Blizzard:ApplyBindings(true)
         Mover:Sync()
         self.warned = false
-    elseif not self.warned then
+    elseif not quiet and not self.warned then
         self.warned = true
         say(L.QUEUED)
     end
 end
 
---- Applies on the next frame: option changes come in bursts (a drag saves x and y).
-function Module:Schedule()
+--- Applies on the next frame: option changes come in bursts (a drag saves x and y). It's quiet
+--- only if every request in the burst was (see Apply).
+---@param quiet boolean?
+function Module:Schedule(quiet)
+    self.loud = self.loud or not quiet
     if self.scheduled then
         return
     end
     self.scheduled = true
     C_Timer.After(0, function()
-        self.scheduled = false
-        self:Apply()
+        local loud = self.loud
+        self.scheduled, self.loud = false, false
+        self:Apply(not loud)
     end)
 end
 
@@ -119,8 +126,9 @@ function Module:OnEvent(event)
             Blizzard:ApplyBindings(true)
         end
     else
-        -- New forms or a new pet change which borrowed buttons are shown.
-        self:Schedule()
+        -- New forms or a new pet change which borrowed buttons are shown. The game asked, so
+        -- leaving it for after combat says nothing (the pet attack command fires PET_BAR_UPDATE).
+        self:Schedule(true)
     end
 end
 
@@ -180,7 +188,7 @@ function Module:OnEnable()
         Mover:OnMoverToggled(open)
     end)
     E.Events.Listen(E.Theme.CHANGED, self, function()
-        self:Schedule()
+        self:Schedule(true)
     end)
     self:Apply()
 end

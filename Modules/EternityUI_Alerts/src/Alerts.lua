@@ -54,7 +54,8 @@ local Module = {
 }
 ns.Module = Module
 -- Internals reachable from the tests.
-Module.Rules, Module.Conditions, Module.Checks, Module.Display = Rules, Conditions, Checks, Display
+Module.Rules, Module.Conditions, Module.Checks, Module.Display, Module.Editor =
+    Rules, Conditions, Checks, Display, Editor
 
 --- Checks every rule now and redraws the row.
 function Module:Evaluate()

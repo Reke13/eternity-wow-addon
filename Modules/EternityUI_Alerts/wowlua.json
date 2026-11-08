@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
   "package": {
     "name": "eternity-ui-alerts",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "authors": ["Jaime"],
     "license": "MIT",
     "wowlua": "^0.13"
@@ -37,6 +37,7 @@
   },
   "check": {
     "globals": [
+      "CLASS_SORT_ORDER",
       "EternityUI",
       "EternityUIAlertsDB",
       "SOUNDKIT"

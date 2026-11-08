@@ -2,7 +2,7 @@
 -- specs and the track panel. They sit on the core's Shape, Theme and Widgets.
 
 ---@type string, EternityUIResourcesNamespace
-local _, ns = ...
+local addonName, ns = ...
 local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
 
@@ -10,30 +10,56 @@ local UI = { space = 6 }
 ns.UI = UI
 
 local SIZES = { small = 12, caption = 11, body = 14 }
+local OUTLINES = { none = "", thin = "OUTLINE", thick = "THICKOUTLINE" }
 local MOST_RADIUS = 5
 
---- A text with a role size and a shadow. :SetStyle(role) changes the size.
+local function opt(path)
+    return E.store:Get(addonName, path)
+end
+
+--- A text with a role size, the text color and outline options and a shadow. :SetStyle(role)
+--- applies them again; they also survive theme changes, which repaint the core's texts.
 ---@param parent table
 ---@return table
 function UI.Text(parent)
     local text = Widgets.Text(parent, SIZES.small, "text")
+    local holder = text.holder
+    function holder.Paint()
+        local outline = OUTLINES[opt("look.outline")] or ""
+        text:SetFont(Theme.font, holder.size * Theme.fontScale, outline)
+        local c = Theme.RGBA(opt("look.textColor"))
+        text:SetTextColor(c[1], c[2], c[3], c[4])
+        text:SetShadowColor(0, 0, 0, outline == "" and 0.9 or 0)
+    end
     function text.SetStyle(self, role)
         Widgets.SetTextSize(self, SIZES[role] or SIZES.small)
     end
     text:SetShadowOffset(1, -1)
-    text:SetShadowColor(0, 0, 0, 0.9)
     text:SetWordWrap(false)
+    holder.Paint()
     return text
+end
+
+--- The corner radius the option asks for, at most the largest that fits height (nil: unknown).
+---@param height number?
+---@return integer
+function UI.Radius(height)
+    local corners = opt("look.corners")
+    if corners == "square" then
+        return 0
+    end
+    local radius = corners == "round" and MOST_RADIUS or math.min(Theme.radius, MOST_RADIUS)
+    if height then
+        radius = math.min(radius, math.floor(height / 2))
+    end
+    return radius
 end
 
 -- A radius that fits the frame's height, so thin bars keep their round ends.
 local function radiusOf(frame)
     -- A frame anchored to a bar drawing a secret value has secret geometry.
     local height = frame:GetHeight()
-    if E.Secret.Is(height) then
-        return math.min(Theme.radius, MOST_RADIUS)
-    end
-    return math.min(Theme.radius, MOST_RADIUS, math.floor(height / 2))
+    return UI.Radius(not E.Secret.Is(height) and height or nil)
 end
 
 --- A shape on a frame. :SetColors(fill, border, top) takes color specs or nil, and with top the
@@ -74,7 +100,8 @@ function UI.Paint(shape, color, style)
     end
 end
 
---- A panel filling its parent. It keeps its colors when the theme or its size changes.
+--- A panel filling its parent, in the background and border options' colors (either may be off).
+--- It keeps them when the theme or its size changes.
 ---@param parent table
 ---@return table
 function UI.Track(parent)
@@ -82,7 +109,9 @@ function UI.Track(parent)
     panel:SetAllPoints()
     panel.shape = UI.Shape(panel)
     function panel.Paint(self)
-        self.shape:SetColors("track", "border")
+        local fill = opt("look.background") and opt("look.backgroundColor") or nil
+        local border = opt("look.border") and opt("look.borderColor") or nil
+        self.shape:SetColors(fill, border)
     end
     panel:SetScript("OnSizeChanged", panel.Paint)
     return Widgets.Track(panel)

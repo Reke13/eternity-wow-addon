@@ -4,7 +4,7 @@
 ---@type string, EternityUIResourcesNamespace
 local addonName, ns = ...
 local E = EternityUI
-local Theme, UI = E.Theme, ns.UI
+local UI = ns.UI
 
 -- Below this height the text doesn't fit.
 local TEXT_HEIGHT = 10
@@ -73,7 +73,7 @@ end
 ---@param height number
 function Bar.Layout(frame, width, height)
     frame:SetSize(width, height)
-    frame.background.shape:SetAlpha(opt("look.background") and Theme.opacity or 0)
+    frame.background:Paint()
 
     local inset = height >= TEXT_HEIGHT and 2 or 1
     frame.bar:ClearAllPoints()

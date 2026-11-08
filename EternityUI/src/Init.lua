@@ -28,7 +28,7 @@ local addonName, ns = ...
 
 ---@class EternityUI
 EternityUI = {
-    version = "0.1.5",
+    version = "0.1.6",
     addonName = addonName,
     -- For tests and debugging only. Modules must not use it.
     Internal = { ns = ns },

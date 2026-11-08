@@ -71,6 +71,17 @@ local function conditions()
     expect(passes(rule({ hideResting = true }), context({ resting = true }))).toBe(false)
 end
 
+@test("the class list has every class, the druid too")
+local function classes()
+    local choices = EternityUI:GetModule(NAME).Editor.ClassChoices()
+    expect(#choices).toBe(#CLASS_SORT_ORDER + 1)
+    local druid = false
+    for _, choice in ipairs(choices) do
+        druid = druid or choice[1] == "DRUID"
+    end
+    expect(druid).toBe(true)
+end
+
 @test("a rule that can't tell keeps what it knew")
 local function keeps()
     local module = EternityUI:GetModule(NAME)

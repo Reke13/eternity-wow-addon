@@ -6,7 +6,7 @@
 ---@type string, EternityUIResourcesNamespace
 local addonName, ns = ...
 local E = EternityUI
-local Secret, Theme, UI = E.Secret, E.Theme, ns.UI
+local Secret, UI = E.Secret, ns.UI
 
 local MAX_PIPS = 10
 
@@ -69,13 +69,12 @@ function Pips.Layout(frame, width, height, count)
     frame:SetSize(width, height)
     local gap = opt("layout.pipSpacing")
     local size = math.max(1, (width - gap * (count - 1)) / count)
-    local alpha = opt("look.background") and Theme.opacity or 0
     for i, pip in ipairs(frame.pips) do
         pip:ClearAllPoints()
         if i <= count then
             pip:SetSize(size, height)
             pip:SetPoint("LEFT", (i - 1) * (size + gap), 0)
-            pip.background.shape:SetAlpha(alpha)
+            pip.background:Paint()
             pip:Show()
         else
             pip:Hide()

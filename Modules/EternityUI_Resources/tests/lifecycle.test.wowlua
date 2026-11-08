@@ -165,6 +165,36 @@ local function texts()
     expect((display().parts.power.text:GetText() or "") ~= "").toBe(true)
 end
 
+@test("the background and border follow their options")
+local function background()
+    local shape = display().parts.power.background.shape
+    set("look.backgroundColor", "#102030")
+    expect(shape.fill:IsShown()).toBe(true)
+    local r = shape.fill:GetVertexColor()
+    expect(math.floor(r * 255 + 0.5)).toBe(16)
+    set("look.background", false)
+    expect(shape.fill:IsShown()).toBe(false)
+    set("look.border", false)
+    expect(shape.border:IsShown()).toBe(false)
+    set("look.background", true)
+    set("look.border", true)
+    expect(shape.border:IsShown()).toBe(true)
+end
+
+@test("the text color and outline follow their options")
+local function textLook()
+    local text = display().parts.power.text
+    set("look.textColor", "#FF0000")
+    local r, g = text:GetTextColor()
+    expect(r).toBe(1)
+    expect(g).toBe(0)
+    set("look.outline", "thin")
+    local _, _, flags = text:GetFont()
+    expect(flags).toBe("OUTLINE")
+    set("look.outline", "none")
+    set("look.textColor", "#FFFFFF")
+end
+
 @test("moving each part on its own swaps the Mover elements")
 local function separate()
     set("display.separate", true)

@@ -1,0 +1,43 @@
+-- The "after combat" notice is for the player's own changes, never for the game's pet or form events.
+-- Own file: it stubs Bars.Build and print.
+import test, expect from "wowlua:test"
+
+local function module()
+    return EternityUI:GetModule("EternityUI_ActionBars")
+end
+
+-- Runs fn with combat lockdown simulated (Build can't apply) and returns how many lines it printed.
+local function printedDuring(fn)
+    local Bars = module().Bars
+    local build, printFn = Bars.Build, print
+    local lines = 0
+    Bars.Build = function()
+        return false
+    end
+    print = function()
+        lines = lines + 1
+    end
+    module().warned = false
+    local ok, err = pcall(fn)
+    Bars.Build, print = build, printFn
+    module().warned = false
+    if not ok then
+        error(err)
+    end
+    return lines
+end
+
+@test("a pet bar update in combat says nothing")
+local function petQuiet()
+    expect(printedDuring(function()
+        module():Apply(true)
+    end)).toBe(0)
+end
+
+@test("a change of the player's in combat says it waits, once")
+local function playerLoud()
+    expect(printedDuring(function()
+        module():Apply()
+        module():Apply()
+    end)).toBe(1)
+end

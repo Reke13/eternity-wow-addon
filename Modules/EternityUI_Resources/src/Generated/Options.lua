@@ -347,6 +347,75 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "backgroundColor",
+                    type = "color",
+                    default = "@window:CC",
+                    label = {
+                        enUS = "Background color",
+                        esES = "Color del fondo",
+                    },
+                    description = {
+                        enUS = "Also the color of unlit combo points.",
+                        esES = "También el color de los puntos de combo apagados.",
+                    },
+                    visibleWhen = {
+                        ["look.background"] = true,
+                    },
+                },
+                {
+                    id = "border",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Show the border",
+                        esES = "Mostrar el borde",
+                    },
+                },
+                {
+                    id = "borderColor",
+                    type = "color",
+                    default = "@border",
+                    label = {
+                        enUS = "Border color",
+                        esES = "Color del borde",
+                    },
+                    visibleWhen = {
+                        ["look.border"] = true,
+                    },
+                },
+                {
+                    id = "corners",
+                    type = "select",
+                    default = "theme",
+                    label = {
+                        enUS = "Corners",
+                        esES = "Esquinas",
+                    },
+                    values = {
+                        {
+                            value = "theme",
+                            label = {
+                                enUS = "Like the theme",
+                                esES = "Como el tema",
+                            },
+                        },
+                        {
+                            value = "round",
+                            label = {
+                                enUS = "Round",
+                                esES = "Redondeadas",
+                            },
+                        },
+                        {
+                            value = "square",
+                            label = {
+                                enUS = "Square",
+                                esES = "Rectas",
+                            },
+                        },
+                    },
+                },
+                {
                     id = "spark",
                     type = "toggle",
                     default = false,
@@ -507,6 +576,47 @@ ns.OptionsSchema = {
                             label = {
                                 enUS = "Large",
                                 esES = "Grande",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "textColor",
+                    type = "color",
+                    default = "#FFFFFF",
+                    label = {
+                        enUS = "Text color",
+                        esES = "Color del texto",
+                    },
+                },
+                {
+                    id = "outline",
+                    type = "select",
+                    default = "none",
+                    label = {
+                        enUS = "Text outline",
+                        esES = "Contorno del texto",
+                    },
+                    values = {
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "None (shadow)",
+                                esES = "Ninguno (sombra)",
+                            },
+                        },
+                        {
+                            value = "thin",
+                            label = {
+                                enUS = "Thin",
+                                esES = "Fino",
+                            },
+                        },
+                        {
+                            value = "thick",
+                            label = {
+                                enUS = "Thick",
+                                esES = "Grueso",
                             },
                         },
                     },
