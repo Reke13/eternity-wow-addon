@@ -225,3 +225,43 @@ local function migrate()
     expect(spell.hide == nil).toBe(true)
     module().Spells.Clear()
 end
+
+@test("a spell added by name collects every ID with that name, and they reach the filters")
+local function byName()
+    local m = module()
+    local spells = m.Spells
+    spells.Clear()
+    -- A small spell list of our own: three ranks of "Test Sunder" among other spells.
+    local names = { [10] = "Test Sunder", [20] = "Other", [30] = "test sunder", [45] = "Test Sunder" }
+    local realName, realLast = C_Spell.GetSpellName, spells.SEARCH_LAST
+    C_Spell.GetSpellName = function(id)
+        if issecretvalue(id) then
+            return nil
+        end
+        return names[id]
+    end
+    spells.SEARCH_LAST = 50
+    local entry = spells.AddName("  Test Sunder ")
+    expect(entry ~= false).toBe(true)
+    expect(entry.name).toBe("Test Sunder")
+    expect(spells.AddName("TEST SUNDER")).toBe(false)
+    while spells.SearchStep(7) do
+    end
+    C_Spell.GetSpellName, spells.SEARCH_LAST = realName, realLast
+    expect(entry.searching == nil).toBe(true)
+    expect(#entry.ids).toBe(3)
+    expect(entry.ids[1]).toBe(10)
+    expect(entry.ids[3]).toBe(45)
+    local always, mine = spells.Sets()
+    expect(always[30]).toBe(true)
+    spells.SetMine(entry, true)
+    always, mine = spells.Sets()
+    expect(mine[45]).toBe(true)
+    expect(always[45] == nil).toBe(true)
+    -- The tab takes a name typed in the box.
+    m.SpellsTab.AddText("Another Spell")
+    expect(spells.FindName("another spell") ~= nil).toBe(true)
+    spells.Remove(entry)
+    expect(spells.FindName("Test Sunder") == nil).toBe(true)
+    spells.Clear()
+end

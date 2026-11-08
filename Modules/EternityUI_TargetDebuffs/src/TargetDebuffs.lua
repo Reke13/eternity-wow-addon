@@ -362,7 +362,11 @@ function Module:OnEnable()
         if self.running then
             self:ApplyFilters()
         end
+        if SpellsTab.frame and SpellsTab.frame:IsVisible() then
+            SpellsTab.Refresh()
+        end
     end
+    Spells.ResumeSearches()
     if self:CreateContainer() then
         self.container:SetEnabled(true)
         self:ApplyFilters()
