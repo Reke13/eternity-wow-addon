@@ -1,6 +1,10 @@
 -- EternityUI_Bags: bags and bank with the Eternity look.
 --   * Bags: every bag in one window (one grid or one section per bag), with search, sort,
 --     gold and free slots. Bank: the character tabs and the warband ones, with deposit.
+--   * Saved view: the bags window can show another character's bags instead of this one's
+--     ("Characters" in its footer), and a window built by the same code as the bank shows what
+--     was saved of a bank (this character's from anywhere, another's, or the guild bank). Their
+--     buttons are plain ItemButtons with the same look: nothing in them can be used.
 --   * The item buttons are Blizzard's (ContainerFrameItemButtonTemplate): clicks, drag, use,
 --     sell, split and tooltips work exactly as in Blizzard's bags; only their look changes.
 --   * Blizzard decides when bags open and close (vendor, mailbox, bank, keys...): its frames
@@ -14,7 +18,7 @@
 local addonName, ns = ...
 local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
-local L, Inventory = ns.L, ns.Inventory
+local L, Inventory, Viewer = ns.L, ns.Inventory, ns.Viewer
 
 local QUALITY_FROM = { poor = 0, common = 1, uncommon = 2, rare = 3, epic = 4 }
 local QUEST_COLOR = { 1, 0.82, 0.2, 1 }
@@ -56,6 +60,7 @@ local RELAYOUT = {
 local Module = {
     schema = ns.OptionsSchema,
     inventory = Inventory, -- for the tests
+    viewer = ns.Viewer,
 }
 
 local function opt(path)
@@ -282,7 +287,11 @@ end
 ---@field bags integer[]
 
 ---@class EternityUIBagsGrid
----@field kind string "bags" | "bank"
+---@field kind string "bags" | "bank" | "saved"
+---@field place string? (saved view) bags, bank or guild
+---@field realm string? (saved view) whose
+---@field name string? (saved view) whose
+---@field viewing boolean? (bags) showing another character's saved bags
 ---@field frame table the window
 ---@field content table
 ---@field holders table<integer, table> bagID -> frame with that ID (the buttons' parent)
@@ -334,6 +343,146 @@ local function bagTitle(bag)
     return name or L.BAG_N:format(bag)
 end
 
+-- Saved view: plain item buttons with the bank's look, filled from what was saved.
+
+local function savedButton(self, index)
+    local b = self.savedButtons[index]
+    if not b then
+        b = CreateFrame("ItemButton", nil, self.content)
+        skinButton(b)
+        b:SetScript("OnEnter", Viewer.OnEnter)
+        b:SetScript("OnLeave", Viewer.OnLeave)
+        b:SetScript("OnClick", Viewer.OnClick)
+        self.savedButtons[index] = b
+    end
+    return b
+end
+
+local function savedMatches(b, needle)
+    if not needle then
+        return true
+    end
+    local _, _, name = Viewer.ItemData(b.itemID or 0)
+    return b.itemID ~= nil and name ~= nil and name:lower():find(needle, 1, true) ~= nil
+end
+
+local function fillSaved(b, entry, needle)
+    local id, count = entry and entry[1], entry and entry[2]
+    b.itemID = id
+    local icon, quality
+    if id then
+        icon, quality = Viewer.ItemData(id)
+    end
+    SetItemButtonTexture(b, icon)
+    SetItemButtonCount(b, count)
+    SetItemButtonQuality(b, quality, id)
+    b.etLevel:Hide()
+    b:SetMatchesSearch(savedMatches(b, needle))
+    local border
+    if id and quality and opt("quality.border") and quality >= QUALITY_FROM[opt("quality.from")] then
+        border = qualityColor(quality)
+    end
+    paintSlot(b.etBorder, nil, border)
+    if border and opt("quality.glow") then
+        paintSlot(b.etBack, { border[1], border[2], border[3], 0.18 }, "border")
+    else
+        paintSlot(b.etBack, "field", "border")
+    end
+end
+
+--- Whether this window shows saved contents (the saved bank, or the bags of another character).
+function Grid:IsSaved()
+    return self.kind == "saved" or self.viewing == true
+end
+
+--- The bags window shows another character's saved bags (nil, or this character: its own).
+function Grid:ViewCharacter(realm, name)
+    local myRealm, myName = Inventory.Me()
+    if not realm or (realm == myRealm and name == myName) then
+        self.viewing, self.place, self.realm, self.name = nil, nil, nil, nil
+    else
+        self.viewing, self.place, self.realm, self.name = true, "bags", realm, name
+    end
+    self:Layout()
+end
+
+function Grid:SavedNeedle()
+    local text = self.search:GetText()
+    return text ~= "" and text:lower() or nil
+end
+
+--- Places the saved slots like Layout does the real ones.
+function Grid:LayoutSaved()
+    local size, gap = opt("slots.size"), opt("slots.spacing")
+    local columns = opt(self.kind == "bags" and "slots.columns" or "slots.bankColumns")
+    local containers, updated, missing = Viewer.Containers(self.place, self.realm, self.name)
+    if self.kind == "bags" and not opt("windows.keyring") then
+        local shown = {}
+        for _, container in ipairs(containers) do
+            if container.kind ~= "keyring" then
+                shown[#shown + 1] = container
+            end
+        end
+        containers = shown
+    end
+    for _, list in pairs(self.buttons) do
+        for _, b in pairs(list) do
+            b:Hide()
+        end
+    end
+    self.savedContainers, self.savedUpdated = containers, updated
+    local needle = self:SavedNeedle()
+    local split = opt("windows.layout") == "bags" or self.place == "guild"
+    local showTitles = opt("window.sectionTitles")
+    local y, used, titleIndex, i = 0, 0, 0, 0
+    for index, container in ipairs(containers) do
+        if split and index > 1 then
+            local rows = math.ceil(i / columns)
+            y = y + rows * size + math.max(rows - 1, 0) * gap + (rows > 0 and gap + 4 or 0)
+            i = 0
+        end
+        if split and showTitles then
+            titleIndex = titleIndex + 1
+            local title = self:SectionTitle(titleIndex)
+            title:SetText(Viewer.ContainerTitle(container, index))
+            title:ClearAllPoints()
+            title:SetPoint("TOPLEFT", self.content, "TOPLEFT", 0, -y)
+            title:Show()
+            y = y + SECTION_TITLE
+        end
+        for slot = 1, container.size or 0 do
+            used = used + 1
+            local b = savedButton(self, used)
+            styleButton(b, size)
+            fillSaved(b, container.slots and container.slots[slot], needle)
+            local col, row = i % columns, math.floor(i / columns)
+            b:ClearAllPoints()
+            b:SetPoint("TOPLEFT", self.content, "TOPLEFT", col * (size + gap), -(y + row * (size + gap)))
+            b:Show()
+            i = i + 1
+        end
+    end
+    local rows = math.ceil(i / columns)
+    y = y + rows * size + math.max(rows - 1, 0) * gap + (rows > 0 and gap + 4 or 0)
+    for index = used + 1, #self.savedButtons do
+        self.savedButtons[index]:Hide()
+    end
+    for index = titleIndex + 1, #self.titles do
+        self.titles[index]:Hide()
+    end
+    self.empty:SetText(missing or L.NO_TABS)
+    self.empty:SetShown(y == 0)
+    local width = math.max(columns * size + (columns - 1) * gap, 260)
+    local height = y == 0 and 40 or math.max(y - gap - 4, 0)
+    self.content:SetSize(width, height)
+    if self.kind == "saved" then
+        self.tabs:SetValue(self.place)
+    end
+    self.sort:Hide()
+    self:LayoutChrome(width, height)
+    self.dirty = false
+end
+
 --- The sections of this window according to the layout.
 ---@return EternityUIBagsSection[]
 function Grid:Sections()
@@ -383,6 +532,15 @@ end
 
 --- Places every slot and sizes the window.
 function Grid:Layout()
+    if self:IsSaved() then
+        self:LayoutSaved()
+        return
+    end
+    for _, b in ipairs(self.savedButtons) do
+        b:Hide()
+    end
+    self.empty:SetText(L.NO_TABS)
+    self.sort:Show()
     local size, gap = opt("slots.size"), opt("slots.spacing")
     local columns = opt(self.kind == "bank" and "slots.bankColumns" or "slots.columns")
     local used, y, titleIndex = {}, 0, 0
@@ -476,19 +634,37 @@ function Grid:LayoutChrome(width, height)
     self.sort:SetPoint("RIGHT", self.menu, "LEFT", -8, 0)
     self.search:ClearAllPoints()
     self.search:SetPoint("LEFT", toolbar, "LEFT", left, 0)
-    self.search:SetPoint("RIGHT", self.sort, "LEFT", -8, 0)
+    self.search:SetPoint("RIGHT", self.sort:IsShown() and self.sort or self.menu, "LEFT", -8, 0)
     self.content:ClearAllPoints()
     self.content:SetPoint("TOPLEFT", toolbar, "BOTTOMLEFT", 0, -pad)
+    -- Wide enough for everything in the footer.
+    self:UpdateFooter()
+    width = math.max(width, self:FooterWidth() - 2 * pad)
+    toolbar:SetWidth(width)
     -- The footer's text is centered in it: the space up to that text sets the gap below the items.
     local footer = w.footer:GetHeight()
     local below = opt("window.footerSpace") - (footer - FOOTER_TEXT) / 2
-    w:SetSize(width + 2 * pad, control + height + 2 * pad + below + footer)
+    -- A saved view says when it was saved on a line of its own, under the slots.
+    local note = 0
+    if self.updated and self:IsSaved() then
+        self.updated:ClearAllPoints()
+        self.updated:SetPoint("TOPLEFT", self.content, "BOTTOMLEFT", 0, -pad)
+        self.updated:SetPoint("TOPRIGHT", self.content, "BOTTOMRIGHT", 0, -pad)
+        note = pad + FOOTER_TEXT + 2
+    end
+    w:SetSize(width + 2 * pad, control + height + 2 * pad + note + below + footer)
     self:UpdateFooter()
 end
 
 --- Item states (count, lock, cooldown, search, borders) without moving anything.
 function Grid:Refresh()
     if not self.frame:IsShown() then
+        return
+    end
+    if self:IsSaved() then
+        if self.dirty then
+            self:LayoutSaved()
+        end
         return
     end
     if self.dirty or self.slots ~= self:CountSlots() then
@@ -516,7 +692,101 @@ function Grid:Bags()
     return list
 end
 
+--- Tooltip of the gold: every character's, richest first, and the total.
+local function goldTooltip(tip)
+    tip:SetTitle(L.GOLD_TITLE)
+    local list, total = Inventory:MoneyList()
+    local myRealm = Inventory.Me()
+    for _, char in ipairs(list) do
+        local text = char.realm == myRealm and char.name or (char.name .. "-" .. char.realm)
+        local color = char.class and C_ClassColor and C_ClassColor.GetClassColor(char.class)
+        tip:AddDoubleLine(color and color:WrapTextInColorCode(text) or text, GetMoneyString(char.money, true))
+    end
+    if #list > 1 then
+        tip:AddDoubleLine(L.GOLD_TOTAL, GetMoneyString(total, true), "text", "text")
+    end
+    tip:AddHint(L.GOLD_HINT)
+end
+Grid.GoldTooltip = goldTooltip
+
+--- Bags footer, left to right: gold (own bags only), Characters, Bank; "saved ..." on the right.
+function Grid:PlaceBagsFooter()
+    local footer = self.frame.footer
+    local money = GetMoney()
+    if self.viewing then
+        local char = Inventory:Character(self.realm, self.name)
+        money = char and char.money
+    end
+    self.money:SetText(money and GetMoneyString(money, true) or L.GOLD_UNKNOWN)
+    self.money:SetShown(opt("windows.money"))
+    self.moneyHit:SetShown(self.money:IsShown())
+    self.others:ClearAllPoints()
+    if self.money:IsShown() then
+        self.others:SetPoint("LEFT", self.money, "RIGHT", 12, 0)
+    else
+        self.others:SetPoint("LEFT", footer, "LEFT", 12, 0)
+    end
+    self.savedBank:ClearAllPoints()
+    self.savedBank:SetPoint("LEFT", self.others, "RIGHT", 4, 0)
+end
+
+--- The width the footer's shown pieces take, with their gaps and the edges.
+function Grid:FooterWidth()
+    local total = 24
+    for _, piece in ipairs({ self.money, self.savedBank, self.keyring, self.free, self.deposit, self.blizzard, self.guild, self.others, self.character }) do
+        if piece and piece:IsShown() then
+            local width = piece.GetStringWidth and piece:GetStringWidth() or piece:GetWidth()
+            total = total + width + 12
+        end
+    end
+    return total
+end
+
 function Grid:UpdateFooter()
+    if self.kind == "bags" then
+        self:PlaceBagsFooter()
+    end
+    if self:IsSaved() then
+        local free, total = 0, 0
+        for _, container in ipairs(self.savedContainers or {}) do
+            if container.kind ~= "keyring" then
+                total = total + (container.size or 0)
+                for slot = 1, container.size or 0 do
+                    if not (container.slots and container.slots[slot]) then
+                        free = free + 1
+                    end
+                end
+            end
+        end
+        self.free:SetText(L.FREE:format(free, total))
+        self.free:SetShown(opt("windows.freeSlots") and total > 0)
+        local text = self.name or ""
+        local char = self.realm and Inventory:Character(self.realm, self.name)
+        local color = char and char.class and C_ClassColor and C_ClassColor.GetClassColor(char.class)
+        local button = self.character or self.others
+        button.label:SetText(color and color:WrapTextInColorCode(text) or text)
+        button:SetWidth(button.label:GetStringWidth() + 20)
+        self.updated:Show()
+        local ago = Viewer.Ago(self.savedUpdated)
+        self.updated:SetText(ago and L.UPDATED:format(ago) or "")
+        -- Right to left: free slots, the keyring box (bags).
+        local anchor = self.free:IsShown() and self.free or nil
+        local function after(piece)
+            piece:ClearAllPoints()
+            if anchor then
+                piece:SetPoint("RIGHT", anchor, "LEFT", -14, 0)
+            else
+                piece:SetPoint("RIGHT", self.frame.footer, "RIGHT", -12, 0)
+            end
+            anchor = piece
+        end
+        if self.keyring then
+            self.keyring:Show()
+            self.keyring:SetValue(opt("windows.keyring"))
+            after(self.keyring)
+        end
+        return
+    end
     local free, total = 0, 0
     for _, bag in ipairs(self:Bags()) do
         if bag ~= (Enum.BagIndex or {}).Keyring then
@@ -538,8 +808,9 @@ function Grid:UpdateFooter()
         end
     end
     if self.money then
-        self.money:SetText(GetMoneyString(GetMoney(), true))
-        self.money:SetShown(opt("windows.money"))
+        self.others.label:SetText(L.OTHER_CHARACTERS)
+        self.others:SetWidth(self.others.label:GetStringWidth() + 20)
+        self.updated:Hide()
     end
     if self.deposit then
         self.deposit:SetShown(C_Bank ~= nil and C_Bank.AutoDepositItemsIntoBank ~= nil)
@@ -597,7 +868,9 @@ function Grid:ClearSearch()
     if self.search:GetText() ~= "" then
         self.search:SetText("")
     end
-    C_Container.SetItemSearch("")
+    if not self:IsSaved() then
+        C_Container.SetItemSearch("")
+    end
 end
 
 function Grid:OpenMenu(owner)
@@ -670,9 +943,10 @@ end
 ---@param kind string "bags" | "bank"
 ---@return EternityUIBagsGrid
 function Grid.New(module, kind)
-    local self = setmetatable({ kind = kind, holders = {}, buttons = {}, titles = {} }, Grid)
-    local bank = kind == "bank"
-    local w = Widgets.Window(bank and "EternityUIBankWindow" or "EternityUIBagsWindow", bank and L.BANK or L.BAGS, true)
+    local self = setmetatable({ kind = kind, holders = {}, buttons = {}, titles = {}, savedButtons = {} }, Grid)
+    local bank, saved = kind == "bank", kind == "saved"
+    local names = { bags = "EternityUIBagsWindow", bank = "EternityUIBankWindow", saved = "EternityUISavedBankWindow" }
+    local w = Widgets.Window(names[kind], kind == "bags" and L.BAGS or L.BANK, true)
     self.frame = w
     w:SetSize(480, 400)
     w:SetFrameStrata("HIGH")
@@ -683,7 +957,7 @@ function Grid.New(module, kind)
     w:EnableKeyboard(false)
     w:SetScript("OnKeyDown", nil)
     w:SetScript("OnDragStart", function(frame)
-        local entry = E.Mover.Entry(self:Key())
+        local entry = not saved and E.Mover.Entry(self:Key())
         if not (entry and entry.locked) then
             frame:StartMoving()
         end
@@ -691,7 +965,9 @@ function Grid.New(module, kind)
     w:SetScript("OnDragStop", function(frame)
         frame:StopMovingOrSizing()
         frame:SetUserPlaced(false)
-        E.Mover.SaveFromFrame(self:Key())
+        if not saved then
+            E.Mover.SaveFromFrame(self:Key())
+        end
     end)
     w:HookScript("OnShow", function()
         self:Place()
@@ -702,6 +978,10 @@ function Grid.New(module, kind)
         end
     end)
     w:HookScript("OnHide", function()
+        if self.viewing then
+            self.viewing, self.place, self.realm, self.name = nil, nil, nil, nil
+            self.dirty = true
+        end
         if opt("windows.clearSearch") then
             self:ClearSearch()
         end
@@ -733,7 +1013,17 @@ function Grid.New(module, kind)
     self.search = Widgets.Input(self.toolbar, nil, L.SEARCH)
     self.search:SetMaxLetters(60)
     self.search:HookScript("OnTextChanged", function(box, userInput)
-        if userInput then
+        if not userInput then
+            return
+        elseif self:IsSaved() then
+            -- Only dims what doesn't match, as Blizzard's search does: nothing moves.
+            local needle = self:SavedNeedle()
+            for _, b in ipairs(self.savedButtons) do
+                if b:IsShown() then
+                    b:SetMatchesSearch(savedMatches(b, needle))
+                end
+            end
+        else
             C_Container.SetItemSearch(box:GetText())
         end
     end)
@@ -742,6 +1032,7 @@ function Grid.New(module, kind)
     end)
     self.sort:SetWidth(math.max(70, self.sort.label:GetStringWidth() + 24))
     hint(self.sort, L.SORT, L.SORT_HINT)
+    self.sort:SetShown(not saved)
 
     self.content = CreateFrame("Frame", nil, w.body)
     self.empty = Widgets.Text(self.content, 12, "muted")
@@ -778,13 +1069,73 @@ function Grid.New(module, kind)
         end)
         self.blizzard:SetPoint("LEFT", self.deposit, "RIGHT", 4, 0)
         hint(self.blizzard, L.BLIZZARD_BANK, L.BLIZZARD_BANK_HINT)
+        -- The saved view: the guild bank, and the bank of the other characters.
+        self.guild = Widgets.Button(w.footer, L.GUILD, "ghost", function()
+            Viewer.Open("guild", nil, nil, w)
+        end)
+        self.guild:SetHeight(26)
+        self.guild:SetPoint("LEFT", self.blizzard, "RIGHT", 4, 0)
+        hint(self.guild, L.GUILD_BANK, L.GUILD_HINT)
+        self.others = Widgets.Button(w.footer, L.OTHER_CHARACTERS, "ghost", function(button)
+            Viewer.CharacterMenu(button, function(realm, name)
+                Viewer.Open("bank", realm, name, w)
+            end)
+        end)
+        self.others:SetHeight(26)
+        self.others:SetPoint("LEFT", self.guild, "RIGHT", 4, 0)
+        hint(self.others, L.OTHER_CHARACTERS, L.OTHER_CHARACTERS_HINT)
+    elseif saved then
+        -- Like the bank's tabs: the bank or the guild bank, of the character in the footer.
+        local items = {}
+        for i, place in ipairs(Viewer.PLACES) do
+            items[i] = { place, place == "guild" and L.GUILD or L.SAVED_BANK }
+        end
+        self.tabs = Widgets.Segmented(self.toolbar, items, function(place)
+            self.place = place
+            self:Layout()
+        end)
+        self.tabs:SetPoint("LEFT", self.toolbar, "LEFT", 0, 0)
+        self.tabs.count = #items
+        self.character = Widgets.Button(w.footer, "", "ghost", function(button)
+            Viewer.CharacterMenu(button, function(realm, name)
+                self.realm, self.name = realm, name
+                self:Layout()
+            end)
+        end)
+        self.character:SetHeight(26)
+        self.character:SetPoint("LEFT", w.footer, "LEFT", pad, 0)
+        hint(self.character, L.OTHER_CHARACTERS, L.OTHER_CHARACTERS_HINT)
+        self.updated = Widgets.Text(w.body, FOOTER_TEXT, "muted")
+        self.updated:SetJustifyH("LEFT")
     else
         self.money = Widgets.Text(w.footer, FOOTER_TEXT, "text")
         self.money:SetPoint("LEFT", w.footer, "LEFT", pad, 0)
+        -- The text can't take the mouse: a frame over it shows every character's gold.
+        self.moneyHit = CreateFrame("Frame", nil, w.footer)
+        self.moneyHit:SetAllPoints(self.money)
+        self.moneyHit:EnableMouse(true)
+        Widgets.AttachTooltip(self.moneyHit, goldTooltip, "TOP")
         self.keyring = newCheck(w.footer, L.KEYRING, function(value)
             E.store:Set(addonName, "windows.keyring", value)
         end)
         hint(self.keyring, L.KEYRING, L.KEYRING_HINT)
+        -- The saved view: another character's bags in this same window, and the bank of the
+        -- character shown, from anywhere.
+        self.others = Widgets.Button(w.footer, L.OTHER_CHARACTERS, "ghost", function(button)
+            Viewer.CharacterMenu(button, function(realm, name)
+                self:ViewCharacter(realm, name)
+            end)
+        end)
+        self.others:SetHeight(26)
+        hint(self.others, L.OTHER_CHARACTERS, L.BAGS_OF_HINT)
+        self.updated = Widgets.Text(w.body, FOOTER_TEXT, "muted")
+        self.updated:SetJustifyH("LEFT")
+        self.savedBank = Widgets.Button(w.footer, L.SAVED_BANK, "ghost", function()
+            Viewer.Open("bank", self.realm, self.name, w)
+        end)
+        self.savedBank:SetHeight(26)
+        self.savedBank:SetWidth(self.savedBank.label:GetStringWidth() + 20)
+        hint(self.savedBank, L.SAVED_BANK, L.SAVED_BANK_HINT)
     end
     self.dirty = true
     return self
@@ -937,7 +1288,7 @@ end
 --- The player closed one of our windows (close button). Escape goes through Blizzard, which
 --- closes its frames first, so this finds nothing left to close.
 function Module:OnWindowHidden(grid)
-    if self.syncing or not self.running then
+    if self.syncing or not self.running or grid.kind == "saved" then
         return
     end
     if grid.kind == "bags" then
@@ -953,11 +1304,64 @@ function Module:OnWindowHidden(grid)
     end
 end
 
+-- Saved bank --------------------------------------------------------------------------------
+
+--- Opens the saved bank window on a place of a character (this one by default). It opens where
+--- the bank window goes, or beside `beside` when that's open (the real bank). It's laid out
+--- before it shows, so it appears already drawn.
+---@param place string bank or guild
+---@param realm string?
+---@param name string?
+---@param beside table?
+function Module:OpenSaved(place, realm, name, beside)
+    if not self.running then
+        return
+    end
+    self.saved = self.saved or Grid.New(self, "saved")
+    local grid = self.saved
+    local myRealm, myName = Inventory.Me()
+    grid.place = place or "bank"
+    grid.realm, grid.name = realm or myRealm, name or myName
+    grid:Place()
+    local w = grid.frame
+    if not w:IsShown() then
+        w:ClearAllPoints()
+        local bank = self.bank and self.bank.frame
+        if beside and beside:IsShown() and beside:GetLeft() and beside ~= (self.bags and self.bags.frame) then
+            -- Beside the real bank: to its right, or to its left when there's no room.
+            local right = (beside:GetRight() or 0) * beside:GetEffectiveScale()
+            if right + 520 * w:GetEffectiveScale() < UIParent:GetRight() * UIParent:GetEffectiveScale() then
+                w:SetPoint("TOPLEFT", beside, "TOPRIGHT", 12, 0)
+            else
+                w:SetPoint("TOPRIGHT", beside, "TOPLEFT", -12, 0)
+            end
+        elseif bank and bank:GetNumPoints() > 0 then
+            -- Where the real bank opens (the Mover's place for it).
+            for i = 1, bank:GetNumPoints() do
+                w:SetPoint(bank:GetPoint(i))
+            end
+        else
+            w:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 24, -120)
+        end
+    end
+    w:Paint()
+    grid:Layout()
+    w:Show()
+end
+
+function Viewer.Open(place, realm, name, beside)
+    Module:OpenSaved(place, realm, name, beside)
+end
+
 -- Events ------------------------------------------------------------------------------------
 
 function Module:OnEvent(event)
     if event == "BANKFRAME_OPENED" then
         self.bankOpen = true
+        -- The real bank takes the saved one's place.
+        if self.saved and self.saved.frame:IsShown() then
+            self.saved.frame:Hide()
+        end
         self:ApplyBank()
         return
     elseif event == "BANKFRAME_CLOSED" then
@@ -1017,7 +1421,7 @@ end
 
 --- Applies every option (or undoes everything if the module isn't running).
 function Module:ApplyAll()
-    for _, grid in ipairs({ self.bags, self.bank }) do
+    for _, grid in ipairs({ self.bags, self.bank, self.saved }) do
         if grid then
             grid.dirty = true
             grid.frame:Paint()
@@ -1058,7 +1462,7 @@ function Module:OnEnable()
     self.bankOpen = bankFrame() ~= nil and bankFrame():IsShown()
     -- A theme change repaints the slot shapes and fonts. The core releases this on disable.
     E.Events.Listen(Theme.CHANGED, self, function()
-        for _, grid in ipairs({ self.bags, self.bank }) do
+        for _, grid in ipairs({ self.bags, self.bank, self.saved }) do
             if grid then
                 grid.dirty = true
                 grid:Refresh()
@@ -1073,7 +1477,7 @@ function Module:OnDisable()
     self.running = false
     Inventory:Stop()
     self:ApplyAll()
-    for _, grid in ipairs({ self.bags, self.bank }) do
+    for _, grid in ipairs({ self.bags, self.bank, self.saved }) do
         if grid then
             self.syncing = true
             grid.frame:Hide()

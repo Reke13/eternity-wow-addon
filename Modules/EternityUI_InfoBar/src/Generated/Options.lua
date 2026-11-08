@@ -9,8 +9,8 @@ ns.OptionsSchema = {
         esES = "Barra de información",
     },
     description = {
-        enUS = "A small bar with the time, FPS, latency and gold. Move it with the Mover; click it to open these options.",
-        esES = "Una barra pequeña con la hora, los FPS, la latencia y el oro. Muévela con el Mover; haz clic para abrir estas opciones.",
+        enUS = "A small bar with the time, FPS, latency and gold. Move it with the Mover; click it to open these options, right click for the Performance tab: where the FPS go.",
+        esES = "Una barra pequeña con la hora, los FPS, la latencia y el oro. Muévela con el Mover; haz clic para abrir estas opciones y clic derecho para la pestaña Rendimiento: a dónde se van los FPS.",
     },
     groups = {
         {

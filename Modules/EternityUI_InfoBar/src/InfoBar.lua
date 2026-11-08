@@ -1,24 +1,12 @@
 -- EternityUI_InfoBar: a small bar with the time, FPS, latency and gold. The Mover places it; a
--- click opens its options.
-
----The module's private table.
----@class EternityUIInfoBarNamespace
----@field OptionsSchema table schema generated from options.json (src/Generated/Options.lua)
+-- click opens its options, a right click its "Performance" tab (Perf.lua, PerfTab.lua), which
+-- tells where the FPS go.
 
 ---@type string, EternityUIInfoBarNamespace
 local addonName, ns = ...
 local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
-
-local L = E.NewLocale({
-    LATENCY_HOME = "Home latency",
-    LATENCY_WORLD = "World latency",
-    HINT = "Click for options · /et move to move it",
-}, {
-    LATENCY_HOME = "Latencia (reino)",
-    LATENCY_WORLD = "Latencia (mundo)",
-    HINT = "Clic para las opciones · /et move para moverla",
-})
+local L, Perf, PerfTab = ns.L, ns.Perf, ns.PerfTab
 
 local TEXT_SIZE = 13
 local HEIGHT = 26
@@ -28,11 +16,14 @@ local PADDING = 12
 ---@field bar table? the bar's frame (created the first time it's enabled)
 ---@field ticker table?
 ---@field running boolean? between OnEnable and OnDisable (active is still false inside OnEnable)
-local Module = { schema = ns.OptionsSchema }
+local Module = {
+    schema = ns.OptionsSchema,
+    tabs = { { key = PerfTab.TAB, text = L.TAB, build = PerfTab.Build } },
+    Perf = Perf,
+    PerfTab = PerfTab,
+}
 
-local function opt(path)
-    return E.store:Get(addonName, path)
-end
+local opt = ns.opt
 
 local function code(spec)
     local r, g, b = Theme.Color(spec)
@@ -108,6 +99,14 @@ local function buildTooltip(tip)
     tip:SetTitle(E.Localize(ns.OptionsSchema.title))
     tip:AddDoubleLine(L.LATENCY_HOME, home .. " ms")
     tip:AddDoubleLine(L.LATENCY_WORLD, world .. " ms")
+    local low, average, high = Perf.Summary(Perf.history)
+    if low then
+        tip:AddDoubleLine(L.LAST_MINUTE, L.MIN_AVG_MAX:format(low, math.floor(average + 0.5), high))
+    end
+    local share, addons = Perf.AddonShare()
+    if share then
+        tip:AddDoubleLine(L.ADDONS_LINE, string.format("%.2f ms (%d%%)", addons, math.floor(share * 100 + 0.5)))
+    end
     tip:AddHint(L.HINT)
 end
 
@@ -133,6 +132,8 @@ local function createBar(self)
     bar:SetScript("OnMouseUp", function(_, button)
         if button == "LeftButton" then
             E:OpenOptions(addonName)
+        elseif button == "RightButton" then
+            PerfTab.Open(addonName)
         end
     end)
     Widgets.AttachTooltip(bar, buildTooltip, "BOTTOM")
@@ -157,6 +158,7 @@ function Module:OnEnable()
     self:ApplyLayout()
     self:Update()
     self.ticker = C_Timer.NewTicker(1, function()
+        Perf.Sample(GetFramerate(), opt("alerts.lowFps"))
         self:Update()
     end)
 end
