@@ -2,8 +2,9 @@
 -- placed with the Mover (Frame.lua). Both are built the same way, on Blizzard's aura container,
 -- so they keep working in combat; each one has its own filters, list of spells, frame and icon
 -- options, and can be switched off on its own.
--- Options page: "Frames" (a picker: Target / Character, with what to show, the frame and the
--- icons of each) and "Spells" (the list of each frame, SpellsTab.lua).
+-- Options page: "General" (Target / Character picked on top, then what to show, the frame and
+-- the icons of that frame) and "Spells" (the list of each frame, picked the same way,
+-- SpellsTab.lua). Picking a frame in one tab picks it in the other.
 
 ---@type string, EternityUIAurasNamespace
 local addonName, ns = ...
@@ -11,7 +12,7 @@ local E = EternityUI
 local Theme = E.Theme
 local L, Filters, Spells, SpellsTab, Frame = ns.L, ns.Filters, ns.Spells, ns.SpellsTab, ns.Frame
 
--- The "Frames" tab: one view per frame, with its three groups.
+-- "General": one view per frame, with its three groups.
 local VIEWS = {}
 for _, kind in ipairs(ns.KINDS) do
     VIEWS[#VIEWS + 1] = {
@@ -20,6 +21,10 @@ for _, kind in ipairs(ns.KINDS) do
         sections = { { group = kind.key }, { group = kind.key .. "Frame" }, { group = kind.key .. "Look" } },
     }
 end
+local TABS = {
+    { key = "frames", text = L.GENERAL, views = VIEWS, picker = "top", onPick = SpellsTab.Pick },
+    { key = SpellsTab.TAB, text = L.TAB, build = SpellsTab.Build },
+}
 
 ---@class EternityUIAurasModule: EternityUIModuleDefinition
 ---@field frames table<string, EternityUIAurasFrame>
@@ -27,10 +32,7 @@ end
 ---@field moverOpen boolean?
 local Module = {
     schema = ns.OptionsSchema,
-    tabs = {
-        { key = "frames", text = L.TAB_FRAMES, views = VIEWS },
-        { key = SpellsTab.TAB, text = L.TAB, build = SpellsTab.Build },
-    },
+    tabs = TABS,
     Filters = Filters,
     Spells = Spells,
     SpellsTab = SpellsTab,

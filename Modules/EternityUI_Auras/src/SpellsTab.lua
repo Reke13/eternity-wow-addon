@@ -330,15 +330,13 @@ function Tab.Build(parent, setHeight)
     v.setHeight = setHeight
     Tab.frame = v
 
-    v.pickerLabel = Widgets.Text(v, 13, "muted")
-    v.pickerLabel:SetPoint("TOPLEFT", 0, -GAP - 8)
-    v.pickerLabel:SetText(L.LIST_FOR)
+    -- The frame whose list is shown, picked as in General.
     local choices = {}
     for _, kind in ipairs(ns.KINDS) do
         choices[#choices + 1] = { kind.key, kind.label }
     end
     v.picker = Widgets.Segmented(v, choices, Tab.Pick)
-    v.picker:SetPoint("LEFT", v.pickerLabel, "RIGHT", 12, 0)
+    v.picker:SetPoint("TOPLEFT", 0, -GAP)
     v.picker:SetValue(Tab.kind.key)
     v.place = Widgets.Button(v, L.PLACE_FRAME, "ghost", function()
         E:ToggleMover()
