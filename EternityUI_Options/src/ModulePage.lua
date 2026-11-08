@@ -1,6 +1,8 @@
 -- A module's page, built from its schema: the Enabled switch and General, Appearance and module
 -- tabs. A group's "tab" field places it; a module tab with `groups` lists them in a picker and
--- shows one at a time, with an optional live preview above. Rows only exist for tabs that open.
+-- shows one at a time, with an optional live preview above. A tab that draws itself (`build`)
+-- may name in `paths` the options it sets, which then leave General and Appearance. Rows only
+-- exist for tabs that open.
 ---@type string, table
 local _, ns = ...
 local L = ns.L
@@ -256,6 +258,9 @@ local function placeOptions(module)
     end
     local tabViews = {}
     for _, tab in ipairs(module.tabs or {}) do
+        for _, path in ipairs(tab.paths or {}) do
+            used[path] = true
+        end
         if tab.groups or tab.views then
             tabViews[tab] = viewsOf(tab, byId, byPath, used)
         end

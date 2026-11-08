@@ -1,5 +1,6 @@
 -- EternityUI_InfoBar: a small bar with the time, FPS, latency, gold, bag slots, level progress
--- and durability, each one switched on in the options. The items are laid out in rows (a number
+-- and durability, each one switched on, in the order chosen in the "Content" tab
+-- (ContentTab.lua). The items are laid out in rows (a number
 -- per row, or shared out among a number of rows) and columns, with the bar's width fitted to
 -- them or fixed. The Mover places it; a click opens its options, a right click its
 -- "Performance" tab (Perf.lua, PerfTab.lua), which tells where the FPS go.
@@ -8,7 +9,7 @@
 local addonName, ns = ...
 local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
-local L, Perf, PerfTab = ns.L, ns.Perf, ns.PerfTab
+local L, Perf, PerfTab, ContentTab = ns.L, ns.Perf, ns.PerfTab, ns.ContentTab
 
 local PADDING = 12
 local GAP = 16 -- between columns, besides the separator
@@ -21,9 +22,14 @@ local GAP = 16 -- between columns, besides the separator
 ---@field running boolean? between OnEnable and OnDisable (active is still false inside OnEnable)
 local Module = {
     schema = ns.OptionsSchema,
-    tabs = { { key = PerfTab.TAB, text = L.TAB, build = PerfTab.Build } },
+    tabs = {
+        -- Its switches and the order leave General: they're in this tab.
+        { key = ContentTab.TAB, text = L.CONTENT_TAB, build = ContentTab.Build, paths = ContentTab.Paths() },
+        { key = PerfTab.TAB, text = L.TAB, build = PerfTab.Build },
+    },
     Perf = Perf,
     PerfTab = PerfTab,
+    ContentTab = ContentTab,
     cells = {},
     separators = {},
 }
@@ -104,43 +110,56 @@ end
 
 --- The texts of the items switched on, in order (empty if everything is off).
 ---@return string[]
-function Module:BuildItems()
-    local value = code(opt("layout.accentValues") and "accentText" or "text")
-    local alert = code(opt("alerts.color"))
-    local items = {}
-    if opt("content.clock") then
-        items[#items + 1] = value .. clockText() .. "|r"
-    end
-    if opt("content.fps") then
+-- Each item's text from the value and alert color codes, or nil when it has nothing to show.
+local ITEMS = {
+    clock = function(value)
+        return value .. clockText() .. "|r"
+    end,
+    fps = function(value, alert)
         local fps = math.floor(GetFramerate() + 0.5)
-        items[#items + 1] = (fps < opt("alerts.lowFps") and alert or value) .. fps .. "|r FPS"
-    end
-    if opt("content.latency") then
+        return (fps < opt("alerts.lowFps") and alert or value) .. fps .. "|r FPS"
+    end,
+    latency = function(value, alert)
         local ms = math.max(latency())
-        items[#items + 1] = (ms > opt("alerts.highLatency") and alert or value) .. ms .. "|r MS"
-    end
-    if opt("content.gold") then
-        local money = C_CurrencyInfo.GetCoinTextureString(GetMoney(), opt("layout.textSize"))
-        items[#items + 1] = value .. money .. "|r"
-    end
-    if opt("content.bags") then
+        return (ms > opt("alerts.highLatency") and alert or value) .. ms .. "|r MS"
+    end,
+    gold = function(value)
+        return value .. C_CurrencyInfo.GetCoinTextureString(GetMoney(), opt("layout.textSize")) .. "|r"
+    end,
+    bags = function(value, alert)
         local free, total = Module.BagSlots()
         local shown = opt("content.bagsFormat") == "used" and (total - free) or free
         local color = free <= opt("alerts.fewSlots") and alert or value
-        items[#items + 1] = L.BAGS .. " " .. color .. shown .. "/" .. total .. "|r"
-    end
-    if opt("content.xp") then
+        return L.BAGS .. " " .. color .. shown .. "/" .. total .. "|r"
+    end,
+    xp = function(value)
         local progress, level = Module.LevelProgress()
         if progress then
-            items[#items + 1] = L.LEVEL:format(level) .. " " .. value .. math.floor(progress * 100) .. "%|r"
+            return L.LEVEL:format(level) .. " " .. value .. math.floor(progress * 100) .. "%|r"
         end
-    end
-    if opt("content.durability") then
+    end,
+    durability = function(value, alert)
         local overall = Module.Durability()
         if overall then
             local percent = math.floor(overall * 100 + 0.5)
             local color = percent < opt("alerts.lowDurability") and alert or value
-            items[#items + 1] = L.DURABILITY .. " " .. color .. percent .. "%|r"
+            return L.DURABILITY .. " " .. color .. percent .. "%|r"
+        end
+    end,
+}
+
+--- The texts of the items switched on, in the chosen order (empty if everything is off).
+---@return string[]
+function Module:BuildItems()
+    local value = code(opt("layout.accentValues") and "accentText" or "text")
+    local alert = code(opt("alerts.color"))
+    local items = {}
+    for _, id in ipairs(ContentTab.Order()) do
+        if opt("content." .. id) then
+            local text = ITEMS[id](value, alert)
+            if text then
+                items[#items + 1] = text
+            end
         end
     end
     return items
@@ -371,6 +390,9 @@ function Module:OnConfigChanged(path)
         self:ApplyLayout()
     end
     self:Update()
+    if ContentTab.frame and ContentTab.frame:IsVisible() then
+        ContentTab.Refresh()
+    end
 end
 
 E:RegisterModule(addonName, Module)

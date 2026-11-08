@@ -92,6 +92,17 @@
             "enUS": "Text between items. Empty leaves just a gap.",
             "esES": "Texto entre los elementos. Vacío deja solo un hueco."
           }
+        },
+        {
+          "id": "order",
+          "type": "text",
+          "default": "clock,fps,latency,gold,bags,xp,durability",
+          "maxLength": 200,
+          "label": { "enUS": "Order", "esES": "Orden" },
+          "description": {
+            "enUS": "The items' order, set in the Content tab.",
+            "esES": "El orden de los elementos, se elige en la pestaña Contenido."
+          }
         }
       ]
     },

@@ -77,3 +77,42 @@ local function rows()
     module:Update()
     expect(math.floor(module.bar:GetHeight() + 0.5)).toBe(26)
 end
+
+@test("the items follow the chosen order, and an order missing ids still has them all")
+local function order()
+    local store = EternityUI.store
+    local module = EternityUI:GetModule(NAME)
+    local tab = module.ContentTab
+    expect(table.concat(tab.Order("gold,clock"), ",")).toBe("gold,clock,fps,latency,bags,xp,durability")
+    expect(#tab.Order("nonsense,,gold,gold")).toBe(#tab.IDS)
+    local first = module:BuildItems()[1]
+    tab.Move("gold", -1)
+    tab.Move("gold", -1)
+    tab.Move("gold", -1)
+    expect(tab.Order()[1]).toBe("gold")
+    expect(module:BuildItems()[2]).toBe(first)
+    -- Can't go further up.
+    tab.Move("gold", -1)
+    expect(tab.Order()[1]).toBe("gold")
+    store:Reset(NAME)
+    expect(tab.Order()[1]).toBe("clock")
+end
+
+@test("the Content tab draws a row per item and switches them")
+local function contentTab()
+    local module = EternityUI:GetModule(NAME)
+    local tab = module.ContentTab
+    expect(module.tabs[1].key).toBe("content")
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 500)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    tab.Build(child, function() end)
+    expect(#tab.rows).toBe(#tab.IDS)
+    expect(tab.rows[1].up:IsEnabled()).toBe(false)
+    expect(tab.rows[#tab.IDS].down:IsEnabled()).toBe(false)
+    local before = #module:BuildItems()
+    tab.rows[1].toggle:Click()
+    expect(#module:BuildItems()).toBe(before - 1)
+    EternityUI.store:Reset(NAME)
+end

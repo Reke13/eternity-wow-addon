@@ -7,6 +7,7 @@
 ---@field opt fun(path: string): any
 ---@field Perf EternityUIInfoBarPerf
 ---@field PerfTab EternityUIInfoBarPerfTab
+---@field ContentTab EternityUIInfoBarContentTab
 
 ---@type string, EternityUIInfoBarNamespace
 local addonName, ns = ...
@@ -28,6 +29,17 @@ local strings = {
         MIN_AVG_MAX = "%d min · %d avg · %d max",
         ADDONS_LINE = "Addons",
         BAGS = "Bags",
+        CONTENT_TAB = "Content",
+        CONTENT_INTRO = "What the bar shows, from left to right and top to bottom. Switch each one on or off and move it with the arrows.",
+        MOVE_UP = "Move up",
+        MOVE_DOWN = "Move down",
+        ITEM_clock = "Time",
+        ITEM_fps = "FPS",
+        ITEM_latency = "Latency",
+        ITEM_gold = "Gold",
+        ITEM_bags = "Bag slots",
+        ITEM_xp = "Level progress",
+        ITEM_durability = "Equipment durability",
         LEVEL = "Lvl %d",
         DURABILITY = "Dur.",
         DURABILITY_LINE = "Durability",
@@ -106,6 +118,17 @@ local strings = {
         MIN_AVG_MAX = "%d mín · %d media · %d máx",
         ADDONS_LINE = "Addons",
         BAGS = "Bolsa",
+        CONTENT_TAB = "Contenido",
+        CONTENT_INTRO = "Lo que muestra la barra, de izquierda a derecha y de arriba abajo. Activa o desactiva cada uno y muévelo con las flechas.",
+        MOVE_UP = "Subir",
+        MOVE_DOWN = "Bajar",
+        ITEM_clock = "Hora",
+        ITEM_fps = "FPS",
+        ITEM_latency = "Latencia",
+        ITEM_gold = "Oro",
+        ITEM_bags = "Huecos de la bolsa",
+        ITEM_xp = "Progreso del nivel",
+        ITEM_durability = "Durabilidad del equipo",
         LEVEL = "Nv. %d",
         DURABILITY = "Dur.",
         DURABILITY_LINE = "Durabilidad",
