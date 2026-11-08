@@ -1,0 +1,89 @@
+-- The Performance tab: FPS history, drop log, verdict, the addon table and the tab itself.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_InfoBar"
+
+local function perf()
+    return EternityUI:GetModule(NAME).Perf
+end
+
+local function reset()
+    local p = perf()
+    p.history, p.drops, p.current = {}, {}, nil
+end
+
+@test("the history keeps the last minute and summarizes it")
+local function history()
+    reset()
+    local p = perf()
+    for i = 1, p.HISTORY + 10 do
+        p.Sample(i, 0)
+    end
+    expect(#p.history).toBe(p.HISTORY)
+    local low, average, high = p.Summary({ 30, 60, 90 })
+    expect(low).toBe(30)
+    expect(average).toBe(60)
+    expect(high).toBe(90)
+    expect(p.Summary({})).toBe(nil)
+end
+
+@test("a drop is logged only when it lasts long enough")
+local function drops()
+    reset()
+    local p = perf()
+    p.Sample(20, 30)
+    p.Sample(60, 30)
+    expect(#p.drops).toBe(0)
+    for _ = 1, p.DROP_SECONDS do
+        p.Sample(25, 30)
+    end
+    expect(#p.drops).toBe(1)
+    p.Sample(12, 30)
+    expect(p.drops[1].min).toBe(12)
+    expect(p.drops[1].seconds).toBe(p.DROP_SECONDS + 1)
+    p.Sample(60, 30)
+    expect(p.current).toBe(nil)
+    local text = EternityUI:GetModule(NAME).PerfTab.DropText(p.drops[1])
+    expect(type(text)).toBe("string")
+end
+
+@test("the verdict always has a text")
+local function verdict()
+    local p = perf()
+    for _, fps in ipairs({ 5, 29, 60, 200 }) do
+        local key = p.Verdict(fps, 30)
+        expect(type(key)).toBe("string")
+    end
+end
+
+@test("the addon table lists loaded addons, sorted")
+local function addons()
+    local p = perf()
+    for _, sort in ipairs(p.SORTS) do
+        local list = p.AddOns(sort)
+        expect(#list > 0).toBe(true)
+        for i = 2, #list do
+            local a, b = list[i - 1][sort] or -1, list[i][sort] or -1
+            expect(a >= b).toBe(true)
+        end
+    end
+end
+
+@test("the Performance tab is one of the module's tabs and fills")
+local function tab()
+    local module = EternityUI:GetModule(NAME)
+    expect(#module.tabs).toBe(1)
+    expect(module.tabs[1].key).toBe("performance")
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 500)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    local height
+    local view = module.PerfTab.Build(child, function(h)
+        height = h
+    end)
+    view:Refresh()
+    expect(height > 300).toBe(true)
+    expect(view.verdict:GetText() ~= nil).toBe(true)
+    expect(module.PerfTab.rows[1]:IsShown()).toBe(true)
+end
