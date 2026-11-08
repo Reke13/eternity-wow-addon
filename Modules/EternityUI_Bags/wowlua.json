@@ -20,7 +20,7 @@
     "camelot": {}
   },
   "build": {
-    "load-order": ["src/Generated/Options.lua", "src/Locale.lua", "src/Inventory.lua", "src/Bags.lua"]
+    "load-order": ["src/Generated/Options.lua", "src/Locale.lua", "src/Inventory.lua", "src/Viewer.lua", "src/Bags.lua"]
   },
   "test": {
     "blizzard-ui": true,
