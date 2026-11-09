@@ -91,3 +91,12 @@ local function needsReload()
     expect(module.active).toBe(true)
     expect(module.reloadPending).toBe(true)
 end
+
+@test("the shipped fonts are in the theme's list, by key")
+local function shippedFonts()
+    local Theme = EternityUI.Theme
+    for _, key in ipairs({ "roboto", "opensans", "quicksand", "orbitron", "cormorant" }) do
+        local file = Theme.Font(key)
+        expect(file:find("media\\fonts\\", 1, true) ~= nil).toBe(true)
+    end
+end

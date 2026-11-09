@@ -123,6 +123,11 @@ local function buildAppearance(tab)
             { "friz", "Friz Quadrata" },
             { "morpheus", "Morpheus" },
             { "skurri", "Skurri" },
+            { "roboto", "Roboto" },
+            { "opensans", "Open Sans" },
+            { "quicksand", "Quicksand" },
+            { "orbitron", "Orbitron" },
+            { "cormorant", "Cormorant" },
         }, setter("appearance.font"))
     )
     addRow(

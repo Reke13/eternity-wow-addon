@@ -77,7 +77,7 @@ ns.CoreOptions = {
                     id = "font",
                     type = "select",
                     default = "preset",
-                    values = values("preset", "arialn", "friz", "morpheus", "skurri"),
+                    values = values("preset", "arialn", "friz", "morpheus", "skurri", "roboto", "opensans", "quicksand", "orbitron", "cormorant"),
                 },
                 { id = "fontScale", type = "range", default = 1, min = 0.8, max = 1.3, step = 0.05 },
                 { id = "pixelPerfect", type = "toggle", default = false },

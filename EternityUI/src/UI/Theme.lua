@@ -46,6 +46,12 @@ local FONTS = {
     friz = { "Fonts\\FRIZQT__.TTF", 0.87 },
     morpheus = { "Fonts\\MORPHEUS.TTF", 1.05 },
     skurri = { "Fonts\\skurri.ttf", 0.95 },
+    -- Shipped in media/fonts (Google Fonts, SIL Open Font License: see media/fonts).
+    roboto = { Theme.MEDIA .. "fonts\\Roboto-Regular.ttf", 0.88 },
+    opensans = { Theme.MEDIA .. "fonts\\OpenSans-Regular.ttf", 0.85 },
+    quicksand = { Theme.MEDIA .. "fonts\\Quicksand-Regular.ttf", 0.9 },
+    orbitron = { Theme.MEDIA .. "fonts\\Orbitron-Regular.ttf", 0.78 },
+    cormorant = { Theme.MEDIA .. "fonts\\Cormorant-Regular.ttf", 1.05 },
 }
 
 Theme.FONTS = FONTS

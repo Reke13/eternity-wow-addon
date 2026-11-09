@@ -664,6 +664,41 @@ ns.OptionsSchema = {
                                 esES = "Skurri",
                             },
                         },
+                        {
+                            value = "roboto",
+                            label = {
+                                enUS = "Roboto",
+                                esES = "Roboto",
+                            },
+                        },
+                        {
+                            value = "opensans",
+                            label = {
+                                enUS = "Open Sans",
+                                esES = "Open Sans",
+                            },
+                        },
+                        {
+                            value = "quicksand",
+                            label = {
+                                enUS = "Quicksand",
+                                esES = "Quicksand",
+                            },
+                        },
+                        {
+                            value = "orbitron",
+                            label = {
+                                enUS = "Orbitron",
+                                esES = "Orbitron",
+                            },
+                        },
+                        {
+                            value = "cormorant",
+                            label = {
+                                enUS = "Cormorant",
+                                esES = "Cormorant",
+                            },
+                        },
                     },
                 },
                 {
