@@ -110,3 +110,14 @@ local function folding()
     E.Mover.Unregister("testF.box")
     E.store.raw.moverElementsOpen = nil
 end
+
+@test("the cross closes the Elements panel")
+local function cross()
+    E.MoverSession.Toggle()
+    if not E.MoverElements.IsOpen() then
+        E.MoverElements.Toggle(UIParent)
+    end
+    E.MoverElements.Panel().close:Click()
+    expect(E.MoverElements.IsOpen()).toBe(false)
+    E.MoverSession.Discard()
+end
