@@ -29,3 +29,17 @@ local function theme()
     EternityUI.store:Set("EternityUI", "appearance.corners", "round")
     expect(EternityUI.Theme.radius).toBe(12)
 end
+
+@test("the background images guide opens with the AI request ready to copy")
+local function wallpaperGuide()
+    local guide = EternityUI.WallpaperGuide
+    guide.Toggle()
+    local w = guide.window
+    expect(w:IsShown()).toBe(true)
+    local prompt = w.prompt:GetText()
+    expect(prompt:find("Options.tga", 1, true) ~= nil).toBe(true)
+    expect(prompt:find("Quests.tga", 1, true) ~= nil).toBe(true)
+    expect(prompt:find("EternityUI_Wallpapers", 1, true) ~= nil).toBe(true)
+    guide.Toggle()
+    expect(w:IsShown()).toBe(false)
+end
