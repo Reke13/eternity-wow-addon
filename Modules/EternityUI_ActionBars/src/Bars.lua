@@ -216,17 +216,29 @@ end
 ---@param bar EternityUIActionBarsBar
 function Bars:Return(bar)
     ns.Sources.Quietly(function()
+        -- Size and place every frame first, then give the parents back: a frame shown again in
+        -- Blizzard's bar runs its layout (the micro menu reads its buttons' centers), and a
+        -- button still placed in our hidden bar has no center yet.
+        local returning = {}
         for frame, saved in pairs(self.borrowed) do
             if saved.bar == bar.id then
-                self.borrowed[frame] = nil
+                returning[frame] = saved
                 Style:Remove(frame)
-                frame:SetParent(saved.parent)
                 frame:SetSize(saved.width, saved.height)
                 frame:ClearAllPoints()
                 for _, p in ipairs(saved.points) do
                     frame:SetPoint(unpack(p))
                 end
+                -- Taken before Blizzard ever placed it (a hidden micro button): with no point it
+                -- has no center either, so put it on its parent until Blizzard lays it out.
+                if #saved.points == 0 then
+                    frame:SetPoint("CENTER", saved.parent or UIParent, "CENTER")
+                end
             end
+        end
+        for frame, saved in pairs(returning) do
+            self.borrowed[frame] = nil
+            frame:SetParent(saved.parent)
         end
     end)
     if bar.taken then
