@@ -138,7 +138,6 @@ local function skinButton(b)
     b.etLock = b:CreateTexture(nil, "OVERLAY", nil, 6)
     b.etLock:SetTexture(LOCK_ICON)
     b.etLock:SetSize(14, 14)
-    b.etLock:SetPoint("TOPLEFT", 1, -1)
     b.etLock:Hide()
     local normal = b:GetNormalTexture()
     if normal then
@@ -205,6 +204,10 @@ local function styleButton(b, size)
         corner:find("LEFT") and inset or (corner:find("RIGHT") and -inset or 0),
         corner:find("TOP") and -inset or (corner:find("BOTTOM") and inset or 0)
     )
+    -- The padlock of a locked slot: bottom left, or top left when the item level is there.
+    local lockCorner = corner == "BOTTOMLEFT" and "TOPLEFT" or "BOTTOMLEFT"
+    b.etLock:ClearAllPoints()
+    b.etLock:SetPoint(lockCorner, 1, lockCorner == "TOPLEFT" and -1 or 1)
     if b.IconBorder then
         b.IconBorder:SetAlpha(opt("quality.border") and 0 or 1)
     end
