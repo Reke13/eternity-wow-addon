@@ -614,6 +614,41 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "combatFade",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Lighter background in combat",
+                        esES = "Fondo más tenue en combate",
+                    },
+                    description = {
+                        enUS = "In combat the chat's background (and its image) fades to the opacity below, for a cleaner screen. The messages stay.",
+                        esES = "En combate el fondo del chat (y su imagen) baja a la opacidad de abajo, para ver la pantalla más limpia. Los mensajes se quedan.",
+                    },
+                    visibleWhen = {
+                        ["background.style"] = "eternity",
+                    },
+                },
+                {
+                    id = "combatOpacity",
+                    type = "range",
+                    default = 0.15,
+                    min = 0,
+                    max = 1,
+                    step = 0.05,
+                    label = {
+                        enUS = "Background opacity in combat",
+                        esES = "Opacidad del fondo en combate",
+                    },
+                    description = {
+                        enUS = "Of the background as it is out of combat: 0 hides it, 1 leaves it as it is.",
+                        esES = "Respecto al fondo fuera de combate: 0 lo oculta, 1 lo deja igual.",
+                    },
+                    visibleWhen = {
+                        ["background.combatFade"] = true,
+                    },
+                },
+                {
                     id = "border",
                     type = "toggle",
                     default = true,

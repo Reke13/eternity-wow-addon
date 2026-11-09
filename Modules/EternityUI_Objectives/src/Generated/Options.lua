@@ -461,6 +461,41 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "combatBackground",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Lighter background in combat",
+                        esES = "Fondo más tenue en combate",
+                    },
+                    description = {
+                        enUS = "In combat the background (and its image) fades to the opacity below, for a cleaner screen. The quests' text stays.",
+                        esES = "En combate el fondo (y su imagen) baja a la opacidad de abajo, para ver la pantalla más limpia. El texto de las misiones se queda.",
+                    },
+                    visibleWhen = {
+                        ["look.background"] = true,
+                    },
+                },
+                {
+                    id = "combatBackgroundOpacity",
+                    type = "range",
+                    default = 0.15,
+                    min = 0,
+                    max = 1,
+                    step = 0.05,
+                    label = {
+                        enUS = "Background opacity in combat",
+                        esES = "Opacidad del fondo en combate",
+                    },
+                    description = {
+                        enUS = "Of the background as it is out of combat: 0 hides it, 1 leaves it as it is.",
+                        esES = "Respecto al fondo fuera de combate: 0 lo oculta, 1 lo deja igual.",
+                    },
+                    visibleWhen = {
+                        ["look.combatBackground"] = true,
+                    },
+                },
+                {
                     id = "headers",
                     type = "toggle",
                     default = true,

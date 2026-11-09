@@ -145,9 +145,12 @@ local function buildAppearance(tab)
         L.WALLPAPER_DIM,
         Widgets.Slider(tab, 0.2, 0.9, 0.05, percent, setter("appearance.wallpaperDim"))
     )
+    addRow(tab, "appearance.wallpaperOptions", L.WALLPAPER_OPTIONS, Widgets.Toggle(tab, setter("appearance.wallpaperOptions")))
+    addRow(tab, "appearance.wallpaperChat", L.WALLPAPER_CHAT, Widgets.Toggle(tab, setter("appearance.wallpaperChat")))
+    addRow(tab, "appearance.wallpaperQuests", L.WALLPAPER_QUESTS, Widgets.Toggle(tab, setter("appearance.wallpaperQuests")))
     addRow(tab, "appearance.portraits", L.PORTRAITS, Widgets.Toggle(tab, setter("appearance.portraits")))
     local note = Widgets.Text(tab, 13, "muted")
-    note:SetPoint("TOPLEFT", 0, -ROW * 10 - 6)
+    note:SetPoint("TOPLEFT", 0, -ROW * 13 - 6)
     note:SetText(L.PIXEL_PERFECT_NOTE:format(E.Pixel.PerfectScale()))
 end
 

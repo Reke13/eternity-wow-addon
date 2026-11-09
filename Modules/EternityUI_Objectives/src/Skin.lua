@@ -534,16 +534,44 @@ end
 
 --- Our backdrop: a frame of the tracker covering Blizzard's NineSlice, which Blizzard already
 --- stretches to the last section shown. Blizzard's own background is left to its Edit Mode opacity.
+--- It can carry an image ("quests" wallpaper: your own Quests.tga, or the theme's) and, in combat,
+--- fade to its combat opacity (only the backdrop: the text stays).
 function Skin:UpdateBackground(tracker)
     local shown = Core.running and opt("look.background")
     if shown and not self.background then
-        self.background = W.Panel(tracker, { role = "window", fill = "window", border = "border" })
-        self.background:SetAllPoints(tracker.NineSlice or tracker)
+        local background = W.Panel(tracker, { role = "window", fill = "window", border = "border" })
+        background:SetAllPoints(tracker.NineSlice or tracker)
+        background.wallpaper = Theme.NewWallpaper(background)
+        local paint = background.Paint
+        function background.Paint(panel)
+            paint(panel)
+            Theme.PaintWallpaper(panel.wallpaper, "quests")
+        end
+        background:SetScript("OnSizeChanged", background.Paint)
+        self.background = background
     end
     if self.background then
-        self.background:SetFrameLevel(tracker:GetFrameLevel())
-        self.background.shape:SetAlpha(opt("look.backgroundOpacity") or 0.75)
-        self.background:SetShown(shown and true or false)
+        local background = self.background
+        background:SetFrameLevel(tracker:GetFrameLevel())
+        background.shape:SetAlpha(opt("look.backgroundOpacity") or 0.75)
+        background:Paint()
+        background:SetShown(shown and true or false)
+        self:UpdateCombatBackground()
+    end
+end
+
+--- The backdrop's opacity for now: lower in combat if that option is on (not protected: also in
+--- combat).
+function Skin:UpdateCombatBackground()
+    local background = self.background
+    if not background then
+        return
+    end
+    local fight = InCombatLockdown() or UnitAffectingCombat("player")
+    if Core.running and opt("look.combatBackground") and fight then
+        background:SetAlpha(opt("look.combatBackgroundOpacity"))
+    else
+        background:SetAlpha(1)
     end
 end
 

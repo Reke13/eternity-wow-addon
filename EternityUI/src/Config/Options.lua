@@ -83,6 +83,10 @@ ns.CoreOptions = {
                 { id = "pixelPerfect", type = "toggle", default = false },
                 { id = "wallpaper", type = "toggle", default = false },
                 { id = "wallpaperDim", type = "range", default = 0.6, min = 0.2, max = 0.9, step = 0.05 },
+                -- Your own image in each place (Theme.OWN_WALLPAPERS), whatever the theme.
+                { id = "wallpaperOptions", type = "toggle", default = false },
+                { id = "wallpaperChat", type = "toggle", default = false },
+                { id = "wallpaperQuests", type = "toggle", default = false },
                 { id = "portraits", type = "toggle", default = false },
             },
         },
