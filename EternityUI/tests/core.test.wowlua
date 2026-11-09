@@ -110,4 +110,8 @@ local function ownWallpaper()
     expect(Theme.WallpaperFor("quests") == Theme.OWN_WALLPAPERS.quests).toBe(false)
     store:Set("EternityUI", "appearance.wallpaperChat", false)
     expect(Theme.WallpaperFor("chat") == Theme.OWN_WALLPAPERS.chat).toBe(false)
+    store:Set("EternityUI", "appearance.wallpaperBags", true)
+    expect(Theme.WallpaperFor("bags").file).toBe("Bags")
+    store:Set("EternityUI", "appearance.wallpaperBags", false)
+    expect(Theme.WallpaperFor("bags")).toBe(nil)
 end

@@ -20,9 +20,9 @@ E.WallpaperGuide = Guide -- for the tests
 -- "Options.tga · the options window · 1030 × 655", one line per place, from the core's list.
 local function filesText()
     local lines = {}
-    local labels = { window = L.GUIDE_WINDOW, chat = L.GUIDE_CHAT, quests = L.GUIDE_QUESTS }
-    local sizes = { window = "1030 × 655", chat = "1024 × 512", quests = "512 × 1024" }
-    for _, slot in ipairs({ "window", "chat", "quests" }) do
+    local labels = { window = L.GUIDE_WINDOW, chat = L.GUIDE_CHAT, quests = L.GUIDE_QUESTS, bags = L.GUIDE_BAGS }
+    local sizes = { window = "1030 × 655", chat = "1024 × 512", quests = "512 × 1024", bags = "1024 × 1024" }
+    for _, slot in ipairs({ "window", "chat", "quests", "bags" }) do
         local own = Theme.OWN_WALLPAPERS and Theme.OWN_WALLPAPERS[slot]
         if own then
             lines[#lines + 1] = ("•  %s.tga  —  %s  —  %s"):format(own.file, labels[slot], sizes[slot])

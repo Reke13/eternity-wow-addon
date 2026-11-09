@@ -226,10 +226,11 @@ Theme.OWN_WALLPAPERS = {
     window = { file = "Options", aspect = 1030 / 655, option = "appearance.wallpaperOptions" },
     chat = { file = "Chat", aspect = 2, option = "appearance.wallpaperChat" },
     quests = { file = "Quests", aspect = 1 / 2, option = "appearance.wallpaperQuests" },
+    bags = { file = "Bags", aspect = 1, option = "appearance.wallpaperBags" },
 }
 
 --- The image a place shows: your own if it's switched on, else the theme's (if it has one).
----@param slot string "window", "chat" or "quests"
+---@param slot string "window", "chat", "quests" or "bags"
 ---@return table? { file, aspect }
 function Theme.WallpaperFor(slot)
     local own = Theme.OWN_WALLPAPERS[slot]
@@ -255,7 +256,7 @@ end
 --- Paints a wallpaper for the current theme, covering the frame without stretching the photo. It
 --- stays inside the shape's rounded corners. Hidden when the theme has no image for the slot.
 ---@param wallpaper table from Theme.NewWallpaper
----@param slot string window, chat or quests
+---@param slot string window, chat, quests or bags
 ---@param visible boolean? false hides it whatever the theme says
 function Theme.PaintWallpaper(wallpaper, slot, visible)
     local image = visible ~= false and Theme.WallpaperFor(slot)

@@ -153,6 +153,7 @@ local function buildAppearance(tab)
     addRow(tab, "appearance.wallpaperOptions", L.WALLPAPER_OPTIONS, Widgets.Toggle(tab, setter("appearance.wallpaperOptions")))
     addRow(tab, "appearance.wallpaperChat", L.WALLPAPER_CHAT, Widgets.Toggle(tab, setter("appearance.wallpaperChat")))
     addRow(tab, "appearance.wallpaperQuests", L.WALLPAPER_QUESTS, Widgets.Toggle(tab, setter("appearance.wallpaperQuests")))
+    addRow(tab, "appearance.wallpaperBags", L.WALLPAPER_BAGS, Widgets.Toggle(tab, setter("appearance.wallpaperBags")))
     -- How to make and place those images, with a request to paste into an AI (WallpaperGuide.lua).
     local guide = Widgets.Button(tab, L.GUIDE_OPEN, "ghost", function()
         ns.WallpaperGuide.Toggle()

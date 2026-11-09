@@ -1103,12 +1103,23 @@ function Grid.New(module, kind)
         Widgets.CloseMenu()
         module:OnWindowHidden(self)
     end)
+    -- Your own image behind the slots ("bags" wallpaper: Bags.tga, switched on in General >
+    -- Appearance), as see-through as the window. Painted again when the window's size changes.
+    w.wallpaper = Theme.NewWallpaper(w)
+    local function paintWallpaper(frame)
+        Theme.PaintWallpaper(frame.wallpaper, "bags", module.running)
+        local alpha = module.running and opt("window.opacity") or 1
+        frame.wallpaper.photo:SetAlpha(alpha)
+        frame.wallpaper.veil:SetAlpha(alpha)
+    end
+    w:HookScript("OnSizeChanged", paintWallpaper)
     -- Window opacity and shadow on top of the theme's: applied after every repaint.
     function w.onPaint(frame)
         if module.running then
             frame.shape.fill:SetAlpha(opt("window.opacity"))
             frame.shadow:SetShown(opt("window.shadow"))
         end
+        paintWallpaper(frame)
     end
     w:Paint()
 

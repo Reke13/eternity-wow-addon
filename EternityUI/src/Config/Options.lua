@@ -87,6 +87,7 @@ ns.CoreOptions = {
                 { id = "wallpaperOptions", type = "toggle", default = false },
                 { id = "wallpaperChat", type = "toggle", default = false },
                 { id = "wallpaperQuests", type = "toggle", default = false },
+                { id = "wallpaperBags", type = "toggle", default = false },
                 { id = "portraits", type = "toggle", default = false },
             },
         },
