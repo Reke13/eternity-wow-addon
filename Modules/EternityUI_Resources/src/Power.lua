@@ -123,22 +123,57 @@ function Power.Abbreviate(value)
     return tostring(math.floor(value + 0.5))
 end
 
+--- A number in a style: "short" (1.8K), "full" (1800) or "separated" (1,800), secret-safe.
+--- Returns what SetFormattedText takes: a format piece and its value (nil if unknown). A secret
+--- number only goes to "%d", which formats it on the C side.
+---@param value any
+---@param style string?
+---@return string? piece
+---@return any value
+function Power.Number(value, style)
+    if not known(value) then
+        return nil
+    end
+    if style == "full" or style == "separated" then
+        if style == "separated" and BreakUpLargeNumbers then
+            local ok, text = pcall(BreakUpLargeNumbers, value)
+            if ok and known(text) then
+                return "%s", text
+            end
+        end
+        if Secret.Is(value) then
+            return "%d", value
+        end
+        if type(value) == "number" then
+            return "%d", math.floor(value + 0.5)
+        end
+        return nil
+    end
+    local short = Power.Abbreviate(value)
+    if short then
+        return "%s", short
+    end
+    return nil
+end
+
 --- Writes a power's text in a format ("current", "currentMax", "percent", "currentPercent",
---- "none"). Secret pieces go to SetFormattedText untouched.
+--- "none"), its numbers in a style (see Power.Number). Secret pieces go to SetFormattedText
+--- untouched.
 ---@param text table FontString
 ---@param mode string
 ---@param powerType number
-function Power.SetText(text, mode, powerType)
+---@param style string?
+function Power.SetText(text, mode, powerType, style)
     if mode == "none" then
         text:SetText("")
         return
     end
     local current, max = Power.Values(powerType)
-    local short = Power.Abbreviate(current)
+    local piece, short = Power.Number(current, style)
     if mode == "currentMax" then
-        local shortMax = Power.Abbreviate(max)
-        if short and shortMax then
-            text:SetFormattedText("%s / %s", short, shortMax)
+        local maxPiece, shortMax = Power.Number(max, style)
+        if piece and maxPiece then
+            text:SetFormattedText(piece .. " / " .. maxPiece, short, shortMax)
             return
         end
     elseif mode == "percent" or mode == "currentPercent" then
@@ -146,13 +181,13 @@ function Power.SetText(text, mode, powerType)
         if percent and mode == "percent" then
             text:SetFormattedText("%.0f%%", percent)
             return
-        elseif percent and short then
-            text:SetFormattedText("%s  %.0f%%", short, percent)
+        elseif percent and piece then
+            text:SetFormattedText(piece .. "  %.0f%%", short, percent)
             return
         end
     end
-    if short then
-        text:SetFormattedText("%s", short)
+    if piece then
+        text:SetFormattedText(piece, short)
     else
         text:SetText("")
     end
