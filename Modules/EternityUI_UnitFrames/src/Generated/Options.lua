@@ -828,6 +828,25 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "overheal",
+                    type = "range",
+                    default = 15,
+                    min = 0,
+                    max = 100,
+                    step = 5,
+                    label = {
+                        enUS = "Heals past full health (% of the bar)",
+                        esES = "Curación por encima de la vida máxima (% de la barra)",
+                    },
+                    description = {
+                        enUS = "How far a heal that would go over full health is still drawn past the end of the bar, even out of the frame. 0: cut at the end of the bar.",
+                        esES = "Hasta dónde se sigue viendo una curación que pasaría de la vida máxima, más allá del final de la barra, aunque salga del marco. 0: se corta al final de la barra.",
+                    },
+                    visibleWhen = {
+                        ["playerBars.incomingHeals"] = true,
+                    },
+                },
+                {
                     id = "absorbs",
                     type = "toggle",
                     default = true,
@@ -2204,6 +2223,25 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "overheal",
+                    type = "range",
+                    default = 15,
+                    min = 0,
+                    max = 100,
+                    step = 5,
+                    label = {
+                        enUS = "Heals past full health (% of the bar)",
+                        esES = "Curación por encima de la vida máxima (% de la barra)",
+                    },
+                    description = {
+                        enUS = "How far a heal that would go over full health is still drawn past the end of the bar, even out of the frame. 0: cut at the end of the bar.",
+                        esES = "Hasta dónde se sigue viendo una curación que pasaría de la vida máxima, más allá del final de la barra, aunque salga del marco. 0: se corta al final de la barra.",
+                    },
+                    visibleWhen = {
+                        ["petBars.incomingHeals"] = true,
+                    },
+                },
+                {
                     id = "absorbs",
                     type = "toggle",
                     default = true,
@@ -3553,6 +3591,25 @@ ns.OptionsSchema = {
                     description = {
                         enUS = "A lighter bar after the health with the heals on their way.",
                         esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "overheal",
+                    type = "range",
+                    default = 15,
+                    min = 0,
+                    max = 100,
+                    step = 5,
+                    label = {
+                        enUS = "Heals past full health (% of the bar)",
+                        esES = "Curación por encima de la vida máxima (% de la barra)",
+                    },
+                    description = {
+                        enUS = "How far a heal that would go over full health is still drawn past the end of the bar, even out of the frame. 0: cut at the end of the bar.",
+                        esES = "Hasta dónde se sigue viendo una curación que pasaría de la vida máxima, más allá del final de la barra, aunque salga del marco. 0: se corta al final de la barra.",
+                    },
+                    visibleWhen = {
+                        ["targetBars.incomingHeals"] = true,
                     },
                 },
                 {
@@ -4917,6 +4974,25 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "overheal",
+                    type = "range",
+                    default = 15,
+                    min = 0,
+                    max = 100,
+                    step = 5,
+                    label = {
+                        enUS = "Heals past full health (% of the bar)",
+                        esES = "Curación por encima de la vida máxima (% de la barra)",
+                    },
+                    description = {
+                        enUS = "How far a heal that would go over full health is still drawn past the end of the bar, even out of the frame. 0: cut at the end of the bar.",
+                        esES = "Hasta dónde se sigue viendo una curación que pasaría de la vida máxima, más allá del final de la barra, aunque salga del marco. 0: se corta al final de la barra.",
+                    },
+                    visibleWhen = {
+                        ["targettargetBars.incomingHeals"] = true,
+                    },
+                },
+                {
                     id = "absorbs",
                     type = "toggle",
                     default = true,
@@ -6230,6 +6306,25 @@ ns.OptionsSchema = {
                     description = {
                         enUS = "A lighter bar after the health with the heals on their way.",
                         esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "overheal",
+                    type = "range",
+                    default = 15,
+                    min = 0,
+                    max = 100,
+                    step = 5,
+                    label = {
+                        enUS = "Heals past full health (% of the bar)",
+                        esES = "Curación por encima de la vida máxima (% de la barra)",
+                    },
+                    description = {
+                        enUS = "How far a heal that would go over full health is still drawn past the end of the bar, even out of the frame. 0: cut at the end of the bar.",
+                        esES = "Hasta dónde se sigue viendo una curación que pasaría de la vida máxima, más allá del final de la barra, aunque salga del marco. 0: se corta al final de la barra.",
+                    },
+                    visibleWhen = {
+                        ["focusBars.incomingHeals"] = true,
                     },
                 },
                 {
@@ -7660,6 +7755,25 @@ ns.OptionsSchema = {
                     description = {
                         enUS = "A lighter bar after the health with the heals on their way.",
                         esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "overheal",
+                    type = "range",
+                    default = 15,
+                    min = 0,
+                    max = 100,
+                    step = 5,
+                    label = {
+                        enUS = "Heals past full health (% of the bar)",
+                        esES = "Curación por encima de la vida máxima (% de la barra)",
+                    },
+                    description = {
+                        enUS = "How far a heal that would go over full health is still drawn past the end of the bar, even out of the frame. 0: cut at the end of the bar.",
+                        esES = "Hasta dónde se sigue viendo una curación que pasaría de la vida máxima, más allá del final de la barra, aunque salga del marco. 0: se corta al final de la barra.",
+                    },
+                    visibleWhen = {
+                        ["partyBars.incomingHeals"] = true,
                     },
                 },
                 {
@@ -9103,6 +9217,25 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "overheal",
+                    type = "range",
+                    default = 15,
+                    min = 0,
+                    max = 100,
+                    step = 5,
+                    label = {
+                        enUS = "Heals past full health (% of the bar)",
+                        esES = "Curación por encima de la vida máxima (% de la barra)",
+                    },
+                    description = {
+                        enUS = "How far a heal that would go over full health is still drawn past the end of the bar, even out of the frame. 0: cut at the end of the bar.",
+                        esES = "Hasta dónde se sigue viendo una curación que pasaría de la vida máxima, más allá del final de la barra, aunque salga del marco. 0: se corta al final de la barra.",
+                    },
+                    visibleWhen = {
+                        ["raidBars.incomingHeals"] = true,
+                    },
+                },
+                {
                     id = "absorbs",
                     type = "toggle",
                     default = true,
@@ -10517,6 +10650,25 @@ ns.OptionsSchema = {
                     description = {
                         enUS = "A lighter bar after the health with the heals on their way.",
                         esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "overheal",
+                    type = "range",
+                    default = 15,
+                    min = 0,
+                    max = 100,
+                    step = 5,
+                    label = {
+                        enUS = "Heals past full health (% of the bar)",
+                        esES = "Curación por encima de la vida máxima (% de la barra)",
+                    },
+                    description = {
+                        enUS = "How far a heal that would go over full health is still drawn past the end of the bar, even out of the frame. 0: cut at the end of the bar.",
+                        esES = "Hasta dónde se sigue viendo una curación que pasaría de la vida máxima, más allá del final de la barra, aunque salga del marco. 0: se corta al final de la barra.",
+                    },
+                    visibleWhen = {
+                        ["grouppetsBars.incomingHeals"] = true,
                     },
                 },
                 {

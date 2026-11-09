@@ -233,7 +233,9 @@ local function samplePerson(f, person, index)
     end
     -- Heals on their way and shields, on some of them.
     f.heals:SetMinMaxValues(0, MAX_HEALTH)
-    f.heals:SetValue((not person.dead and person.hp < 0.8) and MAX_HEALTH * 0.15 or 0)
+    -- Nearly full ones get one too, to show a heal going past full health.
+    local healed = not person.dead and not person.offline and (person.hp < 0.8 or person.hp >= 0.9)
+    f.heals:SetValue(healed and MAX_HEALTH * 0.15 or 0)
     f.absorbs:SetMinMaxValues(0, MAX_HEALTH)
     f.absorbs:SetValue((index % 2 == 0 and not person.dead) and MAX_HEALTH * 0.1 or 0)
     -- Power.

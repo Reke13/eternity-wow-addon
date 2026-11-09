@@ -74,10 +74,13 @@ function Elements.Create(f)
 
     f.health = Style.Bar(f)
     -- Incoming heals and shields: bars that start where the health fill ends (anchored to its
-    -- texture, so the game places them without Lua reading a value) and are clipped by the
-    -- health bar, so what goes past the maximum isn't drawn.
+    -- texture, so the game places them without Lua reading a value). Shields are clipped by the
+    -- health bar; heals by a frame of their own that can reach past the bar's end (the frame's
+    -- edge too), so a heal over full health shows, as far as the frame's option allows.
     f.health:SetClipsChildren(true)
-    f.heals = CreateFrame("StatusBar", nil, f.health)
+    f.healsClip = CreateFrame("Frame", nil, f)
+    f.healsClip:SetClipsChildren(true)
+    f.heals = CreateFrame("StatusBar", nil, f.healsClip)
     f.heals:SetMinMaxValues(0, 1)
     f.heals:SetValue(0)
     f.absorbs = CreateFrame("StatusBar", nil, f.health)
@@ -421,7 +424,8 @@ end
 
 -- Incoming heals and shields -------------------------------------------------------------------
 
---- Places the heals and shields bars: as wide as the health bar, from where its fill ends.
+--- Places the heals and shields bars: as wide as the health bar, from where its fill ends. The
+--- heals can go past the bar's end by the frame's "overheal" option (% of the bar's width).
 ---@param f table
 ---@param width number the health bar's width
 function Elements.LayoutHeals(f, width)
@@ -429,6 +433,13 @@ function Elements.LayoutHeals(f, width)
     local fill = f.health:GetStatusBarTexture()
     local texture = Style.Texture()
     local heals, absorbs = f.heals, f.absorbs
+    local clip = f.healsClip
+    local over = math.max(U(key, "Bars", "overheal") or 0, 0) / 100
+    clip:ClearAllPoints()
+    clip:SetPoint("TOPLEFT", f.health, "TOPLEFT")
+    clip:SetPoint("BOTTOMLEFT", f.health, "BOTTOMLEFT")
+    clip:SetWidth(math.max(width * (1 + over), 1))
+    clip:SetFrameLevel(f.health:GetFrameLevel() + 1)
     heals:ClearAllPoints()
     heals:SetPoint("TOPLEFT", fill, "TOPRIGHT")
     heals:SetPoint("BOTTOMLEFT", fill, "BOTTOMRIGHT")

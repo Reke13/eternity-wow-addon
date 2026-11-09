@@ -183,3 +183,20 @@ local function healsAndShields()
     set("playerBars.incomingHeals", true)
     set("playerBars.absorbs", true)
 end
+
+@test("a heal over full health is drawn past the bar's end, as far as the option says")
+local function overheal()
+    local f = module().holders.player.button
+    local width = f.health:GetWidth()
+    -- The heals are clipped by a frame of their own, from the bar's start.
+    expect(f.heals:GetParent() == f.healsClip).toBe(true)
+    expect(f.absorbs:GetParent() == f.health).toBe(true)
+    local _, relative = f.healsClip:GetPoint(1)
+    expect(relative == f.health).toBe(true)
+    expect(math.floor(f.healsClip:GetWidth() + 0.5)).toBe(math.floor(width * 1.15 + 0.5))
+    set("playerBars.overheal", 50)
+    expect(math.floor(f.healsClip:GetWidth() + 0.5)).toBe(math.floor(width * 1.5 + 0.5))
+    set("playerBars.overheal", 0)
+    expect(math.floor(f.healsClip:GetWidth() + 0.5)).toBe(math.floor(width + 0.5))
+    set("playerBars.overheal", 15)
+end
