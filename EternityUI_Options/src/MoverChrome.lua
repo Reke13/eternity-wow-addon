@@ -61,6 +61,8 @@ local function draggable(frame, root, key, home)
     place()
 end
 
+Chrome.Draggable = draggable
+
 -- A column of dots at the toolbar's left: where to grab it.
 local function grip(frame)
     local dots = {}

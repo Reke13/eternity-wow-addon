@@ -31,3 +31,16 @@ local function panel()
     E.MoverSession.Discard()
     expect(E.MoverElements.IsOpen()).toBe(false)
 end
+
+@test("the Elements panel can be moved and resized, and keeps its size")
+local function moveResize()
+    E.store.raw.moverElementsSize = { w = 360, h = 500 }
+    E.MoverSession.Toggle()
+    E.MoverElements.Toggle(UIParent)
+    local panel = E.MoverElements.Panel()
+    expect(panel:IsMovable()).toBe(true)
+    expect(panel:IsResizable()).toBe(true)
+    expect(panel.grip ~= nil).toBe(true)
+    E.MoverSession.Discard()
+    E.store.raw.moverElementsSize = nil
+end

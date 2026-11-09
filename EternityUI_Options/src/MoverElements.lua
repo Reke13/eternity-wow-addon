@@ -1,6 +1,8 @@
 -- The Mover's "Elements" panel: which elements the Mover draws a handle for, to place the rest
 -- without the clutter. It only touches the Mover: a hidden element is still shown in the game,
 -- in its place. The choice is kept for the account (raw.moverHidden[key] = true).
+-- The panel moves by any empty spot and resizes by its corner; both are kept for the account
+-- (raw.moverElements, raw.moverElementsSize). A right click on it puts it back where it starts.
 ---@type string, table
 local _, ns = ...
 local L = ns.L
@@ -14,6 +16,8 @@ local ROW = 28
 local HEADER = 30
 local WIDTH = 300
 local HEIGHT = 420
+local MIN_W, MIN_H, MAX_W, MAX_H = 240, 240, 700, 1000
+local GRIP = 16
 
 local Elements = {}
 ns.MoverElements = Elements
@@ -158,7 +162,8 @@ end
 
 local function build(root)
     panel = CreateFrame("Frame", nil, root)
-    panel:SetSize(WIDTH, HEIGHT)
+    local size = E.store.raw.moverElementsSize
+    panel:SetSize(size and size.w or WIDTH, size and size.h or HEIGHT)
     panel:SetFrameLevel(root:GetFrameLevel() + 25)
     panel:EnableMouse(true)
     panel.shape = Shape.New(panel)
@@ -166,8 +171,45 @@ local function build(root)
         Theme.PaintWindow(self.shape)
     end
     Widgets.Track(panel)
-    panel:SetPoint("TOPLEFT", 16, -76)
     panel.rows = {}
+    ns.MoverChrome.Draggable(panel, root, "moverElements", function(self)
+        self:SetPoint("TOPLEFT", 16, -76)
+    end)
+
+    -- Resized by the bottom right corner.
+    panel:SetResizable(true)
+    if panel.SetResizeBounds then
+        panel:SetResizeBounds(MIN_W, MIN_H, MAX_W, MAX_H)
+    end
+    local grip = CreateFrame("Button", nil, panel)
+    grip:SetSize(GRIP, GRIP)
+    grip:SetPoint("BOTTOMRIGHT", -2, 2)
+    grip:SetFrameLevel(panel:GetFrameLevel() + 10)
+    grip.texture = grip:CreateTexture(nil, "OVERLAY")
+    grip.texture:SetAllPoints()
+    grip.texture:SetTexture("Interface\ChatFrame\UI-ChatIM-SizeGrabber-Up")
+    grip:SetHighlightTexture("Interface\ChatFrame\UI-ChatIM-SizeGrabber-Highlight")
+    grip:SetScript("OnMouseDown", function()
+        panel:StartSizing("BOTTOMRIGHT")
+    end)
+    grip:SetScript("OnMouseUp", function()
+        panel:StopMovingOrSizing()
+        panel:SetUserPlaced(false)
+        local w = math.floor(math.min(math.max(panel:GetWidth(), MIN_W), MAX_W) + 0.5)
+        local h = math.floor(math.min(math.max(panel:GetHeight(), MIN_H), MAX_H) + 0.5)
+        E.store.raw.moverElementsSize = { w = w, h = h }
+        panel:SetSize(w, h)
+        -- The top left corner stays where it is, as the dragging code keeps it.
+        local left, top = panel:GetLeft(), panel:GetTop()
+        local rootLeft, rootTop = root:GetLeft(), root:GetTop()
+        if left and top and rootLeft and rootTop then
+            E.store.raw.moverElements = { x = left - rootLeft, y = top - rootTop }
+            panel:ClearAllPoints()
+            panel:SetPoint("TOPLEFT", root, "TOPLEFT", left - rootLeft, top - rootTop)
+        end
+        Elements.Refresh()
+    end)
+    panel.grip = grip
 
     panel.title = Widgets.Text(panel, 16, "text")
     panel.title:SetPoint("TOPLEFT", 14, -14)
@@ -192,6 +234,9 @@ local function build(root)
     panel.scroll = Widgets.Scroll(panel)
     panel.scroll:SetPoint("TOPLEFT", 14, -70)
     panel.scroll:SetPoint("BOTTOMRIGHT", -10, 52)
+    panel:SetScript("OnSizeChanged", function()
+        Elements.Refresh()
+    end)
     panel:Hide()
 end
 
@@ -204,6 +249,11 @@ function Elements.Toggle(root)
     panel:SetShown(not panel:IsShown())
     Elements.Refresh()
     ns.MoverChrome.Refresh()
+end
+
+--- The panel, once built (for the tests).
+function Elements.Panel()
+    return panel
 end
 
 --- Whether the panel is open.
