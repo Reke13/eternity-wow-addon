@@ -23,6 +23,8 @@ ns.Frame = Frame
 local UNIT_EVENTS = {
     UNIT_HEALTH = "health",
     UNIT_MAXHEALTH = "health",
+    UNIT_HEAL_PREDICTION = "heals",
+    UNIT_ABSORB_AMOUNT_CHANGED = "heals",
     UNIT_CONNECTION = "health",
     UNIT_FLAGS = "health",
     UNIT_NAME_UPDATE = "health",
@@ -68,6 +70,8 @@ local function run(f, what)
     end
     if what == "health" then
         Elements.UpdateHealth(f)
+    elseif what == "heals" then
+        Elements.UpdateHeals(f)
     elseif what == "power" then
         Elements.UpdatePower(f)
     elseif what == "portrait" then

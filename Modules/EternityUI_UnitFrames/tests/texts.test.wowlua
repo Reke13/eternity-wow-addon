@@ -164,3 +164,22 @@ local function groupValues()
         expect(Style.TextMode(key, "healthRight")).toBe(EternityUI.store:Get(NAME, "look.healthRight"))
     end
 end
+
+@test("incoming heals and shields start where the health ends, and can be switched off")
+local function healsAndShields()
+    local f = module().holders.player.button
+    expect(f.heals:IsShown()).toBe(true)
+    expect(f.absorbs:IsShown()).toBe(true)
+    local _, relative = f.heals:GetPoint(1)
+    expect(relative == f.health:GetStatusBarTexture()).toBe(true)
+    _, relative = f.absorbs:GetPoint(1)
+    expect(relative == f.heals:GetStatusBarTexture()).toBe(true)
+    set("playerBars.incomingHeals", false)
+    expect(f.heals:IsShown()).toBe(false)
+    _, relative = f.absorbs:GetPoint(1)
+    expect(relative == f.health:GetStatusBarTexture()).toBe(true)
+    set("playerBars.absorbs", false)
+    expect(f.absorbs:IsShown()).toBe(false)
+    set("playerBars.incomingHeals", true)
+    set("playerBars.absorbs", true)
+end

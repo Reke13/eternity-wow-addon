@@ -73,6 +73,16 @@ function Elements.Create(f)
     f.shape = Shape.New(f, "BACKGROUND", -8)
 
     f.health = Style.Bar(f)
+    -- Incoming heals and shields: bars that start where the health fill ends (anchored to its
+    -- texture, so the game places them without Lua reading a value) and are clipped by the
+    -- health bar, so what goes past the maximum isn't drawn.
+    f.health:SetClipsChildren(true)
+    f.heals = CreateFrame("StatusBar", nil, f.health)
+    f.heals:SetMinMaxValues(0, 1)
+    f.heals:SetValue(0)
+    f.absorbs = CreateFrame("StatusBar", nil, f.health)
+    f.absorbs:SetMinMaxValues(0, 1)
+    f.absorbs:SetValue(0)
     f.power = Style.Bar(f)
 
     f.overlay = CreateFrame("Frame", nil, f)
@@ -228,6 +238,7 @@ function Elements.Layout(f, width, height)
     end
     Style.PaintBar(f.health)
     Style.PaintBar(f.power)
+    Elements.LayoutHeals(f, width - left - right)
 
     -- Texts.
     local size = U(key, "Text", "textSize")
@@ -408,9 +419,68 @@ local function healthRightText(fs, mode, unit, style)
     end
 end
 
+-- Incoming heals and shields -------------------------------------------------------------------
+
+--- Places the heals and shields bars: as wide as the health bar, from where its fill ends.
+---@param f table
+---@param width number the health bar's width
+function Elements.LayoutHeals(f, width)
+    local key = f.uf.key
+    local fill = f.health:GetStatusBarTexture()
+    local texture = Style.Texture()
+    local heals, absorbs = f.heals, f.absorbs
+    heals:ClearAllPoints()
+    heals:SetPoint("TOPLEFT", fill, "TOPRIGHT")
+    heals:SetPoint("BOTTOMLEFT", fill, "BOTTOMRIGHT")
+    heals:SetWidth(math.max(width, 1))
+    heals:SetStatusBarTexture(texture)
+    local hc = Style.Color("incomingHeals")
+    heals:SetStatusBarColor(hc[1], hc[2], hc[3], 0.55)
+    heals:SetShown(U(key, "Bars", "incomingHeals") and true or false)
+    -- Shields go after the heals (or right after the health when heals are off).
+    local after = heals:IsShown() and heals:GetStatusBarTexture() or fill
+    absorbs:ClearAllPoints()
+    absorbs:SetPoint("TOPLEFT", after, "TOPRIGHT")
+    absorbs:SetPoint("BOTTOMLEFT", after, "BOTTOMRIGHT")
+    absorbs:SetWidth(math.max(width, 1))
+    absorbs:SetStatusBarTexture(texture)
+    local ac = Style.Color("absorbs")
+    absorbs:SetStatusBarColor(ac[1], ac[2], ac[3], 0.6)
+    absorbs:SetShown(U(key, "Bars", "absorbs") and true or false)
+    heals:SetFrameLevel(f.health:GetFrameLevel() + 1)
+    absorbs:SetFrameLevel(f.health:GetFrameLevel() + 1)
+end
+
+-- A value that may be secret, or 0 when the game gives none.
+local function amount(fn, ...)
+    if not fn then
+        return 0
+    end
+    local ok, value = pcall(fn, ...)
+    if not ok or (not secret(value) and value == nil) then
+        return 0
+    end
+    return value
+end
+
+--- The heals on their way to the unit and what its shields absorb, out of its maximum health.
+function Elements.UpdateHeals(f)
+    local unit = f.unit
+    local max = UnitHealthMax(unit)
+    if f.heals:IsShown() then
+        f.heals:SetMinMaxValues(0, max)
+        f.heals:SetValue(amount(UnitGetIncomingHeals, unit))
+    end
+    if f.absorbs:IsShown() then
+        f.absorbs:SetMinMaxValues(0, max)
+        f.absorbs:SetValue(amount(UnitGetTotalAbsorbs, unit))
+    end
+end
+
 function Elements.UpdateHealth(f)
     local unit, key = f.unit, f.uf.key
     Style.SetBar(f.health, UnitHealth(unit), UnitHealthMax(unit))
+    Elements.UpdateHeals(f)
     local color = healthColor(unit)
     Style.BarColor(f.health, color[1], color[2], color[3])
     healthLeftText(f.healthLeft, U(key, "Text", "healthLeft"), unit)

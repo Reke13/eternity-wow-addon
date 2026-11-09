@@ -680,6 +680,24 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "incomingHeals",
+                    type = "color",
+                    default = "#4ADE80",
+                    label = {
+                        enUS = "Incoming heals",
+                        esES = "Curación entrante",
+                    },
+                },
+                {
+                    id = "absorbs",
+                    type = "color",
+                    default = "#E0F2FE",
+                    label = {
+                        enUS = "Shields (absorbs)",
+                        esES = "Escudos (absorción)",
+                    },
+                },
+                {
                     id = "highlight",
                     type = "color",
                     default = "#FFFFFF",
@@ -796,6 +814,32 @@ ns.OptionsSchema = {
                 esES = "Barras",
             },
             options = {
+                {
+                    id = "incomingHeals",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Incoming heals",
+                        esES = "Curación entrante",
+                    },
+                    description = {
+                        enUS = "A lighter bar after the health with the heals on their way.",
+                        esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "absorbs",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Shields (absorbs)",
+                        esES = "Escudos (absorción)",
+                    },
+                    description = {
+                        enUS = "A bar after the health (and the incoming heals) with the damage the unit's shields still absorb.",
+                        esES = "Una barra tras la vida (y la curación entrante) con el daño que aún absorben los escudos de la unidad.",
+                    },
+                },
                 {
                     id = "power",
                     type = "toggle",
@@ -2147,6 +2191,32 @@ ns.OptionsSchema = {
             },
             options = {
                 {
+                    id = "incomingHeals",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Incoming heals",
+                        esES = "Curación entrante",
+                    },
+                    description = {
+                        enUS = "A lighter bar after the health with the heals on their way.",
+                        esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "absorbs",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Shields (absorbs)",
+                        esES = "Escudos (absorción)",
+                    },
+                    description = {
+                        enUS = "A bar after the health (and the incoming heals) with the damage the unit's shields still absorb.",
+                        esES = "Una barra tras la vida (y la curación entrante) con el daño que aún absorben los escudos de la unidad.",
+                    },
+                },
+                {
                     id = "power",
                     type = "toggle",
                     default = true,
@@ -3472,6 +3542,32 @@ ns.OptionsSchema = {
                 esES = "Barras",
             },
             options = {
+                {
+                    id = "incomingHeals",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Incoming heals",
+                        esES = "Curación entrante",
+                    },
+                    description = {
+                        enUS = "A lighter bar after the health with the heals on their way.",
+                        esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "absorbs",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Shields (absorbs)",
+                        esES = "Escudos (absorción)",
+                    },
+                    description = {
+                        enUS = "A bar after the health (and the incoming heals) with the damage the unit's shields still absorb.",
+                        esES = "Una barra tras la vida (y la curación entrante) con el daño que aún absorben los escudos de la unidad.",
+                    },
+                },
                 {
                     id = "power",
                     type = "toggle",
@@ -4808,6 +4904,32 @@ ns.OptionsSchema = {
             },
             options = {
                 {
+                    id = "incomingHeals",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Incoming heals",
+                        esES = "Curación entrante",
+                    },
+                    description = {
+                        enUS = "A lighter bar after the health with the heals on their way.",
+                        esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "absorbs",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Shields (absorbs)",
+                        esES = "Escudos (absorción)",
+                    },
+                    description = {
+                        enUS = "A bar after the health (and the incoming heals) with the damage the unit's shields still absorb.",
+                        esES = "Una barra tras la vida (y la curación entrante) con el daño que aún absorben los escudos de la unidad.",
+                    },
+                },
+                {
                     id = "power",
                     type = "toggle",
                     default = true,
@@ -6097,6 +6219,32 @@ ns.OptionsSchema = {
                 esES = "Barras",
             },
             options = {
+                {
+                    id = "incomingHeals",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Incoming heals",
+                        esES = "Curación entrante",
+                    },
+                    description = {
+                        enUS = "A lighter bar after the health with the heals on their way.",
+                        esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "absorbs",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Shields (absorbs)",
+                        esES = "Escudos (absorción)",
+                    },
+                    description = {
+                        enUS = "A bar after the health (and the incoming heals) with the damage the unit's shields still absorb.",
+                        esES = "Una barra tras la vida (y la curación entrante) con el daño que aún absorben los escudos de la unidad.",
+                    },
+                },
                 {
                     id = "power",
                     type = "toggle",
@@ -7501,6 +7649,32 @@ ns.OptionsSchema = {
                 esES = "Barras",
             },
             options = {
+                {
+                    id = "incomingHeals",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Incoming heals",
+                        esES = "Curación entrante",
+                    },
+                    description = {
+                        enUS = "A lighter bar after the health with the heals on their way.",
+                        esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "absorbs",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Shields (absorbs)",
+                        esES = "Escudos (absorción)",
+                    },
+                    description = {
+                        enUS = "A bar after the health (and the incoming heals) with the damage the unit's shields still absorb.",
+                        esES = "Una barra tras la vida (y la curación entrante) con el daño que aún absorben los escudos de la unidad.",
+                    },
+                },
                 {
                     id = "power",
                     type = "toggle",
@@ -8916,6 +9090,32 @@ ns.OptionsSchema = {
             },
             options = {
                 {
+                    id = "incomingHeals",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Incoming heals",
+                        esES = "Curación entrante",
+                    },
+                    description = {
+                        enUS = "A lighter bar after the health with the heals on their way.",
+                        esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "absorbs",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Shields (absorbs)",
+                        esES = "Escudos (absorción)",
+                    },
+                    description = {
+                        enUS = "A bar after the health (and the incoming heals) with the damage the unit's shields still absorb.",
+                        esES = "Una barra tras la vida (y la curación entrante) con el daño que aún absorben los escudos de la unidad.",
+                    },
+                },
+                {
                     id = "power",
                     type = "toggle",
                     default = false,
@@ -10306,6 +10506,32 @@ ns.OptionsSchema = {
                 esES = "Barras",
             },
             options = {
+                {
+                    id = "incomingHeals",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Incoming heals",
+                        esES = "Curación entrante",
+                    },
+                    description = {
+                        enUS = "A lighter bar after the health with the heals on their way.",
+                        esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "absorbs",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Shields (absorbs)",
+                        esES = "Escudos (absorción)",
+                    },
+                    description = {
+                        enUS = "A bar after the health (and the incoming heals) with the damage the unit's shields still absorb.",
+                        esES = "Una barra tras la vida (y la curación entrante) con el daño que aún absorben los escudos de la unidad.",
+                    },
+                },
                 {
                     id = "power",
                     type = "toggle",

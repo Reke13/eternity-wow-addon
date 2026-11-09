@@ -231,6 +231,11 @@ local function samplePerson(f, person, index)
     else
         Style.SetNumbersAs(Style.NumberStyle(key), f.healthRight, "#", current)
     end
+    -- Heals on their way and shields, on some of them.
+    f.heals:SetMinMaxValues(0, MAX_HEALTH)
+    f.heals:SetValue((not person.dead and person.hp < 0.8) and MAX_HEALTH * 0.15 or 0)
+    f.absorbs:SetMinMaxValues(0, MAX_HEALTH)
+    f.absorbs:SetValue((index % 2 == 0 and not person.dead) and MAX_HEALTH * 0.1 or 0)
     -- Power.
     if f.power:IsShown() then
         local mana = person.class ~= "WARRIOR" and person.class ~= "ROGUE"
