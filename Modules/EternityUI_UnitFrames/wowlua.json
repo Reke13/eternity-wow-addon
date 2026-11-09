@@ -1,0 +1,56 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-unitframes",
+    "version": "0.3.0",
+    "authors": [
+      "Jaime"
+    ],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_UnitFrames",
+    "title": "Eternity Unit Frames",
+    "notes": "Eternity module: frames for you, your pet, target, target of target, focus, group and raid.",
+    "saved-variables": [
+      "EternityUIUnitFramesDB"
+    ]
+  },
+  "addon-dependencies": {
+    "required": [
+      "EternityUI"
+    ]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Style.lua",
+      "src/Filters.lua",
+      "src/AuraBox.lua",
+      "src/Elements.lua",
+      "src/Frame.lua",
+      "src/Groups.lua",
+      "src/Blizzard.lua",
+      "src/Preview.lua",
+      "src/FiltersTab.lua",
+      "src/UnitFrames.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": [
+      "../../../../dist/dev/EternityUI"
+    ]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "EternityUIUnitFramesDB"
+    ]
+  }
+}
