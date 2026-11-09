@@ -99,6 +99,7 @@ local function shippedFonts()
         local file = Theme.Font(key)
         expect(file:find("media\\fonts\\", 1, true) ~= nil).toBe(true)
     end
+end
 
 @test("your own image wins over the theme's in its place, and only there")
 local function ownWallpaper()
