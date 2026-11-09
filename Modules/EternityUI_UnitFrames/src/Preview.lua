@@ -117,10 +117,17 @@ local function sampleIcon(f, index)
     return b
 end
 
+-- Forever has no DebuffTypeColor global: the made-up debuffs use the usual dispel colors.
+local TYPE_COLORS = {
+    Magic = { 0.2, 0.6, 1 },
+    Curse = { 0.6, 0, 1 },
+    Disease = { 0.6, 0.4, 0 },
+    Poison = { 0, 0.6, 0 },
+}
+
 local function typeColor(kind)
-    local colors = DebuffTypeColor or {}
-    local c = colors[kind] or colors.none or { r = 0.8, g = 0, b = 0 }
-    return c.r, c.g, c.b
+    local c = TYPE_COLORS[kind] or { 0.8, 0, 0 }
+    return c[1], c[2], c[3]
 end
 
 -- Made-up buffs and debuffs where the real ones would be, with the frame's options.
