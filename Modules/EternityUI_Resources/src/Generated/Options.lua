@@ -517,6 +517,42 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "numbers",
+                    type = "select",
+                    default = "short",
+                    label = {
+                        enUS = "Number format",
+                        esES = "Formato de los números",
+                    },
+                    description = {
+                        enUS = "How the current and maximum values are written. The percent doesn't change.",
+                        esES = "Cómo se escriben el valor actual y el máximo. El porcentaje no cambia.",
+                    },
+                    values = {
+                        {
+                            value = "short",
+                            label = {
+                                enUS = "Short (1.8K)",
+                                esES = "Abreviado (1,8 mil)",
+                            },
+                        },
+                        {
+                            value = "full",
+                            label = {
+                                enUS = "Full (1800)",
+                                esES = "Completo (1800)",
+                            },
+                        },
+                        {
+                            value = "separated",
+                            label = {
+                                enUS = "Full with separator (1,800)",
+                                esES = "Completo con separador (1.800)",
+                            },
+                        },
+                    },
+                },
+                {
                     id = "align",
                     type = "select",
                     default = "center",

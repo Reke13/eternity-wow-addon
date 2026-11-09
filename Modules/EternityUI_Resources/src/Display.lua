@@ -180,7 +180,7 @@ function Display:UpdatePower()
     else
         Bar.SetValues(frame, Power.Values(self.powerType))
         if frame.showText then
-            Power.SetText(frame.text, opt("look.text"), self.powerType)
+            Power.SetText(frame.text, opt("look.text"), self.powerType, opt("look.numbers"))
         end
     end
     restFade(self, frame, self.powerType)
@@ -195,7 +195,7 @@ function Display:UpdateMana()
     else
         Bar.SetValues(frame, Power.Values(TYPES.Mana))
         if frame.showText then
-            Power.SetText(frame.text, opt("look.manaText"), TYPES.Mana)
+            Power.SetText(frame.text, opt("look.manaText"), TYPES.Mana, opt("look.numbers"))
         end
     end
     restFade(self, frame, TYPES.Mana)

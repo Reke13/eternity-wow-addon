@@ -165,6 +165,27 @@ local function texts()
     expect((display().parts.power.text:GetText() or "") ~= "").toBe(true)
 end
 
+@test("the number format writes big values short or whole")
+local function numbers()
+    local unitPower, unitPowerMax = UnitPower, UnitPowerMax
+    UnitPower = function()
+        return 1800
+    end
+    UnitPowerMax = function()
+        return 25000
+    end
+    local text = display().parts.power.text
+    set("look.text", "currentMax")
+    set("look.numbers", "full")
+    local full = text:GetText()
+    set("look.numbers", "short")
+    local short = text:GetText()
+    UnitPower, UnitPowerMax = unitPower, unitPowerMax
+    set("look.text", "current")
+    expect(full).toBe("1800 / 25000")
+    expect(short ~= full).toBe(true)
+end
+
 @test("the background and border follow their options")
 local function background()
     local shape = display().parts.power.background.shape
