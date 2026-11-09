@@ -39,7 +39,7 @@ local function moveResize()
     E.MoverElements.Toggle(UIParent)
     local panel = E.MoverElements.Panel()
     expect(panel:IsMovable()).toBe(true)
-    expect(panel:IsResizable()).toBe(true)
+    expect(math.floor(panel:GetWidth() + 0.5)).toBe(360)
     expect(panel.grip ~= nil).toBe(true)
     E.MoverSession.Discard()
     E.store.raw.moverElementsSize = nil
@@ -71,4 +71,42 @@ local function onlyModule()
     E.store.raw.moverHidden = nil
     E.Mover.Unregister("testA.box")
     E.Mover.Unregister("testB.box")
+end
+
+@test("each module's section folds by its title, and stays as it was left")
+local function folding()
+    local frame = CreateFrame("Frame", nil, UIParent)
+    frame:SetSize(50, 20)
+    E.Mover.Register({ key = "testF.box", owner = "TestF", label = "F", frame = frame })
+    E.store.raw.moverElementsOpen = nil
+    E.MoverSession.Toggle()
+    if not E.MoverElements.IsOpen() then
+        E.MoverElements.Toggle(UIParent)
+    end
+    local panel = E.MoverElements.Panel()
+    local function header()
+        for _, r in ipairs(panel.rows) do
+            if r:IsShown() and r.owner == "TestF" then
+                return r
+            end
+        end
+    end
+    local function elementShown()
+        for _, r in ipairs(panel.rows) do
+            if r:IsShown() and not r.owner and r.keys and r.keys[1] == "testF.box" then
+                return true
+            end
+        end
+        return false
+    end
+    expect(header() ~= nil).toBe(true)
+    expect(elementShown()).toBe(false)
+    header():Click()
+    expect(elementShown()).toBe(true)
+    expect(E.store.raw.moverElementsOpen.TestF).toBe(true)
+    header():Click()
+    expect(elementShown()).toBe(false)
+    E.MoverSession.Discard()
+    E.Mover.Unregister("testF.box")
+    E.store.raw.moverElementsOpen = nil
 end

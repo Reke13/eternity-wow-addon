@@ -3,6 +3,8 @@
 -- in its place. The choice is kept for the account (raw.moverHidden[key] = true).
 -- The panel moves by any empty spot and resizes by its corner; both are kept for the account
 -- (raw.moverElements, raw.moverElementsSize). A right click on it puts it back where it starts.
+-- Each module's section folds by its title (raw.moverElementsOpen[owner] = true when open);
+-- in a module's own Mover its only section is always open.
 ---@type string, table
 local _, ns = ...
 local L = ns.L
@@ -112,23 +114,47 @@ local function keysOf(elements)
     return keys
 end
 
--- Pooled rows: a module's title with its own switch, or an element with its switch.
+-- Whether a module's section is unfolded.
+local function isOpen(owner)
+    if only() then
+        return true
+    end
+    local open = E.store.raw.moverElementsOpen
+    return type(open) == "table" and open[owner] == true
+end
+
+local function setOpen(owner, value)
+    E.store.raw.moverElementsOpen = type(E.store.raw.moverElementsOpen) == "table" and E.store.raw.moverElementsOpen or {}
+    E.store.raw.moverElementsOpen[owner] = value or nil
+end
+
+-- Pooled rows: a module's title (it folds its section) with a switch for all of it, or an
+-- element with its switch.
 local function row(index)
     local rows = panel.rows
     local r = rows[index]
     if r then
         return r
     end
-    r = CreateFrame("Frame", nil, panel.scroll.child)
+    r = CreateFrame("Button", nil, panel.scroll.child)
     r:SetHeight(ROW)
+    r:RegisterForClicks("LeftButtonUp")
+    r.fold = r:CreateTexture(nil, "ARTWORK")
+    r.fold:SetSize(14, 14)
+    r.fold:SetPoint("LEFT", 2, 0)
     r.label = Widgets.Text(r, 13, "text")
-    r.label:SetPoint("LEFT", 6, 0)
     r.label:SetJustifyH("LEFT")
     r.toggle = Widgets.Toggle(r, function(value)
         Elements.Set(r.keys, value)
     end)
     r.toggle:SetPoint("RIGHT", -4, 0)
     r.label:SetPoint("RIGHT", r.toggle, "LEFT", -8, 0)
+    r:SetScript("OnClick", function(self)
+        if self.owner and not only() then
+            setOpen(self.owner, not isOpen(self.owner))
+            Elements.Refresh()
+        end
+    end)
     rows[index] = r
     return r
 end
@@ -142,9 +168,16 @@ function Elements.Refresh()
     for _, group in ipairs(groups()) do
         used = used + 1
         local head = row(used)
+        local open = isOpen(group.owner)
         head:SetHeight(HEADER)
+        head.owner = group.owner
         head.keys = keysOf(group.elements)
-        head.label:SetText(group.title)
+        head.fold:Show()
+        head.fold:SetTexture(open and "Interface\\Buttons\\UI-MinusButton-Up" or "Interface\\Buttons\\UI-PlusButton-Up")
+        head.label:ClearAllPoints()
+        head.label:SetPoint("LEFT", head.fold, "RIGHT", 6, 0)
+        head.label:SetPoint("RIGHT", head.toggle, "LEFT", -8, 0)
+        head.label:SetText(("%s  (%d)"):format(group.title, #group.elements))
         Widgets.SetTextSize(head.label, 14)
         head.label:SetTextColor(Theme.Color("accentText"))
         local any = false
@@ -157,10 +190,15 @@ function Elements.Refresh()
         head:SetPoint("TOPRIGHT", 0, -y)
         head:Show()
         y = y + HEADER
-        for _, element in ipairs(group.elements) do
+        for _, element in ipairs(open and group.elements or {}) do
             used = used + 1
             local r = row(used)
             r:SetHeight(ROW)
+            r.owner = nil
+            r.fold:Hide()
+            r.label:ClearAllPoints()
+            r.label:SetPoint("LEFT", 6, 0)
+            r.label:SetPoint("RIGHT", r.toggle, "LEFT", -8, 0)
             r.keys = { element.key }
             r.label:SetText(element.label)
             Widgets.SetTextSize(r.label, 13)
@@ -195,38 +233,54 @@ local function build(root)
         self:SetPoint("TOPLEFT", 16, -76)
     end)
 
-    -- Resized by the bottom right corner.
-    panel:SetResizable(true)
-    if panel.SetResizeBounds then
-        panel:SetResizeBounds(MIN_W, MIN_H, MAX_W, MAX_H)
-    end
+    -- Resized by the bottom right corner. The size follows the cursor (no StartSizing: with the
+    -- panel kept on screen the game re-anchors it while sizing, and it jumped); the top left
+    -- corner stays put and the panel never leaves the screen.
     local grip = CreateFrame("Button", nil, panel)
     grip:SetSize(GRIP, GRIP)
     grip:SetPoint("BOTTOMRIGHT", -2, 2)
     grip:SetFrameLevel(panel:GetFrameLevel() + 10)
-    grip.texture = grip:CreateTexture(nil, "OVERLAY")
-    grip.texture:SetAllPoints()
-    grip.texture:SetTexture("Interface\ChatFrame\UI-ChatIM-SizeGrabber-Up")
-    grip:SetHighlightTexture("Interface\ChatFrame\UI-ChatIM-SizeGrabber-Highlight")
-    grip:SetScript("OnMouseDown", function()
-        panel:StartSizing("BOTTOMRIGHT")
-    end)
-    grip:SetScript("OnMouseUp", function()
-        panel:StopMovingOrSizing()
-        panel:SetUserPlaced(false)
-        local w = math.floor(math.min(math.max(panel:GetWidth(), MIN_W), MAX_W) + 0.5)
-        local h = math.floor(math.min(math.max(panel:GetHeight(), MIN_H), MAX_H) + 0.5)
-        E.store.raw.moverElementsSize = { w = w, h = h }
-        panel:SetSize(w, h)
-        -- The top left corner stays where it is, as the dragging code keeps it.
+    grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    local function pin()
+        -- Anchored by the top left corner to the Mover's root, where it is now.
         local left, top = panel:GetLeft(), panel:GetTop()
         local rootLeft, rootTop = root:GetLeft(), root:GetTop()
         if left and top and rootLeft and rootTop then
-            E.store.raw.moverElements = { x = left - rootLeft, y = top - rootTop }
             panel:ClearAllPoints()
             panel:SetPoint("TOPLEFT", root, "TOPLEFT", left - rootLeft, top - rootTop)
+            E.store.raw.moverElements = { x = left - rootLeft, y = top - rootTop }
         end
+    end
+    local function limits()
+        local left, top = panel:GetLeft() or 0, panel:GetTop() or 0
+        local right, bottom = root:GetRight() or MAX_W, root:GetBottom() or 0
+        return math.min(MAX_W, right - left), math.min(MAX_H, top - bottom)
+    end
+    grip:SetScript("OnMouseDown", function()
+        pin()
+        local x, y = GetCursorPosition()
+        local scale = panel:GetEffectiveScale()
+        grip.start = { x = x / scale, y = y / scale, w = panel:GetWidth(), h = panel:GetHeight() }
+        grip:SetScript("OnUpdate", function()
+            local cx, cy = GetCursorPosition()
+            cx, cy = cx / scale, cy / scale
+            local maxW, maxH = limits()
+            local w = math.min(math.max(grip.start.w + cx - grip.start.x, MIN_W), math.max(maxW, MIN_W))
+            local h = math.min(math.max(grip.start.h + grip.start.y - cy, MIN_H), math.max(maxH, MIN_H))
+            panel:SetSize(math.floor(w + 0.5), math.floor(h + 0.5))
+        end)
+    end)
+    grip:SetScript("OnMouseUp", function()
+        grip:SetScript("OnUpdate", nil)
+        grip.start = nil
+        E.store.raw.moverElementsSize = { w = math.floor(panel:GetWidth() + 0.5), h = math.floor(panel:GetHeight() + 0.5) }
+        pin()
         Elements.Refresh()
+    end)
+    grip:SetScript("OnHide", function()
+        grip:SetScript("OnUpdate", nil)
     end)
     panel.grip = grip
 
@@ -274,6 +328,13 @@ end
 function Elements.Toggle(root)
     if not panel then
         build(root)
+    end
+    if not panel:IsShown() then
+        -- The size the player left it at.
+        local size = E.store.raw.moverElementsSize
+        if type(size) == "table" and size.w and size.h then
+            panel:SetSize(size.w, size.h)
+        end
     end
     panel:SetShown(not panel:IsShown())
     panel.note:SetText(only() and L.MOVER_ELEMENTS_ONLY or L.MOVER_ELEMENTS_NOTE)
