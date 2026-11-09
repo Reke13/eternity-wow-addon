@@ -138,3 +138,26 @@ local function cycle()
     expect(module().active).toBe(true)
     expect(recorder().running).toBe(true)
 end
+
+@test("errors of earlier sessions stay in the list after a reload, and the picked session is kept")
+local function keepsAfterReload()
+    local List = module().List
+    recorder().Clear()
+    EternityUIBugsDB.listSession = nil
+    recorder().Add("error", "before the reload", "stack", nil)
+    -- A /reload is a new session.
+    EternityUIBugsDB.session = EternityUIBugsDB.session + 1
+    expect(List.SavedSession()).toBe("all")
+    local view = List.Filter(EternityUIBugsDB.errors, { text = "", session = List.SavedSession() },
+        EternityUIBugsDB.session)
+    expect(#view).toBe(1)
+    expect(view[1].message).toBe("before the reload")
+    List.SetSession("previous")
+    expect(EternityUIBugsDB.listSession).toBe("previous")
+    expect(List.SavedSession()).toBe("previous")
+    List.SetSession("nonsense")
+    expect(List.SavedSession()).toBe("previous")
+    EternityUIBugsDB.listSession = "nonsense"
+    expect(List.SavedSession()).toBe("all")
+    List.SetSession("all")
+end
