@@ -32,10 +32,22 @@ local function hiddenSet()
     return E.store.raw.moverHidden
 end
 
+-- A Mover opened from a module's page shows only that module (Session.only), with its own
+-- switches for the session (Session.onlyHidden); the account's choice stays as it was.
+local function only()
+    local session = ns.MoverSession
+    return session and session.active and session.only or nil
+end
+
 --- Whether the Mover draws a handle for this element.
 ---@param key string
 ---@return boolean
 function Elements.IsShown(key)
+    local owner = only()
+    if owner then
+        local element = Mover.elements[key]
+        return element ~= nil and element.owner == owner and not ns.MoverSession.onlyHidden[key]
+    end
     local hidden = E.store.raw.moverHidden
     return not (type(hidden) == "table" and hidden[key])
 end
@@ -54,7 +66,7 @@ end
 ---@param keys string[]
 ---@param shown boolean
 function Elements.Set(keys, shown)
-    local hidden = hiddenSet()
+    local hidden = only() and ns.MoverSession.onlyHidden or hiddenSet()
     for _, key in ipairs(keys) do
         hidden[key] = not shown or nil
     end
@@ -64,8 +76,8 @@ end
 -- The module that registered an element, by its title; elements of no module go last.
 local function groups()
     local byOwner, list = {}, {}
-    for _, element in ipairs(Mover.List()) do
-        local owner = element.owner or ""
+    local filter = only()
+    local function add(element, owner)
         local group = byOwner[owner]
         if not group then
             local module = element.owner and E:GetModule(element.owner)
@@ -75,6 +87,13 @@ local function groups()
             list[#list + 1] = group
         end
         group.elements[#group.elements + 1] = element
+    end
+    for _, element in ipairs(Mover.List()) do
+        local owner = element.owner or ""
+        -- In a module's Mover, another module's elements aren't listed.
+        if not filter or owner == filter then
+            add(element, owner)
+        end
     end
     table.sort(list, function(a, b)
         if (a.owner == "") ~= (b.owner == "") then
@@ -220,11 +239,21 @@ local function build(root)
     panel.note:SetJustifyH("LEFT")
     panel.note:SetText(L.MOVER_ELEMENTS_NOTE)
 
+    -- Every element of the list (in a module's Mover, only its own).
+    local function listed()
+        local elements = {}
+        for _, group in ipairs(groups()) do
+            for _, element in ipairs(group.elements) do
+                elements[#elements + 1] = element
+            end
+        end
+        return keysOf(elements)
+    end
     local all = Widgets.Button(panel, L.MOVER_ELEMENTS_ALL, "ghost", function()
-        Elements.Set(keysOf(Mover.List()), true)
+        Elements.Set(listed(), true)
     end)
     local none = Widgets.Button(panel, L.MOVER_ELEMENTS_NONE, "ghost", function()
-        Elements.Set(keysOf(Mover.List()), false)
+        Elements.Set(listed(), false)
     end)
     all:SetPoint("BOTTOMLEFT", 14, 12)
     all:SetPoint("RIGHT", panel, "BOTTOM", -4, 0)
@@ -247,6 +276,7 @@ function Elements.Toggle(root)
         build(root)
     end
     panel:SetShown(not panel:IsShown())
+    panel.note:SetText(only() and L.MOVER_ELEMENTS_ONLY or L.MOVER_ELEMENTS_NOTE)
     Elements.Refresh()
     ns.MoverChrome.Refresh()
 end

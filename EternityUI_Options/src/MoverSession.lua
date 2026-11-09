@@ -39,6 +39,9 @@ end
 local function close()
     Session.active = false
     Session.selected = nil
+    -- A Mover opened from a module's page goes back to that page; its filter was only for now.
+    local back = Session.only
+    Session.only, Session.onlyHidden = nil, nil
     E.Events.Send(Mover.TOGGLED, false)
     ns.MoverScene.Hide()
     ns.MoverElements.Close()
@@ -48,6 +51,11 @@ local function close()
     E.Events.Off("PLAYER_REGEN_DISABLED", Session)
     E.Events.Off("PLAYER_REGEN_ENABLED", Session)
     E.Events.Unlisten(E.CONFIG_CHANGED, Session)
+    if back then
+        C_Timer.After(0, function()
+            E:OpenOptions(back)
+        end)
+    end
 end
 
 --- Redraws everything after a change.
@@ -126,7 +134,7 @@ function Session.Save()
     Mover.Save(Session.draft)
 end
 
-local function open()
+local function open(only)
     if InCombatLockdown() then
         print(L.MOVER_COMBAT)
         return
@@ -136,6 +144,9 @@ local function open()
     Session.draft = Mover.Layout()
     Session.undo, Session.redo = {}, {}
     Session.active = true
+    -- Only one module's elements (opened from its page). The account's "Elements" choice isn't
+    -- used or changed: what's hidden meanwhile is kept in onlyHidden and forgotten on close.
+    Session.only, Session.onlyHidden = only, only and {} or nil
     if ns.Window.frame then
         ns.Window.frame:Hide()
     end
@@ -143,6 +154,27 @@ local function open()
     E.Events.On("PLAYER_REGEN_ENABLED", Session, ns.MoverScene.Show)
     E.Events.Listen(E.CONFIG_CHANGED, Session, onConfigChanged)
     ns.MoverScene.Show()
+end
+
+--- Enters Mover mode showing only one module's elements (from its options page).
+---@param owner string the module's name
+function Session.OpenFor(owner)
+    if Session.active then
+        Session.Discard()
+    end
+    open(owner)
+end
+
+--- Whether a module has elements in the Mover.
+---@param owner string
+---@return boolean
+function Session.HasElements(owner)
+    for _, element in ipairs(Mover.List()) do
+        if element.owner == owner then
+            return true
+        end
+    end
+    return false
 end
 
 --- Enters Mover mode, or leaves it without saving.
