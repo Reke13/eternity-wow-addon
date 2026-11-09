@@ -138,10 +138,63 @@ function Elements.Create(f)
         if self.uf and U(self.uf.key, "Indicators", "highlight") then
             self.hover:Show()
         end
+        Elements.ShowTooltip(self)
     end)
     f:HookScript("OnLeave", function(self)
         self.hover:Hide()
+        Elements.HideTooltip(self)
     end)
+end
+
+-- Tooltip ---------------------------------------------------------------------------------------
+
+--- True if the "Unit tooltip on mouseover" option lets it show now.
+---@return boolean
+function Elements.TooltipWanted()
+    local mode = opt("look.tooltip")
+    if mode == "never" then
+        return false
+    elseif mode == "nocombat" then
+        return not InCombatLockdown()
+    end
+    return true
+end
+
+-- Keeps the tooltip current while the mouse stays (GameTooltip calls its owner's UpdateTooltip).
+local function updateTooltip(self)
+    Elements.ShowTooltip(self)
+end
+
+--- The game's tooltip of the frame's unit, where Blizzard's unit frames put it, with the hint
+--- that a right click opens its menu.
+---@param f table
+function Elements.ShowTooltip(f)
+    local unit = f.unit
+    if not (unit and UnitExists(unit) and Elements.TooltipWanted()) then
+        -- Combat started with the mouse on it ("Out of combat"), or the unit left.
+        Elements.HideTooltip(f)
+        return
+    end
+    GameTooltip_SetDefaultAnchor(GameTooltip, f)
+    if GameTooltip:SetUnit(unit) then
+        if GameTooltip_AddBlankLineToTooltip and GameTooltip_AddInstructionLine and UNIT_POPUP_RIGHT_CLICK then
+            GameTooltip_AddBlankLineToTooltip(GameTooltip)
+            GameTooltip_AddInstructionLine(GameTooltip, UNIT_POPUP_RIGHT_CLICK)
+        end
+        GameTooltip:Show()
+        f.UpdateTooltip = updateTooltip
+    else
+        f.UpdateTooltip = nil
+    end
+end
+
+--- Hides the tooltip if this frame showed it.
+---@param f table
+function Elements.HideTooltip(f)
+    f.UpdateTooltip = nil
+    if GameTooltip:IsOwned(f) then
+        GameTooltip:Hide()
+    end
 end
 
 local function place(region, point, parent, relative, x, y)

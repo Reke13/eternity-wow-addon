@@ -187,7 +187,9 @@ end
 ---@param frame table a chat frame
 function ChatSkin:ApplyCombat(frame)
     local decor = self.decor[frame]
-    if not decor then
+    -- self.decor also holds the tabs' and the input box's look (plain tables): only a chat
+    -- frame's background (a frame, with its wallpaper) fades.
+    if not (decor and decor.wallpaper) then
         return
     end
     local fight = InCombatLockdown() or UnitAffectingCombat("player")

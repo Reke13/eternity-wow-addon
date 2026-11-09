@@ -538,6 +538,42 @@
             "enUS": "Smooth bar changes",
             "esES": "Cambios suaves en las barras"
           }
+        },
+        {
+          "id": "tooltip",
+          "type": "select",
+          "default": "always",
+          "label": {
+            "enUS": "Unit tooltip on mouseover",
+            "esES": "Información de la unidad al pasar el ratón"
+          },
+          "values": [
+            {
+              "value": "always",
+              "label": {
+                "enUS": "Always",
+                "esES": "Siempre"
+              }
+            },
+            {
+              "value": "nocombat",
+              "label": {
+                "enUS": "Out of combat",
+                "esES": "Fuera de combate"
+              }
+            },
+            {
+              "value": "never",
+              "label": {
+                "enUS": "Never",
+                "esES": "Nunca"
+              }
+            }
+          ],
+          "description": {
+            "enUS": "The game's tooltip of the character, NPC or pet under the mouse, as Blizzard's frames show it.",
+            "esES": "El tooltip del juego del personaje, PNJ o mascota bajo el ratón, como lo muestran los marcos de Blizzard."
+          }
         }
       ]
     },

@@ -39,3 +39,25 @@ local function chatCombat()
     expect(skin.decor[frame]:GetAlpha()).toBe(1)
     store:Set("EternityUI_Chat", "background.combatFade", false)
 end
+
+@test("leaving combat goes over every skinned part without error (tabs and the input box too)")
+local function combatEveryPart()
+    local skin = EternityUI:GetModule("EternityUI_Chat").ns.Skin
+    if not (skin and skin.decor) then
+        return
+    end
+    local plain = 0
+    for part, decor in pairs(skin.decor) do
+        if not decor.wallpaper then
+            plain = plain + 1
+        end
+        local ok, err = pcall(skin.ApplyCombat, skin, part)
+        expect(ok).toBe(true)
+        if not ok then
+            print(err)
+        end
+    end
+    -- The tabs' look is there too: the case that errored.
+    expect(plain > 0).toBe(true)
+end
+
