@@ -29,6 +29,7 @@ Each release's notes list what changed since the previous tag, so players know w
 - Write for players, not for code: what they see or can now do ("The info bar can show bag slots"), not function names. One line per change.
 - Add **Upgrading** when a player has to do something or will notice a loss: a new or removed addon folder (restart the game, delete the old folder), settings that go back to their defaults, a frame placed again with the Mover, a renamed slash command.
 - Name the pull requests or contributors that brought each part.
+- Add the release to `CHANGELOG.md` too, shorter: one line per change under Added, Changed, Fixed and Removed, without contributors.
 
 ### Which number to raise
 
