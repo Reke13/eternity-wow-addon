@@ -200,3 +200,22 @@ local function overheal()
     expect(math.floor(f.healsClip:GetWidth() + 0.5)).toBe(math.floor(width + 0.5))
     set("playerBars.overheal", 15)
 end
+
+@test("the mouse over a frame shows its unit's tooltip, as the option says")
+local function tooltip()
+    local f = module().holders.player.button
+    local E = module().Elements
+    E.ShowTooltip(f)
+    expect(GameTooltip:IsShown()).toBe(true)
+    expect(GameTooltip:IsOwned(f)).toBe(true)
+    expect(f.UpdateTooltip ~= nil).toBe(true)
+    E.HideTooltip(f)
+    expect(GameTooltip:IsShown()).toBe(false)
+    expect(f.UpdateTooltip).toBe(nil)
+    set("look.tooltip", "never")
+    E.ShowTooltip(f)
+    expect(GameTooltip:IsShown()).toBe(false)
+    set("look.tooltip", "nocombat")
+    expect(E.TooltipWanted()).toBe(not InCombatLockdown())
+    set("look.tooltip", "always")
+end
