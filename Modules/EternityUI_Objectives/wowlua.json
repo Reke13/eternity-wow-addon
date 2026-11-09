@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
   "package": {
     "name": "eternity-ui-objectives",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "authors": ["Jaime"],
     "license": "MIT",
     "wowlua": "^0.13"
@@ -10,7 +10,8 @@
   "addon": {
     "name": "EternityUI_Objectives",
     "title": "Eternity Quests",
-    "notes": "Eternity module: Blizzard's quest and objective tracker restyled with the Eternity look, with auto fade, hideable sections and completion feedback."
+    "notes": "Eternity module: Blizzard's quest and objective tracker restyled with the Eternity look, with auto fade, hideable sections, completion feedback and a this zone only filter.",
+    "saved-variables": ["EternityUIObjectivesDB"]
   },
   "addon-dependencies": {
     "required": ["EternityUI"]
@@ -29,6 +30,7 @@
       "src/Feedback.lua",
       "src/Sections.lua",
       "src/Position.lua",
+      "src/ZoneFilter.lua",
       "src/Objectives.lua"
     ]
   },
@@ -36,6 +38,7 @@
     "globals": [
       "EternityUI",
       "EternityUIObjectivesBlocker",
+      "EternityUIObjectivesDB",
       "ObjectiveTrackerFrame",
       "ObjectiveTrackerManager",
       "ObjectiveTrackerLineFont",

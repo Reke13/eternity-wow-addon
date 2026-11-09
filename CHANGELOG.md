@@ -2,6 +2,11 @@
 
 What changed in each release of the Eternity suite, newest first. Every addon shares the release's version.
 
+## 0.6.0 (2026-11-10)
+
+### Added
+- Objectives: a "This zone only" button beside the tracker's collapse button. One click tracks only the quests of your zone, following you as you travel; another gives your own back.
+
 ## 0.5.0 (2026-11-09)
 
 ### Added

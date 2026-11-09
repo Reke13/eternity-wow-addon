@@ -146,6 +146,19 @@ ns.OptionsSchema = {
                         esES = "Zona y nivel en el tooltip de la misión",
                     },
                 },
+                {
+                    id = "zoneButton",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "\"This zone only\" button",
+                        esES = "Botón «Solo esta zona»",
+                    },
+                    description = {
+                        enUS = "Beside the collapse button: one click leaves only the quests of your zone in the tracker, another gives yours back.",
+                        esES = "Junto al botón de plegar: un clic deja en el seguimiento solo las misiones de tu zona y otro devuelve las tuyas.",
+                    },
+                },
             },
         },
         {

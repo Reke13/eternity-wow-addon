@@ -1,0 +1,104 @@
+-- "This zone only": what it takes out and puts in, and giving it back. The quest log is made up.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Objectives"
+
+-- A made-up quest log: two zones, one quest watched in each, one unwatched in Elwynn.
+local function fakeLog()
+    local log = {
+        { isHeader = true, title = "Elwynn Forest" },
+        { questID = 101, title = "Wolves" },
+        { questID = 102, title = "Kobolds" },
+        { isHeader = true, title = "Westfall" },
+        { questID = 201, title = "Harvest Watchers" },
+    }
+    local watches = { [101] = 1, [201] = 1 }
+    local saved = C_QuestLog
+    local fake: any = setmetatable({
+        GetNumQuestLogEntries = function()
+            return #log, 3
+        end,
+        GetInfo = function(index)
+            return log[index]
+        end,
+        GetNumQuestWatches = function()
+            local count = 0
+            for _ in pairs(watches) do
+                count = count + 1
+            end
+            return count
+        end,
+        GetQuestIDForQuestWatchIndex = function()
+            return nil
+        end,
+        GetQuestWatchType = function(questID)
+            return watches[questID]
+        end,
+        AddQuestWatch = function(questID)
+            watches[questID] = 1
+            return true
+        end,
+        RemoveQuestWatch = function(questID)
+            watches[questID] = nil
+            return true
+        end,
+        IsOnMap = function()
+            return false, false
+        end,
+        IsOnQuest = function()
+            return true
+        end,
+    }, { __index = saved })
+    C_QuestLog = fake
+    return watches, function()
+        C_QuestLog = saved
+    end
+end
+
+@test("on, it leaves only the zone's quests; off, it gives yours back")
+local function filters()
+    local zoneFilter = EternityUI:GetModule(NAME).ZoneFilter
+    local watches, restore = fakeLog()
+    local zoneText = GetRealZoneText
+    local inElwynn: any = function()
+        return "Elwynn Forest"
+    end
+    GetRealZoneText = inElwynn
+    zoneFilter.active = true
+    zoneFilter.Set(true)
+    local afterOn = { watches[101] ~= nil, watches[102] ~= nil, watches[201] ~= nil }
+    zoneFilter.Set(false)
+    local afterOff = { watches[101] ~= nil, watches[102] ~= nil, watches[201] ~= nil }
+    GetRealZoneText = zoneText
+    restore()
+    expect(afterOn[1]).toBe(true)
+    expect(afterOn[2]).toBe(true)
+    expect(afterOn[3]).toBe(false)
+    expect(afterOff[1]).toBe(true)
+    expect(afterOff[2]).toBe(false)
+    expect(afterOff[3]).toBe(true)
+end
+
+@test("disabling the module gives your quests back and keeps it on for next time")
+local function disabling()
+    local zoneFilter = EternityUI:GetModule(NAME).ZoneFilter
+    local watches, restore = fakeLog()
+    local zoneText = GetRealZoneText
+    local inWestfall: any = function()
+        return "Westfall"
+    end
+    GetRealZoneText = inWestfall
+    zoneFilter.active = true
+    zoneFilter.Set(true)
+    local filtered = watches[101] == nil
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    local back = watches[101] ~= nil
+    local stillOn = zoneFilter.IsOn()
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    zoneFilter.Set(false)
+    GetRealZoneText = zoneText
+    restore()
+    expect(filtered).toBe(true)
+    expect(back).toBe(true)
+    expect(stillOn).toBe(true)
+end

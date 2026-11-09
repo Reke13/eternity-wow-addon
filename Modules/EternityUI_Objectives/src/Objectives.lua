@@ -11,6 +11,7 @@ local addonName, ns = ...
 local E = EternityUI
 local W = ns.Ui.W
 local Core, Skin, Fade, Feedback, Sections, Position = ns.Core, ns.Skin, ns.Fade, ns.Feedback, ns.Sections, ns.Position
+local ZoneFilter = ns.ZoneFilter
 
 ---@class EternityUIObjectivesModule: EternityUIModuleDefinition
 ---@field events table?
@@ -18,6 +19,7 @@ local Core, Skin, Fade, Feedback, Sections, Position = ns.Core, ns.Skin, ns.Fade
 local Module = { schema = ns.OptionsSchema }
 -- Internals reachable from the tests.
 Module.Core, Module.Skin, Module.Fade, Module.Feedback, Module.Sections = Core, Skin, Fade, Feedback, Sections
+Module.ZoneFilter = ZoneFilter
 
 --- Applies everything to the tracker, if Blizzard has made it already.
 function Module:Apply()
@@ -29,6 +31,7 @@ function Module:Apply()
     Fade:Enable(tracker)
     Sections:Apply(tracker)
     Position:Apply(tracker)
+    ZoneFilter.Apply(tracker)
 end
 
 function Module:Install()
@@ -51,6 +54,7 @@ function Module:Install()
         local tracker = Core.Tracker()
         if Core.running and tracker then
             Skin:Apply(tracker)
+            ZoneFilter.Paint()
         end
     end)
 end
@@ -78,6 +82,7 @@ function Module:OnDisable()
     Feedback:Disable()
     Fade:Disable()
     Position:Stop()
+    ZoneFilter.Stop()
     local tracker = Core.Tracker()
     Skin:Restore(tracker)
     if tracker then
@@ -108,6 +113,9 @@ function Module:OnConfigChanged(path)
         or path:find("^size%.")
     then
         Skin:Apply(tracker)
+    end
+    if path == nil or path == "info.zoneButton" then
+        ZoneFilter.Apply(tracker)
     end
 end
 
