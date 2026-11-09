@@ -216,6 +216,17 @@ local function textLook()
     set("look.textColor", "#FFFFFF")
 end
 
+@test("the font follows its option, or the theme's")
+local function fontFamily()
+    local text = display().parts.power.text
+    set("look.fontFamily", "morpheus")
+    local file = text:GetFont()
+    expect(file).toBe("Fonts\\MORPHEUS.TTF")
+    set("look.fontFamily", "theme")
+    file = text:GetFont()
+    expect(file).toBe(EternityUI.Theme.font)
+end
+
 @test("moving each part on its own swaps the Mover elements")
 local function separate()
     set("display.separate", true)

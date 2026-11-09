@@ -17,7 +17,7 @@ local function opt(path)
     return E.store:Get(addonName, path)
 end
 
---- A text with a role size, the text color and outline options and a shadow. :SetStyle(role)
+--- A text with a role size, the font, text color and outline options and a shadow. :SetStyle(role)
 --- applies them again; they also survive theme changes, which repaint the core's texts.
 ---@param parent table
 ---@return table
@@ -26,7 +26,8 @@ function UI.Text(parent)
     local holder = text.holder
     function holder.Paint()
         local outline = OUTLINES[opt("look.outline")] or ""
-        text:SetFont(Theme.font, holder.size * Theme.fontScale, outline)
+        local file, scale = Theme.Font(opt("look.fontFamily"))
+        text:SetFont(file, holder.size * scale, outline)
         local c = Theme.RGBA(opt("look.textColor"))
         text:SetTextColor(c[1], c[2], c[3], c[4])
         text:SetShadowColor(0, 0, 0, outline == "" and 0.9 or 0)

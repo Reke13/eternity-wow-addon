@@ -48,6 +48,21 @@ local FONTS = {
     skurri = { "Fonts\\skurri.ttf", 0.95 },
 }
 
+Theme.FONTS = FONTS
+
+--- A font's file and size factor: one of FONTS by key, or the theme's when the key is nil,
+--- "theme" or unknown. Lets a module use a font of its own and still follow the font size.
+---@param key string?
+---@return string file
+---@return number scale
+function Theme.Font(key)
+    local font = key and FONTS[key]
+    if font then
+        return font[1], font[2] * Theme.fontScale / (Theme.fontFactor or 1)
+    end
+    return Theme.font, Theme.fontScale
+end
+
 --- Adds a theme.
 ---@param key string
 ---@param preset table
@@ -135,6 +150,8 @@ function Theme.Reload()
     local font = FONTS[pick("appearance.font", preset.font)]
     Theme.font = font[1]
     Theme.fontScale = font[2] * option("appearance.fontScale")
+    -- The theme font's own factor, so Theme.Font can swap it for another's.
+    Theme.fontFactor = font[2]
     Theme.wallpaper = option("appearance.wallpaper") and preset.wallpaper or nil
     Theme.wallpaperDim = option("appearance.wallpaperDim")
     Theme.portraits = option("appearance.portraits") and preset.portraits or nil
