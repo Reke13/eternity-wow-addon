@@ -1,0 +1,29 @@
+-- The Filters tab.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+@test("the Filters tab builds, makes a filter and applies it to a frame")
+local function filtersTab()
+    local m = module()
+    local holder = CreateFrame("Frame", nil, UIParent)
+    holder:SetSize(700, 400)
+    local view = m.FiltersTab.Build(holder, function() end)
+    expect(view.empty:IsShown()).toBe(true)
+    view.new:Click()
+    local filter = m.Filters.All()[1]
+    expect(filter ~= nil).toBe(true)
+    expect(view.empty:IsShown()).toBe(false)
+    m.FiltersTab.AddText("1243, 21562")
+    expect(#filter.spells).toBe(2)
+    m.FiltersTab.checks[6].toggle:Click()
+    expect(filter.frames[m.FiltersTab.checks[6].def.key]).toBe(true)
+    view.delete:Click()
+    view.delete:Click()
+    expect(#m.Filters.All()).toBe(0)
+    holder:Hide()
+end

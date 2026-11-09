@@ -29,3 +29,49 @@ local function theme()
     EternityUI.store:Set("EternityUI", "appearance.corners", "round")
     expect(EternityUI.Theme.radius).toBe(12)
 end
+
+@test("the background images guide opens with the AI request ready to copy")
+local function wallpaperGuide()
+    local guide = EternityUI.WallpaperGuide
+    guide.Toggle()
+    local w = guide.window
+    expect(w:IsShown()).toBe(true)
+    local prompt = w.prompt:GetText()
+    expect(prompt:find("Options.tga", 1, true) ~= nil).toBe(true)
+    expect(prompt:find("Quests.tga", 1, true) ~= nil).toBe(true)
+    expect(prompt:find("Bags.tga", 1, true) ~= nil).toBe(true)
+    expect(prompt:find("EternityUI_Wallpapers", 1, true) ~= nil).toBe(true)
+    guide.Toggle()
+    expect(w:IsShown()).toBe(false)
+end
+
+@test("the Appearance tab scrolls inside the window, with the note under its last row")
+local function lookScrolls()
+    local window = EternityUI.OptionsWindow
+    window.Toggle()
+    local page = window.pages[1]
+    window.Show(page)
+    page.Select("appearance")
+    local scroll = page.tabs.appearance
+    local child = scroll.child
+    expect(scroll:IsShown()).toBe(true)
+    -- The content is as wide as the scroll (less its bar), so the rows keep their controls.
+    expect(math.floor(child:GetWidth() + 0.5)).toBe(math.floor(scroll:GetWidth() - 12 + 0.5))
+    -- Every row is in the scroll's content, which is as tall as the rows and the note.
+    local rows = 0
+    for _, region in ipairs({ child:GetChildren() }) do
+        if region:IsShown() and region:GetHeight() == 44 then
+            rows = rows + 1
+        end
+    end
+    expect(rows >= 15).toBe(true)
+    expect(child:GetHeight() > rows * 44).toBe(true)
+    local _, _, _, _, y = child.note:GetPoint(1)
+    expect(y <= -rows * 44).toBe(true)
+    -- What doesn't fit is reached by scrolling, and the search scrolls to a row.
+    scroll:SetHeight(300)
+    page.Reveal("appearance.portraits")
+    expect(scroll:GetVerticalScroll() > 0).toBe(true)
+    window.Toggle()
+end
+

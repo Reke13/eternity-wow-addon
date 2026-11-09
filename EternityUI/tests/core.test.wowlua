@@ -91,3 +91,27 @@ local function needsReload()
     expect(module.active).toBe(true)
     expect(module.reloadPending).toBe(true)
 end
+
+@test("the shipped fonts are in the theme's list, by key")
+local function shippedFonts()
+    local Theme = EternityUI.Theme
+    for _, key in ipairs({ "roboto", "opensans", "quicksand", "orbitron", "cormorant" }) do
+        local file = Theme.Font(key)
+        expect(file:find("media\\fonts\\", 1, true) ~= nil).toBe(true)
+    end
+end
+
+@test("your own image wins over the theme's in its place, and only there")
+local function ownWallpaper()
+    local Theme, store = EternityUI.Theme, EternityUI.store
+    store:Set("EternityUI", "appearance.wallpaperChat", true)
+    local image = Theme.WallpaperFor("chat")
+    expect(image.file).toBe("Chat")
+    expect(Theme.WallpaperFor("quests") == Theme.OWN_WALLPAPERS.quests).toBe(false)
+    store:Set("EternityUI", "appearance.wallpaperChat", false)
+    expect(Theme.WallpaperFor("chat") == Theme.OWN_WALLPAPERS.chat).toBe(false)
+    store:Set("EternityUI", "appearance.wallpaperBags", true)
+    expect(Theme.WallpaperFor("bags").file).toBe("Bags")
+    store:Set("EternityUI", "appearance.wallpaperBags", false)
+    expect(Theme.WallpaperFor("bags")).toBe(nil)
+end

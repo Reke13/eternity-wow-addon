@@ -15,3 +15,22 @@ local function cycle()
     EternityUI.store:SetModuleEnabled(NAME, true)
     expect(EternityUI:GetModule(NAME).active).toBe(true)
 end
+
+@test("your own image shows behind the bags when switched on, as see-through as the window")
+local function ownWallpaper()
+    OpenAllBags()
+    local module = EternityUI:GetModule(NAME)
+    local w = module.bags.frame
+    local store = EternityUI.store
+    expect(w.wallpaper ~= nil).toBe(true)
+    expect(w.wallpaper.photo:IsShown()).toBe(false)
+    store:Set("EternityUI", "appearance.wallpaperBags", true)
+    expect(w.wallpaper.photo:IsShown()).toBe(true)
+    local opacity = store:Get(NAME, "window.opacity")
+    store:Set(NAME, "window.opacity", 0.5)
+    expect(math.floor(w.wallpaper.photo:GetAlpha() * 100 + 0.5)).toBe(50)
+    store:Set(NAME, "window.opacity", opacity)
+    store:Set("EternityUI", "appearance.wallpaperBags", false)
+    expect(w.wallpaper.photo:IsShown()).toBe(false)
+    CloseAllBags()
+end

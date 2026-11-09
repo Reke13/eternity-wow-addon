@@ -46,7 +46,28 @@ local FONTS = {
     friz = { "Fonts\\FRIZQT__.TTF", 0.87 },
     morpheus = { "Fonts\\MORPHEUS.TTF", 1.05 },
     skurri = { "Fonts\\skurri.ttf", 0.95 },
+    -- Shipped in media/fonts (Google Fonts, SIL Open Font License: see media/fonts).
+    roboto = { Theme.MEDIA .. "fonts\\Roboto-Regular.ttf", 0.88 },
+    opensans = { Theme.MEDIA .. "fonts\\OpenSans-Regular.ttf", 0.85 },
+    quicksand = { Theme.MEDIA .. "fonts\\Quicksand-Regular.ttf", 0.9 },
+    orbitron = { Theme.MEDIA .. "fonts\\Orbitron-Regular.ttf", 0.78 },
+    cormorant = { Theme.MEDIA .. "fonts\\Cormorant-Regular.ttf", 1.05 },
 }
+
+Theme.FONTS = FONTS
+
+--- A font's file and size factor: one of FONTS by key, or the theme's when the key is nil,
+--- "theme" or unknown. Lets a module use a font of its own and still follow the font size.
+---@param key string?
+---@return string file
+---@return number scale
+function Theme.Font(key)
+    local font = key and FONTS[key]
+    if font then
+        return font[1], font[2] * Theme.fontScale / (Theme.fontFactor or 1)
+    end
+    return Theme.font, Theme.fontScale
+end
 
 --- Adds a theme.
 ---@param key string
@@ -135,6 +156,8 @@ function Theme.Reload()
     local font = FONTS[pick("appearance.font", preset.font)]
     Theme.font = font[1]
     Theme.fontScale = font[2] * option("appearance.fontScale")
+    -- The theme font's own factor, so Theme.Font can swap it for another's.
+    Theme.fontFactor = font[2]
     Theme.wallpaper = option("appearance.wallpaper") and preset.wallpaper or nil
     Theme.wallpaperDim = option("appearance.wallpaperDim")
     Theme.portraits = option("appearance.portraits") and preset.portraits or nil
@@ -195,6 +218,28 @@ function Theme.PaintWindow(shape)
     end
 end
 
+-- Your own images, one per place, in Interface\AddOns\EternityUI_Wallpapers (a folder of its own,
+-- so updating Eternity never deletes them). Each is named after where it shows, and the image is
+-- cropped to the place's shape as if it had the aspect given (width / height), its recommended
+-- size. Switched on in General > Appearance.
+Theme.OWN_WALLPAPERS = {
+    window = { file = "Options", aspect = 1030 / 655, option = "appearance.wallpaperOptions" },
+    chat = { file = "Chat", aspect = 2, option = "appearance.wallpaperChat" },
+    quests = { file = "Quests", aspect = 1 / 2, option = "appearance.wallpaperQuests" },
+    bags = { file = "Bags", aspect = 1, option = "appearance.wallpaperBags" },
+}
+
+--- The image a place shows: your own if it's switched on, else the theme's (if it has one).
+---@param slot string "window", "chat", "quests" or "bags"
+---@return table? { file, aspect }
+function Theme.WallpaperFor(slot)
+    local own = Theme.OWN_WALLPAPERS[slot]
+    if own and option(own.option) then
+        return own
+    end
+    return Theme.wallpaper and Theme.wallpaper[slot] or nil
+end
+
 --- Adds a wallpaper to a frame: a photo over its shape's fill and a veil that keeps text readable.
 ---@param frame table
 ---@return table wallpaper
@@ -211,10 +256,10 @@ end
 --- Paints a wallpaper for the current theme, covering the frame without stretching the photo. It
 --- stays inside the shape's rounded corners. Hidden when the theme has no image for the slot.
 ---@param wallpaper table from Theme.NewWallpaper
----@param slot string window or chat
+---@param slot string window, chat, quests or bags
 ---@param visible boolean? false hides it whatever the theme says
 function Theme.PaintWallpaper(wallpaper, slot, visible)
-    local image = visible ~= false and Theme.wallpaper and Theme.wallpaper[slot]
+    local image = visible ~= false and Theme.WallpaperFor(slot)
     wallpaper.photo:SetShown(image and true or false)
     wallpaper.veil:SetShown(image and true or false)
     local frame = wallpaper.frame

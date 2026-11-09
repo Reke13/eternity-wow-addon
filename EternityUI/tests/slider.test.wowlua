@@ -1,0 +1,39 @@
+-- Sliders: the value can also be typed, exact.
+import test, expect from "wowlua:test"
+
+local Widgets = EternityUI.Widgets
+
+@test("a typed value is read as the readout shows it, on a step and between the limits")
+local function parse()
+    local parse = Widgets.ParseSliderValue
+    expect(parse("230", 40, 400, 1, "220")).toBe(230)
+    expect(parse("231.4", 40, 400, 1, "220")).toBe(231)
+    expect(parse("999", 40, 400, 1, "220")).toBe(400)
+    expect(parse("5", 40, 400, 1, "220")).toBe(40)
+    expect(parse("0,35", 0, 1, 0.05, "0.70")).toBe(0.35)
+    expect(parse("75%", 0.6, 1, 0.02, "92%")).toBe(0.76)
+    expect(parse("abc", 0, 10, 1, "5") == nil).toBe(true)
+end
+
+@test("clicking the value lets you type it, and Enter applies it")
+local function typed()
+    local got
+    local slider = Widgets.Slider(UIParent, 0, 100, 1, function(v)
+        return string.format("%.0f", v)
+    end, function(v)
+        got = v
+    end)
+    slider:SetValue(20)
+    slider.hit:Click()
+    expect(slider.edit:IsShown()).toBe(true)
+    slider.edit:SetText("63")
+    slider.edit:GetScript("OnEnterPressed")(slider.edit)
+    expect(got).toBe(63)
+    expect(slider.readout:GetText()).toBe("63")
+    expect(slider.edit:IsShown()).toBe(false)
+    slider.hit:Click()
+    slider.edit:SetText("10")
+    slider.edit:GetScript("OnEscapePressed")(slider.edit)
+    expect(got).toBe(63)
+    expect(slider.readout:GetText()).toBe("63")
+end

@@ -3,7 +3,10 @@
 import test, beforeEach, expect from "wowlua:test"
 
 local NAME = "EternityUI_Automation"
-local Config = EternityUI.store
+-- The store is made at PLAYER_LOGIN, after this file loads: read it when a test runs.
+local function Config()
+    return EternityUI.store
+end
 
 local function core(): any
     return EternityUI:GetModule(NAME).Core
@@ -27,9 +30,9 @@ end
 
 @beforeEach
 local function reset()
-    Config:UseProfile("Default")
-    Config:SetModuleEnabled(NAME, true)
-    Config:Reset(NAME)
+    Config():UseProfile("Default")
+    Config():SetModuleEnabled(NAME, true)
+    Config():Reset(NAME)
 end
 
 @test("repair uses guild funds first and falls back to your gold")
@@ -125,9 +128,9 @@ local function report()
     local Core = core()
     -- @accentText of Midnight: #8B5CF6 mixed 40 % with white.
     expect(Core.FormatReport("Hi")).toBe("|cffB99DFAEternity: Hi|r")
-    Config:Set(NAME, "messages.prefix", false)
-    Config:Set(NAME, "messages.color", "#FF000080")
+    Config():Set(NAME, "messages.prefix", false)
+    Config():Set(NAME, "messages.color", "#FF000080")
     expect(Core.FormatReport("Hi")).toBe("|cffFF0000Hi|r")
-    Config:Set(NAME, "messages.report", false)
+    Config():Set(NAME, "messages.report", false)
     expect(Core.FormatReport("Hi")).toBe(nil)
 end

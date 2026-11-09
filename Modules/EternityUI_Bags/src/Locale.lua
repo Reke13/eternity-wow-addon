@@ -5,6 +5,7 @@
 ---@field OptionsSchema table schema generated from options.json (src/Generated/Options.lua)
 ---@field L table<string, string> texts in the client's language
 ---@field Inventory EternityUIBagsInventory what every character carries (Inventory.lua)
+---@field Locks EternityUIBagsLocks locked slots and the sort around them (Locks.lua)
 
 ---@type string, EternityUIBagsNamespace
 local _, ns = ...
@@ -36,6 +37,10 @@ local strings = {
         REAGENTS = "Reagents",
         KEYRING = "Keyring",
         KEYRING_HINT = "Show or hide the keyring in the bags",
+        LOCK = "Lock items",
+        LOCK_HINT = "Then click an item to lock it (or unlock it): Sort leaves it where it is. Click the padlock again, or right-click, to finish.",
+        SORT_COMBAT = "the bags can't be sorted in combat.",
+        SORT_STOPPED = "the sort stopped: an item didn't move. Press Sort again to go on.",
         BAG_N = "Bag %d",
         TAB_N = "Tab %d",
         NO_TABS = "This bank has no tabs yet",
@@ -88,6 +93,10 @@ local strings = {
         REAGENTS = "Componentes",
         KEYRING = "Llavero",
         KEYRING_HINT = "Muestra u oculta el llavero en las bolsas",
+        LOCK = "Bloquear objetos",
+        LOCK_HINT = "Después haz clic en un objeto para bloquearlo (o desbloquearlo): Ordenar lo deja donde está. Vuelve a pulsar el candado, o haz clic derecho, para terminar.",
+        SORT_COMBAT = "las bolsas no se pueden ordenar en combate.",
+        SORT_STOPPED = "se ha parado la ordenación: un objeto no se movía. Pulsa Ordenar otra vez para seguir.",
         BAG_N = "Bolsa %d",
         TAB_N = "Pestaña %d",
         NO_TABS = "Este banco aún no tiene pestañas",

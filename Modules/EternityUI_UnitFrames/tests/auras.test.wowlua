@@ -1,0 +1,131 @@
+-- Aura filters and where the buff and debuff icons go.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function set(path, value)
+    EternityUI.store:Set(NAME, path, value)
+end
+
+@test("party filters build the game's filter strings and the container's candidate filters")
+local function partyFilters()
+    local groups = module().AuraBox.Groups
+    set("partyDebuffs.enabled", true)
+    set("partyDebuffs.dispellable", true)
+    set("partyDebuffs.origin", "others")
+    set("partyDebuffs.crowdControl", "hide")
+    set("partyDebuffs.poison", false)
+    local g = groups("party")
+    expect(g.debuffMain.filter).toBe("HARMFUL|!PLAYER|RAID|!CROWD_CONTROL")
+    expect(g.debuffMain.candidate.excludeDispelTypes.Poison).toBe(true)
+    expect(g.debuffMain.candidate.excludeDispelTypes.Magic == nil).toBe(true)
+    set("partyDebuffs.untyped", false)
+    g = groups("party")
+    expect(g.debuffMain.candidate.includeDispelTypes.Magic).toBe(true)
+    expect(g.debuffMain.candidate.includeDispelTypes.Poison == nil).toBe(true)
+    for _, id in ipairs({ "dispellable", "poison", "untyped" }) do
+        EternityUI.store:Set(NAME, "partyDebuffs." .. id, id ~= "dispellable")
+    end
+    set("partyDebuffs.origin", "all")
+    set("partyDebuffs.crowdControl", "show")
+end
+
+@test("filters: their spells show first on the frames they apply to, and can be all you see")
+local function buffFilters()
+    local m = module()
+    local Filters, groups = m.Filters, m.AuraBox.Groups
+    set("partyBuffs.enabled", true)
+    set("partyBuffs.hide", "21562")
+    local filter = Filters.Create("Healers")
+    Filters.Add(filter, 1243)
+    Filters.Add(filter, 1244)
+    Filters.SetMine(filter, 1244, true)
+    local g = groups("party")
+    expect(g.buffAlways.enabled).toBe(false)
+    Filters.SetFrame(filter, "party", true)
+    g = groups("party")
+    expect(g.buffAlways.enabled).toBe(true)
+    expect(g.buffAlways.candidate.includeSpellIDs[1243]).toBe(true)
+    expect(g.buffMine.candidate.includeSpellIDs[1244]).toBe(true)
+    expect(g.buffMine.filter).toBe("HELPFUL|PLAYER")
+    expect(g.buffMain.candidate.excludeSpellIDs[1243]).toBe(true)
+    expect(g.buffMain.candidate.excludeSpellIDs[21562]).toBe(true)
+    expect(groups("raid").buffAlways.enabled).toBe(false)
+    set("partyBuffs.onlyList", true)
+    expect(groups("party").buffMain.enabled).toBe(false)
+    set("partyBuffs.onlyList", false)
+    Filters.SetEnabled(filter, 1243, false)
+    expect(groups("party").buffAlways.enabled).toBe(false)
+    expect(Filters.Create("Healers").name).toBe("Healers 2")
+    for _, f in ipairs({ Filters.All()[1], Filters.All()[2] }) do
+        Filters.Delete(f)
+    end
+    expect(#Filters.All()).toBe(0)
+    set("partyBuffs.hide", "")
+    set("partyBuffs.enabled", false)
+end
+
+@test("each frame gets Blizzard's aura container when the client has it")
+local function containers()
+    local m = module()
+    local f = m.holders.target.button
+    if m.AuraBox.missing then
+        return
+    end
+    expect(f.auraContainer ~= nil).toBe(true)
+    local child = m.holders.party.header:GetAttribute("child1")
+    expect(child.auraContainer ~= nil).toBe(true)
+end
+
+@test("buffs and debuffs go where each option says, and stack when they share a place")
+local function auraPlaces()
+    local m = module()
+    local f = m.holders.target.button
+    if m.AuraBox.missing then
+        return
+    end
+    set("targetAuras.buffPosition", "left")
+    set("targetAuras.debuffPosition", "right")
+    local point, relative, to = f.auraBoxes.buffs:GetPoint(1)
+    expect(point).toBe("TOPRIGHT")
+    expect(relative == f and to == "TOPLEFT").toBe(true)
+    point, relative, to = f.auraBoxes.debuffs:GetPoint(1)
+    expect(point).toBe("TOPLEFT")
+    expect(to).toBe("TOPRIGHT")
+    set("targetAuras.buffPosition", "below")
+    set("targetAuras.debuffPosition", "below")
+    local _, _, _, _, debuffY = f.auraBoxes.debuffs:GetPoint(1)
+    local _, _, _, _, buffY = f.auraBoxes.buffs:GetPoint(1)
+    expect(buffY < debuffY).toBe(true)
+end
+
+@test("the aura containers refresh when someone else is behind the same unit")
+local function freshAuras()
+    local m = module()
+    local f = m.holders.player.button
+    if m.AuraBox.missing or not f.auraContainers then
+        return
+    end
+    local calls = 0
+    local container = f.auraContainers.buffs
+    local update = container.UpdateAllAuras
+    ---@type any
+    local count = function(self)
+        calls = calls + 1
+        return update(self)
+    end
+    container.UpdateAllAuras = count
+    f.auraStamp = nil
+    m.Elements.UpdateAuras(f)
+    expect(calls).toBe(1)
+    m.Elements.UpdateAuras(f)
+    expect(calls).toBe(1)
+    f.auraStamp = "someone else"
+    m.Elements.UpdateAuras(f)
+    expect(calls).toBe(2)
+    container.UpdateAllAuras = update
+end

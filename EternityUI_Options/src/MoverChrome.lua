@@ -11,7 +11,7 @@ local Widgets = E.Widgets
 local Chrome = {}
 ns.MoverChrome = Chrome
 
-local toolbar, panel, gridButton, snapButton
+local toolbar, panel, gridButton, snapButton, elementsButton
 
 local function session()
     return ns.MoverSession
@@ -60,6 +60,8 @@ local function draggable(frame, root, key, home)
     end)
     place()
 end
+
+Chrome.Draggable = draggable
 
 -- A column of dots at the toolbar's left: where to grab it.
 local function grip(frame)
@@ -111,6 +113,14 @@ local function buildToolbar(root)
         ns.MoverScene.snap = not ns.MoverScene.snap
         ns.MoverScene.Refresh()
     end))
+    -- Which elements get a handle (MoverElements.lua): only the Mover, never the game.
+    elementsButton = add(Widgets.Button(toolbar, L.MOVER_ELEMENTS, "nav", function()
+        ns.MoverElements.Toggle(root)
+    end))
+    Widgets.AttachTooltip(elementsButton, function(tip)
+        tip:SetTitle(L.MOVER_ELEMENTS)
+        tip:AddLine(L.MOVER_ELEMENTS_HINT, "textMuted")
+    end)
     add(Widgets.Button(toolbar, L.MOVER_UNDO, "ghost", session().Undo))
     add(Widgets.Button(toolbar, L.MOVER_REDO, "ghost", session().Redo))
     add(Widgets.Button(toolbar, L.MOVER_DISCARD, "ghost", session().Discard))
@@ -256,6 +266,7 @@ end
 function Chrome.Refresh()
     gridButton:SetActive(ns.MoverScene.showGrid)
     snapButton:SetActive(ns.MoverScene.snap)
+    elementsButton:SetActive(ns.MoverElements.IsOpen())
     local key = session().selected
     local element = key and Mover.elements[key]
     panel:SetShown(element ~= nil)

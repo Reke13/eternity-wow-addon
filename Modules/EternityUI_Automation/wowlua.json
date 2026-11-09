@@ -29,6 +29,7 @@
       "src/Death.lua",
       "src/Quests.lua",
       "src/Loot.lua",
+      "src/Mail.lua",
       "src/Cinematics.lua",
       "src/Automation.lua"
     ]

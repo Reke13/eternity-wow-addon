@@ -1,6 +1,8 @@
 -- The module's "Errors" tab in the options: errors on the left, newest first, and the chosen
 -- one on the right in full (message, stack and locals) in a text box that can be selected and
--- copied. It fills the tab's height and scrolls inside. Filters last until the /reload.
+-- copied. It fills the tab's height and scrolls inside. Every login and /reload is a new session,
+-- so the list shows every session unless another is picked; the pick is saved (EternityUIBugsDB),
+-- the text search lasts until the /reload.
 
 ---@type string, EternityUIBugsNamespace
 local addonName, ns = ...
@@ -30,9 +32,39 @@ local List = {
     TAB = TAB,
     rows = {},
     view = {},
-    filter = { text = "", session = "current" },
+    filter = { text = "", session = "all" },
 }
 ns.List = List
+
+--- True if `session` is one of the list's session filters.
+---@param session any
+local function knownSession(session)
+    for _, known in ipairs(SESSIONS) do
+        if known == session then
+            return true
+        end
+    end
+    return false
+end
+
+--- The session filter saved with the log ("all" when none or unknown).
+---@return string
+function List.SavedSession()
+    Recorder.Bind()
+    local saved = Recorder.db.listSession
+    return knownSession(saved) and saved or "all"
+end
+
+--- Picks the session filter and saves it with the log.
+---@param session string
+function List.SetSession(session)
+    if not knownSession(session) then
+        return
+    end
+    Recorder.Bind()
+    List.filter.session = session
+    Recorder.db.listSession = session
+end
 
 local function firstLine(text)
     return (text:match("^[^\n]*") or text)
@@ -275,6 +307,7 @@ function List.Build(parent, setHeight)
     v:SetPoint("TOPLEFT")
     v:SetPoint("TOPRIGHT")
     List.frame = v
+    List.filter.session = List.SavedSession()
     local area = parent:GetParent()
     local function fit()
         local height = math.max(area:GetHeight() - 4, 200)
@@ -294,7 +327,7 @@ function List.Build(parent, setHeight)
             entries[i] = {
                 text = L["SESSION_" .. session],
                 onClick = function()
-                    List.filter.session = session
+                    List.SetSession(session)
                     v.list:ScrollTo(0)
                     List.Refresh()
                 end,

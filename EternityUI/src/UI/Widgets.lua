@@ -242,7 +242,37 @@ function Widgets.Toggle(parent, onChange)
     return Widgets.Track(toggle)
 end
 
---- A slider with its value at the right. format turns the value into text.
+--- The value typed in a slider's box: a number, as the readout shows it ("75%" is 0.75 when the
+--- slider goes up to 1; "1,5" works as "1.5"), kept between min and max and on a step.
+---@param text string
+---@param min number
+---@param max number
+---@param step number
+---@param shown string the readout's text now (tells whether it's a percent)
+---@return number?
+function Widgets.ParseSliderValue(text, min, max, step, shown)
+    local number = tonumber((tostring(text or ""):gsub(",", "."):match("%-?%d+%.?%d*") or ""))
+    if not number then
+        return nil
+    end
+    if tostring(shown or ""):find("%%") and max <= 1 then
+        number = number / 100
+    end
+    if step and step > 0 then
+        number = min + math.floor((number - min) / step + 0.5) * step
+        -- Steps like 0.05 leave float noise: round to the step's decimals.
+        local decimals = tostring(step):match("%.(%d+)")
+        if decimals then
+            local factor = 10 ^ #decimals
+            number = math.floor(number * factor + 0.5) / factor
+        end
+    end
+    return math.min(math.max(number, min), max)
+end
+
+--- A slider with its value at the right. format turns the value into text. A click on the value
+--- turns it into a box to type an exact number (Enter applies it, Esc or a click elsewhere
+--- leaves it as it was).
 ---@param parent table
 ---@param min number
 ---@param max number
@@ -271,6 +301,55 @@ function Widgets.Slider(parent, min, max, step, format, onChange)
     holder.readout = Widgets.Text(holder, 14, "muted")
     holder.readout:SetPoint("RIGHT")
 
+    -- The value as a box to type in, over the readout while editing.
+    local edit = CreateFrame("EditBox", nil, holder)
+    edit:SetSize(46, 20)
+    edit:SetPoint("RIGHT", 2, 0)
+    edit:SetAutoFocus(false)
+    edit:SetJustifyH("RIGHT")
+    edit:SetTextInsets(2, 4, 0, 0)
+    edit:SetMaxLetters(12)
+    edit.shape = Shape.New(edit)
+    edit:Hide()
+    holder.edit = edit
+    local hit = CreateFrame("Button", nil, holder)
+    hit:SetPoint("TOPLEFT", holder.readout, "TOPLEFT", -6, 4)
+    hit:SetPoint("BOTTOMRIGHT", holder.readout, "BOTTOMRIGHT", 4, -4)
+    holder.hit = hit
+    local function stopEditing()
+        edit:Hide()
+        holder.readout:Show()
+        hit:Show()
+    end
+    hit:SetScript("OnClick", function()
+        edit:SetText(holder.readout:GetText() or "")
+        holder.readout:Hide()
+        hit:Hide()
+        edit:Show()
+        edit:SetFocus()
+        edit:HighlightText()
+    end)
+    hit:SetScript("OnEnter", function()
+        setColor(holder.readout, Theme.colors.text)
+    end)
+    hit:SetScript("OnLeave", function()
+        setColor(holder.readout, Theme.colors.textMuted or Theme.colors.muted)
+    end)
+    edit:SetScript("OnEnterPressed", function(self)
+        local value = Widgets.ParseSliderValue(self:GetText(), min, max, step, holder.readout:GetText())
+        self:ClearFocus()
+        stopEditing()
+        if value then
+            holder:SetValue(value)
+            onChange(value)
+        end
+    end)
+    edit:SetScript("OnEscapePressed", function(self)
+        self:ClearFocus()
+        stopEditing()
+    end)
+    edit:SetScript("OnEditFocusLost", stopEditing)
+
     function holder:SetValue(value)
         self.silent = true
         slider:SetValue(value)
@@ -280,6 +359,9 @@ function Widgets.Slider(parent, min, max, step, format, onChange)
 
     function holder:Paint()
         self.thumb:SetColorTexture(Theme.accent[1], Theme.accent[2], Theme.accent[3], 1)
+        edit:SetFont(Theme.font, 14 * Theme.fontScale, "")
+        setColor(edit, Theme.colors.text)
+        Shape.Paint(edit.shape, math.min(Theme.radius, 4), Theme.colors.hover, Theme.colors.line)
     end
 
     slider:SetScript("OnValueChanged", function(_, value, byUser)

@@ -24,6 +24,7 @@
       "src/Locale.lua",
       "src/Window.lua",
       "src/PageLook.lua",
+      "src/WallpaperGuide.lua",
       "src/PageMover.lua",
       "src/PageProfiles.lua",
       "src/PageModules.lua",
@@ -32,6 +33,7 @@
       "src/MoverSession.lua",
       "src/MoverScene.lua",
       "src/MoverHandles.lua",
+      "src/MoverElements.lua",
       "src/MoverChrome.lua"
     ]
   },

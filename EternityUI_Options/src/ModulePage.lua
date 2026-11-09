@@ -370,8 +370,18 @@ local function build(page, frame)
     label:SetPoint("RIGHT", page.enabled, "LEFT", -10, 0)
     label:SetText(L.ENABLED)
 
+    -- Mover with only this module's elements, while it has some (the usual Mover isn't touched).
+    page.mover = Widgets.Button(frame, L.MOVER_THIS, "ghost", function()
+        ns.MoverSession.OpenFor(module.name)
+    end)
+    page.mover:SetPoint("RIGHT", label, "LEFT", -14, 0)
+    Widgets.AttachTooltip(page.mover, function(tip)
+        tip:SetTitle(L.MOVER_THIS)
+        tip:AddLine(L.MOVER_THIS_HINT, "textMuted")
+    end)
+
     -- Buttons the module adds beside the switch: { text, onClick }.
-    local anchor = label
+    local anchor = page.mover
     for _, action in ipairs(module.actions or {}) do
         local button = Widgets.Button(frame, action.text, "ghost", action.onClick)
         button:SetPoint("RIGHT", anchor, "LEFT", -14, 0)
@@ -443,6 +453,7 @@ function ModulePage.AddAll()
                     return
                 end
                 page.enabled:SetValue(E.store:IsModuleEnabled(module.name))
+                page.mover:SetShown(ns.MoverSession.HasElements(module.name))
                 for _, list in ipairs(page.lists) do
                     refreshList(list, module)
                 end

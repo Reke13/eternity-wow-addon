@@ -5,6 +5,8 @@
 --     ("Characters" in its footer), and a window built by the same code as the bank shows what
 --     was saved of a bank (this character's from anywhere, another's, or the guild bank). Their
 --     buttons are plain ItemButtons with the same look: nothing in them can be used.
+--   * Padlock (footer): while it's on, a click on an item locks its slot (Locks.lua), and Sort
+--     then leaves the locked slots alone.
 --   * The item buttons are Blizzard's (ContainerFrameItemButtonTemplate): clicks, drag, use,
 --     sell, split and tooltips work exactly as in Blizzard's bags; only their look changes.
 --   * Blizzard decides when bags open and close (vendor, mailbox, bank, keys...): its frames
@@ -18,7 +20,8 @@
 local addonName, ns = ...
 local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
-local L, Inventory, Viewer = ns.L, ns.Inventory, ns.Viewer
+local L, Inventory, Viewer, Locks = ns.L, ns.Inventory, ns.Viewer, ns.Locks
+local LOCK_ICON = "Interface\\PetBattles\\PetBattle-LockIcon"
 
 local QUALITY_FROM = { poor = 0, common = 1, uncommon = 2, rare = 3, epic = 4 }
 local QUEST_COLOR = { 1, 0.82, 0.2, 1 }
@@ -60,6 +63,7 @@ local RELAYOUT = {
 local Module = {
     schema = ns.OptionsSchema,
     inventory = Inventory, -- for the tests
+    locks = Locks,
     viewer = ns.Viewer,
 }
 
@@ -131,6 +135,10 @@ local function skinButton(b)
     b.etBorder = Shape.New(b, "OVERLAY", 5)
     b.etLevel = b:CreateFontString(nil, "OVERLAY")
     b.etLevel:SetFont(Theme.font, 12, "OUTLINE")
+    b.etLock = b:CreateTexture(nil, "OVERLAY", nil, 6)
+    b.etLock:SetTexture(LOCK_ICON)
+    b.etLock:SetSize(14, 14)
+    b.etLock:Hide()
     local normal = b:GetNormalTexture()
     if normal then
         normal:SetAlpha(0)
@@ -196,6 +204,10 @@ local function styleButton(b, size)
         corner:find("LEFT") and inset or (corner:find("RIGHT") and -inset or 0),
         corner:find("TOP") and -inset or (corner:find("BOTTOM") and inset or 0)
     )
+    -- The padlock of a locked slot: bottom left, or top left when the item level is there.
+    local lockCorner = corner == "BOTTOMLEFT" and "TOPLEFT" or "BOTTOMLEFT"
+    b.etLock:ClearAllPoints()
+    b.etLock:SetPoint(lockCorner, 1, lockCorner == "TOPLEFT" and -1 or 1)
     if b.IconBorder then
         b.IconBorder:SetAlpha(opt("quality.border") and 0 or 1)
     end
@@ -278,6 +290,7 @@ local function updateButton(b, tooltipOwner)
         end
     end
     b.etLevel:SetShown(level and true or false)
+    b.etLock:SetShown(Locks.Is(bag, slot))
 end
 
 -- Grid: one window (bags or bank) -----------------------------------------------------------
@@ -728,12 +741,14 @@ function Grid:PlaceBagsFooter()
     end
     self.savedBank:ClearAllPoints()
     self.savedBank:SetPoint("LEFT", self.others, "RIGHT", 4, 0)
+    self.lock:ClearAllPoints()
+    self.lock:SetPoint("LEFT", self.savedBank, "RIGHT", 4, 0)
 end
 
 --- The width the footer's shown pieces take, with their gaps and the edges.
 function Grid:FooterWidth()
     local total = 24
-    for _, piece in ipairs({ self.money, self.savedBank, self.keyring, self.free, self.deposit, self.blizzard, self.guild, self.others, self.character }) do
+    for _, piece in ipairs({ self.money, self.savedBank, self.lock, self.keyring, self.free, self.deposit, self.blizzard, self.guild, self.others, self.character }) do
         if piece and piece:IsShown() then
             local width = piece.GetStringWidth and piece:GetStringWidth() or piece:GetWidth()
             total = total + width + 12
@@ -745,6 +760,13 @@ end
 function Grid:UpdateFooter()
     if self.kind == "bags" then
         self:PlaceBagsFooter()
+    end
+    if self.lock then
+        -- Only this character's own bags and bank can be locked.
+        self.lock:SetShown(not self:IsSaved())
+        if not self.lock:IsShown() then
+            self:SetLockMode(false)
+        end
     end
     if self:IsSaved() then
         local free, total = 0, 0
@@ -818,6 +840,11 @@ function Grid:UpdateFooter()
 end
 
 function Grid:Sort()
+    -- Blizzard's sort can't skip a slot: with locked slots, ours (Locks.lua).
+    if Locks.Any(self:Bags()) then
+        Locks.Sort(self)
+        return
+    end
     if self.kind == "bank" then
         if C_Container.SortBank and self.bankType then
             C_Container.SortBank(self.bankType)
@@ -836,6 +863,93 @@ function Grid:Sort()
     if set and previous ~= nil then
         set(previous)
     end
+end
+
+--- The item button under the mouse, or nil.
+function Grid:HoveredButton()
+    for _, list in pairs(self.buttons) do
+        for _, b in pairs(list) do
+            if b:IsVisible() and b:IsMouseOver() then
+                return b
+            end
+        end
+    end
+    return nil
+end
+
+--- Lock mode: a layer over the items takes the clicks, so a click locks or unlocks a slot instead
+--- of using the item (the item buttons are Blizzard's and aren't touched).
+function Grid:SetLockMode(on)
+    on = on and true or false
+    if (self.lockMode or false) == on or not self.lock then
+        return
+    end
+    self.lockMode = on
+    local layer = self.lockLayer
+    if not layer then
+        layer = CreateFrame("Button", nil, self.frame.body)
+        layer:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        layer.hover = layer:CreateTexture(nil, "OVERLAY")
+        layer.hover:SetColorTexture(1, 1, 1, 0.18)
+        layer.hover:Hide()
+        layer:SetScript("OnClick", function(_, button)
+            if button == "RightButton" then
+                self:SetLockMode(false)
+                return
+            end
+            local b = self:HoveredButton()
+            if b then
+                Locks.Toggle(b:GetBagID(), b:GetID())
+                self:Refresh()
+            end
+        end)
+        -- A padlock follows the mouse over the items, so it's clear clicks lock instead of use.
+        local cursor = CreateFrame("Frame", nil, UIParent)
+        cursor:SetFrameStrata("TOOLTIP")
+        cursor:SetSize(20, 20)
+        cursor:EnableMouse(false)
+        cursor.icon = cursor:CreateTexture(nil, "OVERLAY")
+        cursor.icon:SetAllPoints()
+        cursor.icon:SetTexture(LOCK_ICON)
+        cursor:Hide()
+        layer.cursor = cursor
+        layer:SetScript("OnUpdate", function()
+            if layer:IsMouseOver() then
+                local x, y = GetCursorPosition()
+                local scale = UIParent:GetEffectiveScale()
+                cursor:ClearAllPoints()
+                cursor:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / scale + 14, y / scale - 10)
+                cursor:Show()
+            else
+                cursor:Hide()
+            end
+            local b = self:HoveredButton()
+            if b ~= layer.target then
+                layer.target = b
+                layer.hover:ClearAllPoints()
+                if b then
+                    layer.hover:SetAllPoints(b)
+                end
+                layer.hover:SetShown(b ~= nil)
+            end
+        end)
+        layer:SetScript("OnHide", function()
+            layer.target = nil
+            layer.hover:Hide()
+            cursor:Hide()
+        end)
+        self.lockLayer = layer
+    end
+    layer:SetAllPoints(self.content)
+    layer:SetFrameLevel(self.content:GetFrameLevel() + 50)
+    layer:SetShown(on)
+    local accent = Theme.accent
+    if on then
+        self.lock.icon:SetVertexColor(accent[1], accent[2], accent[3], 1)
+    else
+        self.lock.icon:SetVertexColor(1, 1, 1, 1)
+    end
+    self.lock:SetActive(on)
 end
 
 --- Scale. The position belongs to the Mover: bags at the bottom right corner and bank at the top
@@ -978,6 +1092,7 @@ function Grid.New(module, kind)
         end
     end)
     w:HookScript("OnHide", function()
+        self:SetLockMode(false)
         if self.viewing then
             self.viewing, self.place, self.realm, self.name = nil, nil, nil, nil
             self.dirty = true
@@ -988,12 +1103,23 @@ function Grid.New(module, kind)
         Widgets.CloseMenu()
         module:OnWindowHidden(self)
     end)
+    -- Your own image behind the slots ("bags" wallpaper: Bags.tga, switched on in General >
+    -- Appearance), as see-through as the window. Painted again when the window's size changes.
+    w.wallpaper = Theme.NewWallpaper(w)
+    local function paintWallpaper(frame)
+        Theme.PaintWallpaper(frame.wallpaper, "bags", module.running)
+        local alpha = module.running and opt("window.opacity") or 1
+        frame.wallpaper.photo:SetAlpha(alpha)
+        frame.wallpaper.veil:SetAlpha(alpha)
+    end
+    w:HookScript("OnSizeChanged", paintWallpaper)
     -- Window opacity and shadow on top of the theme's: applied after every repaint.
     function w.onPaint(frame)
         if module.running then
             frame.shape.fill:SetAlpha(opt("window.opacity"))
             frame.shadow:SetShown(opt("window.shadow"))
         end
+        paintWallpaper(frame)
     end
     w:Paint()
 
@@ -1136,6 +1262,20 @@ function Grid.New(module, kind)
         self.savedBank:SetHeight(26)
         self.savedBank:SetWidth(self.savedBank.label:GetStringWidth() + 20)
         hint(self.savedBank, L.SAVED_BANK, L.SAVED_BANK_HINT)
+    end
+    if not saved then
+        self.lock = Widgets.Button(w.footer, "", "ghost", function()
+            self:SetLockMode(not self.lockMode)
+        end)
+        self.lock:SetSize(26, 26)
+        self.lock.icon = self.lock:CreateTexture(nil, "ARTWORK")
+        self.lock.icon:SetTexture(LOCK_ICON)
+        self.lock.icon:SetSize(16, 16)
+        self.lock.icon:SetPoint("CENTER")
+        hint(self.lock, L.LOCK, L.LOCK_HINT)
+        if bank then
+            self.lock:SetPoint("LEFT", self.others, "RIGHT", 4, 0)
+        end
     end
     self.dirty = true
     return self

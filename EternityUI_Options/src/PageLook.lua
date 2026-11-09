@@ -1,4 +1,5 @@
 -- Personalization: the General and Appearance tabs of the core, with a live preview beside them.
+-- Each tab scrolls inside the window when its rows don't fit.
 ---@type string, table
 local _, ns = ...
 local L = ns.L
@@ -27,6 +28,7 @@ local THEMES = {
     "borahae",
 }
 local ROW = 44
+local NOTE_GAP = 6
 
 local controls = {} -- option path -> control
 local tabs = {}
@@ -123,6 +125,11 @@ local function buildAppearance(tab)
             { "friz", "Friz Quadrata" },
             { "morpheus", "Morpheus" },
             { "skurri", "Skurri" },
+            { "roboto", "Roboto" },
+            { "opensans", "Open Sans" },
+            { "quicksand", "Quicksand" },
+            { "orbitron", "Orbitron" },
+            { "cormorant", "Cormorant" },
         }, setter("appearance.font"))
     )
     addRow(
@@ -145,10 +152,24 @@ local function buildAppearance(tab)
         L.WALLPAPER_DIM,
         Widgets.Slider(tab, 0.2, 0.9, 0.05, percent, setter("appearance.wallpaperDim"))
     )
+    addRow(tab, "appearance.wallpaperOptions", L.WALLPAPER_OPTIONS, Widgets.Toggle(tab, setter("appearance.wallpaperOptions")))
+    addRow(tab, "appearance.wallpaperChat", L.WALLPAPER_CHAT, Widgets.Toggle(tab, setter("appearance.wallpaperChat")))
+    addRow(tab, "appearance.wallpaperQuests", L.WALLPAPER_QUESTS, Widgets.Toggle(tab, setter("appearance.wallpaperQuests")))
+    addRow(tab, "appearance.wallpaperBags", L.WALLPAPER_BAGS, Widgets.Toggle(tab, setter("appearance.wallpaperBags")))
+    -- How to make and place those images, with a request to paste into an AI (WallpaperGuide.lua).
+    local guide = Widgets.Button(tab, L.GUIDE_OPEN, "ghost", function()
+        ns.WallpaperGuide.Toggle()
+    end)
+    guide:SetHeight(28)
+    addRow(tab, "appearance.wallpaperGuide", L.GUIDE_ROW, guide)
+    -- A button, not an option: nothing to refresh from the store.
+    controls["appearance.wallpaperGuide"] = nil
     addRow(tab, "appearance.portraits", L.PORTRAITS, Widgets.Toggle(tab, setter("appearance.portraits")))
+    -- Under the last row shown (placed by refresh).
     local note = Widgets.Text(tab, 13, "muted")
-    note:SetPoint("TOPLEFT", 0, -ROW * 10 - 6)
+    note:SetJustifyH("LEFT")
     note:SetText(L.PIXEL_PERFECT_NOTE:format(E.Pixel.PerfectScale()))
+    tab.note = note
 end
 
 local function buildPreview(parent)
@@ -208,6 +229,8 @@ local function showTab(key)
     end
 end
 
+local refresh -- below: lays the rows out again when a tab's size changes
+
 local function build(frame)
     local left = CreateFrame("Frame", nil, frame)
     left:SetPoint("TOPLEFT")
@@ -219,12 +242,14 @@ local function build(frame)
     }, showTab)
     selector:SetPoint("TOPLEFT")
 
+    -- tabs[key] is the tab's scroll; its rows live in the scroll's child.
     for key, buildTab in pairs({ general = buildGeneral, appearance = buildAppearance }) do
-        local tab = CreateFrame("Frame", nil, left)
-        tab:SetPoint("TOPLEFT", 0, -42)
-        tab:SetPoint("BOTTOMRIGHT")
-        tabs[key] = tab
-        buildTab(tab)
+        local scroll = Widgets.Scroll(left)
+        scroll:SetPoint("TOPLEFT", 0, -42)
+        scroll:SetPoint("BOTTOMRIGHT")
+        tabs[key] = scroll
+        buildTab(scroll.child)
+        scroll:HookScript("OnSizeChanged", refresh)
     end
     selector:SetValue("appearance")
     showTab("appearance")
@@ -236,7 +261,7 @@ local function build(frame)
     buildPreview(right)
 end
 
-local function refresh()
+function refresh()
     for path, control in pairs(controls) do
         if control.HasFocus and control:HasFocus() then
             control = nil
@@ -251,6 +276,9 @@ local function refresh()
         end
     end
     for tab, stack in pairs(stacks) do
+        -- The content is as wide as its scroll, less the scroll bar (the rows stretch to it).
+        local scroll = tab:GetParent()
+        tab:SetWidth(math.max(scroll:GetWidth() - 12, 1))
         local y = 0
         for _, entry in ipairs(stack) do
             local shown = not entry.visible or entry.visible()
@@ -259,19 +287,29 @@ local function refresh()
                 entry.row:ClearAllPoints()
                 entry.row:SetPoint("TOPLEFT", tab, "TOPLEFT", 0, y)
                 entry.row:SetPoint("TOPRIGHT", tab, "TOPRIGHT", 0, y)
+                entry.row.offset = -y
                 y = y - ROW
             end
         end
+        local height = -y
+        if tab.note then
+            tab.note:ClearAllPoints()
+            tab.note:SetPoint("TOPLEFT", tab, "TOPLEFT", 0, y - NOTE_GAP)
+            tab.note:SetPoint("TOPRIGHT", tab, "TOPRIGHT", 0, y - NOTE_GAP)
+            height = height + NOTE_GAP + math.ceil(tab.note:GetStringHeight()) + NOTE_GAP
+        end
+        scroll:SetContentHeight(height)
     end
 end
 
 local page = { key = "look", title = L.LOOK, note = L.LOOK_NOTE, Build = build, Refresh = refresh }
+page.tabs = tabs -- for the tests
 
 function page.Entries()
     ns.Window.Ensure(page)
     local entries = {}
     for _, row in ipairs(rows) do
-        local key = row.tab == tabs.general and "general" or "appearance"
+        local key = row.tab == tabs.general.child and "general" or "appearance"
         entries[#entries + 1] = {
             label = row.label,
             path = row.path,
@@ -292,6 +330,8 @@ end
 function page.Reveal(path)
     for _, row in ipairs(rows) do
         if row.path == path and row.row:IsVisible() then
+            -- Scrolled so the row shows, a row's height below the top when it can.
+            row.tab:GetParent():ScrollTo((row.row.offset or 0) - ROW)
             ns.Search.Flash(row.row)
         end
     end

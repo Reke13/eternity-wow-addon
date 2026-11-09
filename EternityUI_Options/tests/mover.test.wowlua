@@ -1,0 +1,123 @@
+-- The Mover's "Elements" panel: hiding an element only hides its handle in the Mover.
+import test, expect from "wowlua:test"
+
+local E = EternityUI
+
+@test("the Elements panel hides a handle, never the element, and remembers it")
+local function hideHandle()
+    local frame = CreateFrame("Frame", nil, UIParent)
+    frame:SetSize(100, 40)
+    E.Mover.Register({ key = "test.box", label = "Test box", frame = frame, point = "CENTER", x = 0, y = 0 })
+    local session, elements = E.MoverSession, E.MoverElements
+    session.Toggle()
+    expect(session.active).toBe(true)
+    elements.Set({ "test.box" }, false)
+    expect(elements.IsShown("test.box")).toBe(false)
+    expect(E.store.raw.moverHidden["test.box"]).toBe(true)
+    expect(frame:IsShown()).toBe(true)
+    elements.Set({ "test.box" }, true)
+    expect(elements.IsShown("test.box")).toBe(true)
+    session.Discard()
+    E.Mover.Unregister("test.box")
+    frame:Hide()
+end
+
+@test("the panel opens from the toolbar button and closes with the Mover")
+local function panel()
+    E.MoverSession.Toggle()
+    expect(E.MoverElements.IsOpen()).toBe(false)
+    E.MoverElements.Toggle(UIParent)
+    expect(E.MoverElements.IsOpen()).toBe(true)
+    E.MoverSession.Discard()
+    expect(E.MoverElements.IsOpen()).toBe(false)
+end
+
+@test("the Elements panel can be moved and resized, and keeps its size")
+local function moveResize()
+    E.store.raw.moverElementsSize = { w = 360, h = 500 }
+    E.MoverSession.Toggle()
+    E.MoverElements.Toggle(UIParent)
+    local panel = E.MoverElements.Panel()
+    expect(panel:IsMovable()).toBe(true)
+    expect(math.floor(panel:GetWidth() + 0.5)).toBe(360)
+    expect(panel.grip ~= nil).toBe(true)
+    E.MoverSession.Discard()
+    E.store.raw.moverElementsSize = nil
+end
+
+@test("a module's Mover shows only its elements and leaves the usual setup alone")
+local function onlyModule()
+    local a, b = CreateFrame("Frame", nil, UIParent), CreateFrame("Frame", nil, UIParent)
+    a:SetSize(50, 20)
+    b:SetSize(50, 20)
+    E.Mover.Register({ key = "testA.box", owner = "TestA", label = "A", frame = a })
+    E.Mover.Register({ key = "testB.box", owner = "TestB", label = "B", frame = b })
+    E.store.raw.moverHidden = { ["testA.box"] = true }
+    local session, elements = E.MoverSession, E.MoverElements
+    expect(session.HasElements("TestA")).toBe(true)
+    expect(session.HasElements("Nobody")).toBe(false)
+    session.OpenFor("TestA")
+    expect(session.active).toBe(true)
+    -- Hidden in the usual Mover, but this one shows it; the other module's doesn't show.
+    expect(elements.IsShown("testA.box")).toBe(true)
+    expect(elements.IsShown("testB.box")).toBe(false)
+    elements.Set({ "testA.box" }, false)
+    expect(elements.IsShown("testA.box")).toBe(false)
+    session.Discard()
+    expect(session.only == nil).toBe(true)
+    -- The usual setup is as it was.
+    expect(E.store.raw.moverHidden["testA.box"]).toBe(true)
+    expect(elements.IsShown("testB.box")).toBe(true)
+    E.store.raw.moverHidden = nil
+    E.Mover.Unregister("testA.box")
+    E.Mover.Unregister("testB.box")
+end
+
+@test("each module's section folds by its title, and stays as it was left")
+local function folding()
+    local frame = CreateFrame("Frame", nil, UIParent)
+    frame:SetSize(50, 20)
+    E.Mover.Register({ key = "testF.box", owner = "TestF", label = "F", frame = frame })
+    E.store.raw.moverElementsOpen = nil
+    E.MoverSession.Toggle()
+    if not E.MoverElements.IsOpen() then
+        E.MoverElements.Toggle(UIParent)
+    end
+    local panel = E.MoverElements.Panel()
+    local function header()
+        for _, r in ipairs(panel.rows) do
+            if r:IsShown() and r.owner == "TestF" then
+                return r
+            end
+        end
+    end
+    local function elementShown()
+        for _, r in ipairs(panel.rows) do
+            if r:IsShown() and not r.owner and r.keys and r.keys[1] == "testF.box" then
+                return true
+            end
+        end
+        return false
+    end
+    expect(header() ~= nil).toBe(true)
+    expect(elementShown()).toBe(false)
+    header():Click()
+    expect(elementShown()).toBe(true)
+    expect(E.store.raw.moverElementsOpen.TestF).toBe(true)
+    header():Click()
+    expect(elementShown()).toBe(false)
+    E.MoverSession.Discard()
+    E.Mover.Unregister("testF.box")
+    E.store.raw.moverElementsOpen = nil
+end
+
+@test("the cross closes the Elements panel")
+local function cross()
+    E.MoverSession.Toggle()
+    if not E.MoverElements.IsOpen() then
+        E.MoverElements.Toggle(UIParent)
+    end
+    E.MoverElements.Panel().close:Click()
+    expect(E.MoverElements.IsOpen()).toBe(false)
+    E.MoverSession.Discard()
+end

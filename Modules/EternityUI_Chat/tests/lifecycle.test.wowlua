@@ -15,3 +15,27 @@ local function cycle()
     EternityUI.store:SetModuleEnabled(NAME, true)
     expect(EternityUI:GetModule(NAME).active).toBe(true)
 end
+
+@test("the chat's background gets lighter in combat, if that option is on")
+local function chatCombat()
+    local skin = EternityUI:GetModule("EternityUI_Chat").ns.Skin
+    local frame = ChatFrame1
+    if not (skin and skin.decor and skin.decor[frame]) then
+        return
+    end
+    local store = EternityUI.store
+    store:Set("EternityUI_Chat", "background.combatFade", true)
+    store:Set("EternityUI_Chat", "background.combatOpacity", 0.3)
+    local fight = UnitAffectingCombat
+    ---@type any
+    local inCombat = function()
+        return true
+    end
+    UnitAffectingCombat = inCombat
+    skin:ApplyCombat(frame)
+    UnitAffectingCombat = fight
+    expect(math.floor(skin.decor[frame]:GetAlpha() * 100 + 0.5)).toBe(30)
+    skin:ApplyCombat(frame)
+    expect(skin.decor[frame]:GetAlpha()).toBe(1)
+    store:Set("EternityUI_Chat", "background.combatFade", false)
+end

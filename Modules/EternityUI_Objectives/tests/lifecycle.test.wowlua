@@ -15,3 +15,26 @@ local function toggles()
     EternityUI.store:SetModuleEnabled(NAME, true)
     expect(EternityUI:GetModule(NAME).active).toBe(true)
 end
+
+@test("the backdrop gets lighter in combat, if that option is on")
+local function combatBackground()
+    local skin = EternityUI:GetModule("EternityUI_Objectives").Skin
+    if not (skin and skin.background) then
+        return
+    end
+    local store = EternityUI.store
+    store:Set("EternityUI_Objectives", "look.combatBackground", true)
+    store:Set("EternityUI_Objectives", "look.combatBackgroundOpacity", 0.2)
+    local fight = UnitAffectingCombat
+    ---@type any
+    local inCombat = function()
+        return true
+    end
+    UnitAffectingCombat = inCombat
+    skin:UpdateCombatBackground()
+    UnitAffectingCombat = fight
+    expect(math.floor(skin.background:GetAlpha() * 100 + 0.5)).toBe(20)
+    skin:UpdateCombatBackground()
+    expect(skin.background:GetAlpha()).toBe(1)
+    store:Set("EternityUI_Objectives", "look.combatBackground", false)
+end

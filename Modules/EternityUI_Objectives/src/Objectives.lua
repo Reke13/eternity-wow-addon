@@ -34,10 +34,12 @@ end
 function Module:Install()
     self.events = CreateFrame("Frame")
     self.events:SetScript("OnEvent", function(_, event, name)
-        if event == "PLAYER_REGEN_ENABLED" then
+        if event == "PLAYER_REGEN_ENABLED" or event == "PLAYER_REGEN_DISABLED" then
+            -- In and out of combat: the backdrop's combat opacity.
+            Skin:UpdateCombatBackground()
             -- A scale change (or giving it back after disabling) waited for the end of combat.
             local tracker = Core.Tracker()
-            if tracker and Skin.pendingScale then
+            if event == "PLAYER_REGEN_ENABLED" and tracker and Skin.pendingScale then
                 Skin:ApplyScale(tracker)
             end
         elseif Core.running and (event ~= "ADDON_LOADED" or name == "Blizzard_ObjectiveTracker") then
@@ -59,7 +61,7 @@ function Module:OnEnable()
         self:Install()
     end
     -- The tracker is set up on PLAYER_ENTERING_WORLD; ADDON_LOADED covers a late Blizzard addon.
-    for _, event in ipairs({ "ADDON_LOADED", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED" }) do
+    for _, event in ipairs({ "ADDON_LOADED", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED" }) do
         self.events:RegisterEvent(event)
     end
     self:Apply()

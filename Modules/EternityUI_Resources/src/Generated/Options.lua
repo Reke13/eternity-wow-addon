@@ -617,6 +617,91 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "fontFamily",
+                    type = "select",
+                    default = "theme",
+                    label = {
+                        enUS = "Font",
+                        esES = "Fuente",
+                    },
+                    description = {
+                        enUS = "The bars' typeface. \"Like the theme\" follows General > Appearance.",
+                        esES = "El tipo de letra de las barras. «Como el tema» sigue General > Apariencia.",
+                    },
+                    values = {
+                        {
+                            value = "theme",
+                            label = {
+                                enUS = "Like the theme",
+                                esES = "Como el tema",
+                            },
+                        },
+                        {
+                            value = "arialn",
+                            label = {
+                                enUS = "Arial Narrow",
+                                esES = "Arial Narrow",
+                            },
+                        },
+                        {
+                            value = "friz",
+                            label = {
+                                enUS = "Friz Quadrata",
+                                esES = "Friz Quadrata",
+                            },
+                        },
+                        {
+                            value = "morpheus",
+                            label = {
+                                enUS = "Morpheus",
+                                esES = "Morpheus",
+                            },
+                        },
+                        {
+                            value = "skurri",
+                            label = {
+                                enUS = "Skurri",
+                                esES = "Skurri",
+                            },
+                        },
+                        {
+                            value = "roboto",
+                            label = {
+                                enUS = "Roboto",
+                                esES = "Roboto",
+                            },
+                        },
+                        {
+                            value = "opensans",
+                            label = {
+                                enUS = "Open Sans",
+                                esES = "Open Sans",
+                            },
+                        },
+                        {
+                            value = "quicksand",
+                            label = {
+                                enUS = "Quicksand",
+                                esES = "Quicksand",
+                            },
+                        },
+                        {
+                            value = "orbitron",
+                            label = {
+                                enUS = "Orbitron",
+                                esES = "Orbitron",
+                            },
+                        },
+                        {
+                            value = "cormorant",
+                            label = {
+                                enUS = "Cormorant",
+                                esES = "Cormorant",
+                            },
+                        },
+                    },
+                },
+                {
                     id = "textColor",
                     type = "color",
                     default = "#FFFFFF",

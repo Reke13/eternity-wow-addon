@@ -1,0 +1,182 @@
+-- The module starts and stops cleanly, builds its frames and follows its options.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function set(path, value)
+    EternityUI.store:Set(NAME, path, value)
+end
+
+@test("the module starts and builds a holder per frame, each in the Mover")
+local function starts()
+    local m = module()
+    expect(m.active).toBe(true)
+    for _, key in ipairs({ "player", "pet", "target", "targettarget", "focus", "party", "raid", "grouppets" }) do
+        expect(m.holders[key] ~= nil).toBe(true)
+        expect(EternityUI.Mover.elements[NAME .. "." .. key] ~= nil).toBe(true)
+    end
+end
+
+@test("the player's frame is shown with its bars and name")
+local function player()
+    local f = module().holders.player.button
+    expect(f:IsShown()).toBe(true)
+    expect(f.unit).toBe("player")
+    expect(f.health:IsShown()).toBe(true)
+    expect(f.power:IsShown()).toBe(true)
+    expect((f.healthLeft:GetText() or "") ~= "").toBe(true)
+end
+
+@test("size, power bar and portrait follow the options")
+local function options()
+    local holder = module().holders.player
+    local f = holder.button
+    set("player.width", 300)
+    expect(math.floor(holder:GetWidth() + 0.5)).toBe(300)
+    set("playerBars.power", false)
+    expect(f.power:IsShown()).toBe(false)
+    set("playerBars.power", true)
+    set("player.portrait", "off")
+    expect(f.portrait:IsShown()).toBe(false)
+    set("player.portrait", "left")
+    expect(f.portrait:IsShown()).toBe(true)
+    set("player.width", 230)
+end
+
+@test("switching a frame off hides it and frees the Mover")
+local function disable()
+    local m = module()
+    set("player.enabled", false)
+    expect(m.holders.player.button:IsShown()).toBe(false)
+    expect(EternityUI.Mover.elements[NAME .. ".player"] == nil).toBe(true)
+    set("player.enabled", true)
+    expect(m.holders.player.button:IsShown()).toBe(true)
+end
+
+@test("Blizzard's player frame is hidden while ours is shown, and comes back")
+local function blizzard()
+    if not PlayerFrame then
+        return
+    end
+    expect(EternityUI.Hider.IsHidden(PlayerFrame)).toBe(true)
+    set("player.hideBlizzard", false)
+    expect(EternityUI.Hider.IsHidden(PlayerFrame)).toBe(false)
+    set("player.hideBlizzard", true)
+end
+
+@test("the module stops and starts again")
+local function cycle()
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(module().active).toBe(false)
+    expect(module().holders.player.button:IsShown()).toBe(false)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    expect(module().active).toBe(true)
+    expect(module().holders.player.button:IsShown()).toBe(true)
+end
+
+@test("the group and raid headers make their buttons up front, styled")
+local function headers()
+    local m = module()
+    for key, count in pairs({ party = 5, raid = 40, grouppets = 40 }) do
+        local header = m.holders[key].header
+        local first = header:GetAttribute("child1")
+        expect(first ~= nil).toBe(true)
+        expect(first.uf ~= nil and first.uf.key == key).toBe(true)
+        expect(header:GetAttribute("child" .. count) ~= nil).toBe(true)
+    end
+end
+
+@test("with the Mover open the target frame shows you, and goes back after")
+local function preview()
+    local f = module().holders.target.button
+    EternityUI.Events.Send(EternityUI.Mover.TOGGLED, true)
+    expect(f:IsShown()).toBe(true)
+    expect(f.unit).toBe("player")
+    EternityUI.Events.Send(EternityUI.Mover.TOGGLED, false)
+    expect(f.unit).toBe("target")
+end
+
+@test("a changed option redraws only its own frame")
+local function onlyItsFrame()
+    local FrameOf = module().FrameOf
+    expect(FrameOf("partyBuffs.max")).toBe("party")
+    expect(FrameOf("targettargetText.healthLeft")).toBe("targettarget")
+    expect(FrameOf("target.width")).toBe("target")
+    expect(FrameOf("look.texture") == nil).toBe(true)
+    expect(FrameOf(nil) == nil).toBe(true)
+end
+
+@test("your power bar steps aside while the Resources module is on, if you want")
+local function resourcesAside()
+    local m = module()
+    local f = m.holders.player.button
+    local on = m.Elements.ResourcesOn
+    ---@type any
+    local always = function()
+        return true
+    end
+    m.Elements.ResourcesOn = always
+    local ok, err = pcall(function()
+        set("playerBars.hideWithResources", false)
+        expect(f.power:IsShown()).toBe(true)
+        set("playerBars.hideWithResources", true)
+        expect(f.power:IsShown()).toBe(false)
+    end)
+    m.Elements.ResourcesOn = on
+    set("playerBars.hideWithResources", false)
+    set("playerBars.hideWithResources", true)
+    if not ok then
+        error(err)
+    end
+    expect(f.power:IsShown()).toBe(true)
+end
+
+@test("every frame but yours can fade out of range, by its own option")
+local function rangeFade()
+    local m = module()
+    local f = m.holders.target.button
+    local inRange = m.Elements.InRange
+    ---@type any
+    local far = function()
+        return false
+    end
+    m.Elements.InRange = far
+    local ok, err = pcall(function()
+        set("targetIndicators.rangeFade", true)
+        set("targetIndicators.rangeAlpha", 0.3)
+        m.Elements.UpdateRange(f)
+        expect(math.floor(f:GetAlpha() * 100 + 0.5)).toBe(30)
+        set("targetIndicators.rangeFade", false)
+        m.Elements.UpdateRange(f)
+        expect(f:GetAlpha()).toBe(1)
+    end)
+    m.Elements.InRange = inRange
+    if not ok then
+        error(err)
+    end
+    expect(EternityUI.store:Get(NAME, "partyIndicators.rangeFade")).toBe(true)
+    expect(EternityUI.store:Get(NAME, "playerIndicators.rangeFade") == nil).toBe(true)
+end
+
+@test("group members fade by the real distance, in yards, where the game gives it")
+local function rangeYards()
+    local InRange = module().Elements.InRange
+    local distance = UnitDistanceSquared
+    ---@type any
+    local fake = function()
+        return 45 * 45, true
+    end
+    UnitDistanceSquared = fake
+    local ok, err = pcall(function()
+        expect(InRange("party1", 40)).toBe(false)
+        expect(InRange("party1", 50)).toBe(true)
+    end)
+    UnitDistanceSquared = distance
+    if not ok then
+        error(err)
+    end
+end

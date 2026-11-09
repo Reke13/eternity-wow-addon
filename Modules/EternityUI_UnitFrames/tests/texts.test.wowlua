@@ -1,0 +1,202 @@
+-- Texts, numbers, fonts, portraits and the bars' look follow their options.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function set(path, value)
+    EternityUI.store:Set(NAME, path, value)
+end
+
+@test("health texts follow their options (secret texts count as written)")
+local function texts()
+    local f = module().holders.player.button
+    local function written(fs)
+        local value = fs:GetText()
+        return issecretvalue(value) or (value ~= nil and value ~= "")
+    end
+    for _, mode in ipairs({ "current", "currentMax", "percent", "currentPercent", "missing" }) do
+        set("playerText.healthRight", mode)
+        expect(written(f.healthRight)).toBe(true)
+    end
+    set("playerText.healthRight", "none")
+    expect(written(f.healthRight)).toBe(false)
+    set("playerText.healthRight", "currentMax")
+    set("playerText.healthLeft", "nameLevel")
+    expect(written(f.healthLeft)).toBe(true)
+    set("playerText.healthLeft", "name")
+end
+
+@test("portraits can be removed for every frame at once")
+local function noPortraits()
+    local m = module()
+    set("look.portraitType", "none")
+    expect(m.holders.player.button.portrait:IsShown()).toBe(false)
+    expect(m.holders.target.button.portrait:IsShown()).toBe(false)
+    set("look.portraitType", "class")
+    expect(m.holders.player.button.portrait:IsShown()).toBe(true)
+end
+
+@test("the number format writes plain numbers whole or short")
+local function numbers()
+    local fs = module().holders.player.button:CreateFontString(nil, "OVERLAY")
+    fs:SetFont(EternityUI.Theme.font, 12, "")
+    local Style = module().Style
+    set("look.numbers", "full")
+    Style.SetNumbers(fs, "# / #", 1800, 25000)
+    expect(fs:GetText()).toBe("1800 / 25000")
+    set("look.numbers", "short")
+    Style.SetNumbers(fs, "# / #", 1800, 25000)
+    expect(fs:GetText() ~= "1800 / 25000").toBe(true)
+    set("look.numbers", "full")
+    for _, mode in ipairs({ "current", "currentMax", "currentPercent", "missing" }) do
+        set("playerText.healthRight", mode)
+        local value = module().holders.player.button.healthRight:GetText()
+        expect(issecretvalue(value) or (value ~= nil and value ~= "")).toBe(true)
+    end
+    set("look.numbers", "short")
+    set("playerText.healthRight", "currentMax")
+end
+
+@test("the font and the outline follow their options")
+local function fontAndOutline()
+    local fs = module().holders.player.button.healthLeft
+    set("look.font", "morpheus")
+    local file = fs:GetFont()
+    expect(file).toBe("Fonts\\MORPHEUS.TTF")
+    set("look.outline", "thickMono")
+    local _, _, flags = fs:GetFont()
+    expect(flags).toBe("THICKOUTLINE, MONOCHROME")
+    set("look.outline", "none")
+    set("look.font", "theme")
+    file = fs:GetFont()
+    expect(file).toBe(EternityUI.Theme.font)
+end
+
+@test("bar opacity reaches the health bar, and the tone options change its color")
+local function barLook()
+    local bar = module().holders.player.button.health
+    set("look.barAlpha", 0.5)
+    local _, _, _, a = bar:GetStatusBarColor()
+    expect(math.floor(a * 100 + 0.5)).toBe(50)
+    set("look.saturation", 0)
+    local r, g, b = bar:GetStatusBarColor()
+    expect(math.abs(r - g) < 0.01 and math.abs(g - b) < 0.01).toBe(true)
+    set("look.saturation", 1)
+    set("look.barAlpha", 1)
+    set("look.shade", "strong")
+    set("look.shade", "none")
+end
+
+@test("texts go where their options say")
+local function textPlaces()
+    local f = module().holders.player.button
+    set("playerText.leftV", "top")
+    set("playerText.leftH", "center")
+    local point, relative = f.healthLeft:GetPoint(1)
+    expect(point).toBe("TOP")
+    expect(relative == f.health).toBe(true)
+    set("playerText.rightV", "below")
+    set("playerText.rightH", "left")
+    point, relative = f.healthRight:GetPoint(1)
+    expect(point).toBe("TOPLEFT")
+    expect(relative == f).toBe(true)
+    set("playerText.leftV", "bar")
+    set("playerText.leftH", "left")
+    set("playerText.rightV", "bar")
+    set("playerText.rightH", "right")
+    point = f.healthLeft:GetPoint(1)
+    expect(point).toBe("LEFT")
+end
+
+@test("a frame can keep General's number format or use its own")
+local function ownNumbers()
+    local Style = module().Style
+    set("look.numbers", "short")
+    expect(Style.NumberStyle("party")).toBe("short")
+    set("partyText.numbers", "full")
+    expect(Style.NumberStyle("party")).toBe("full")
+    expect(Style.NumberStyle("raid")).toBe("short")
+    local fs = module().holders.player.button:CreateFontString(nil, "OVERLAY")
+    fs:SetFont(EternityUI.Theme.font, 12, "")
+    Style.SetNumbersAs(Style.NumberStyle("party"), fs, "# / #", 1800, 25000)
+    expect(fs:GetText()).toBe("1800 / 25000")
+    set("partyText.numbers", "inherit")
+    expect(Style.NumberStyle("party")).toBe("short")
+end
+
+@test("\"No numbers\" hides health and power values, but not names or \"Dead\"")
+local function noNumbers()
+    local f = module().holders.player.button
+    set("playerText.numbers", "none")
+    expect(f.healthRight:GetText() or "").toBe("")
+    expect(f.powerText:GetText() or "").toBe("")
+    local name = f.healthLeft:GetText()
+    expect(issecretvalue(name) or (name ~= nil and name ~= "")).toBe(true)
+    set("playerText.numbers", "inherit")
+    local value = f.healthRight:GetText()
+    expect(issecretvalue(value) or (value ~= nil and value ~= "")).toBe(true)
+end
+
+@test("health and power texts can follow General's choice")
+local function likeGeneral()
+    local Style = module().Style
+    set("playerText.healthRight", "inherit")
+    set("look.healthRight", "percent")
+    expect(Style.TextMode("player", "healthRight")).toBe("percent")
+    expect(Style.TextMode("target", "healthRight")).toBe("percent")
+    set("partyText.healthRight", "current")
+    expect(Style.TextMode("party", "healthRight")).toBe("current")
+    set("partyText.healthRight", "inherit")
+    expect(Style.TextMode("party", "healthRight")).toBe("percent")
+    set("look.healthRight", "currentMax")
+end
+
+@test("group, raid and group pets offer the health and power values, like General by default")
+local function groupValues()
+    local Style = module().Style
+    for _, key in ipairs({ "party", "raid", "grouppets" }) do
+        expect(EternityUI.store:Get(NAME, key .. "Text.healthRight")).toBe("inherit")
+        expect(EternityUI.store:Get(NAME, key .. "Text.powerText")).toBe("inherit")
+        expect(Style.TextMode(key, "healthRight")).toBe(EternityUI.store:Get(NAME, "look.healthRight"))
+    end
+end
+
+@test("incoming heals and shields start where the health ends, and can be switched off")
+local function healsAndShields()
+    local f = module().holders.player.button
+    expect(f.heals:IsShown()).toBe(true)
+    expect(f.absorbs:IsShown()).toBe(true)
+    local _, relative = f.heals:GetPoint(1)
+    expect(relative == f.health:GetStatusBarTexture()).toBe(true)
+    _, relative = f.absorbs:GetPoint(1)
+    expect(relative == f.heals:GetStatusBarTexture()).toBe(true)
+    set("playerBars.incomingHeals", false)
+    expect(f.heals:IsShown()).toBe(false)
+    _, relative = f.absorbs:GetPoint(1)
+    expect(relative == f.health:GetStatusBarTexture()).toBe(true)
+    set("playerBars.absorbs", false)
+    expect(f.absorbs:IsShown()).toBe(false)
+    set("playerBars.incomingHeals", true)
+    set("playerBars.absorbs", true)
+end
+
+@test("a heal over full health is drawn past the bar's end, as far as the option says")
+local function overheal()
+    local f = module().holders.player.button
+    local width = f.health:GetWidth()
+    -- The heals are clipped by a frame of their own, from the bar's start.
+    expect(f.heals:GetParent() == f.healsClip).toBe(true)
+    expect(f.absorbs:GetParent() == f.health).toBe(true)
+    local _, relative = f.healsClip:GetPoint(1)
+    expect(relative == f.health).toBe(true)
+    expect(math.floor(f.healsClip:GetWidth() + 0.5)).toBe(math.floor(width * 1.15 + 0.5))
+    set("playerBars.overheal", 50)
+    expect(math.floor(f.healsClip:GetWidth() + 0.5)).toBe(math.floor(width * 1.5 + 0.5))
+    set("playerBars.overheal", 0)
+    expect(math.floor(f.healsClip:GetWidth() + 0.5)).toBe(math.floor(width + 0.5))
+    set("playerBars.overheal", 15)
+end
