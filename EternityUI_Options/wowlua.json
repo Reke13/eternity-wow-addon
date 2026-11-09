@@ -32,6 +32,7 @@
       "src/MoverSession.lua",
       "src/MoverScene.lua",
       "src/MoverHandles.lua",
+      "src/MoverElements.lua",
       "src/MoverChrome.lua"
     ]
   },
