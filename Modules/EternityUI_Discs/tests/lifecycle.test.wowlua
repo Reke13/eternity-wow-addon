@@ -94,8 +94,8 @@ local function back()
     EternityUIDiscsHeader:Execute([[ self:RunAttribute("Open", 2, true) ]])
     expect(Ring.rings[2]).toBeShown()
     expect(Ring.rings[1]).never.toBeShown()
-    Ring.rings[2].center:Click("LeftButton", true)
-    expect(Ring.rings[2]).toBeShown()
+    -- Only the release is clicked: the emulator's Button:Click hands the snippets down = false
+    -- even for a press, so "the press does nothing" can't be checked here.
     Ring.rings[2].center:Click("LeftButton", false)
     expect(Ring.rings[1]).toBeShown()
     Ring.rings[1].center:Click("LeftButton", false)

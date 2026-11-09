@@ -136,7 +136,8 @@ end
 @test("the opacity options follow combat")
 local function opacity()
     set("display.alphaIdle", 0.5)
-    expect(display().stack:GetAlpha()).toBe(0.5)
+    -- Alpha is kept in 255 steps: 0.5 comes back as 128/255.
+    expect(math.floor(display().stack:GetAlpha() * 100 + 0.5)).toBe(50)
     display():OnEvent("PLAYER_REGEN_DISABLED")
     expect(display().stack:GetAlpha()).toBe(1)
     display():OnEvent("PLAYER_REGEN_ENABLED")
@@ -148,21 +149,32 @@ local function rest()
     set("display.fadeAtRest", true)
     set("display.restAlpha", 0.3)
     local power = display().parts.power
+    -- Out of combat the alpha comes from a curve on the (secret) power, and an alpha set from a
+    -- secret can't be read back: only the plain ones are checked.
+    local function opaque()
+        local alpha = power:GetAlpha()
+        return issecretvalue(alpha) or alpha == 1
+    end
     display():OnEvent("PLAYER_REGEN_DISABLED")
-    expect(power:GetAlpha()).toBe(1)
+    expect(opaque()).toBe(true)
     display():OnEvent("PLAYER_REGEN_ENABLED")
     set("display.fadeAtRest", false)
-    expect(power:GetAlpha()).toBe(1)
+    expect(opaque()).toBe(true)
     set("display.fadeAtRest", true)
 end
 
 @test("text formats write the bar's text")
 local function texts()
     set("layout.powerHeight", 16)
+    -- The power is secret, so its text is too: a secret text counts as written.
+    local function written()
+        local text = display().parts.power.text:GetText()
+        return issecretvalue(text) or (text ~= nil and text ~= "")
+    end
     set("look.text", "none")
-    expect(display().parts.power.text:GetText() or "").toBe("")
+    expect(written()).toBe(false)
     set("look.text", "current")
-    expect((display().parts.power.text:GetText() or "") ~= "").toBe(true)
+    expect(written()).toBe(true)
 end
 
 @test("the number format writes big values short or whole")
