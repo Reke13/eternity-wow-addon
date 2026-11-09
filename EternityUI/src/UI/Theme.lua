@@ -218,6 +218,27 @@ function Theme.PaintWindow(shape)
     end
 end
 
+-- Your own images, one per place, in Interface\AddOns\EternityUI_Wallpapers (a folder of its own,
+-- so updating Eternity never deletes them). Each is named after where it shows, and the image is
+-- cropped to the place's shape as if it had the aspect given (width / height), its recommended
+-- size. Switched on in General > Appearance.
+Theme.OWN_WALLPAPERS = {
+    window = { file = "Options", aspect = 1030 / 655, option = "appearance.wallpaperOptions" },
+    chat = { file = "Chat", aspect = 2, option = "appearance.wallpaperChat" },
+    quests = { file = "Quests", aspect = 1 / 2, option = "appearance.wallpaperQuests" },
+}
+
+--- The image a place shows: your own if it's switched on, else the theme's (if it has one).
+---@param slot string "window", "chat" or "quests"
+---@return table? { file, aspect }
+function Theme.WallpaperFor(slot)
+    local own = Theme.OWN_WALLPAPERS[slot]
+    if own and option(own.option) then
+        return own
+    end
+    return Theme.wallpaper and Theme.wallpaper[slot] or nil
+end
+
 --- Adds a wallpaper to a frame: a photo over its shape's fill and a veil that keeps text readable.
 ---@param frame table
 ---@return table wallpaper
@@ -234,10 +255,10 @@ end
 --- Paints a wallpaper for the current theme, covering the frame without stretching the photo. It
 --- stays inside the shape's rounded corners. Hidden when the theme has no image for the slot.
 ---@param wallpaper table from Theme.NewWallpaper
----@param slot string window or chat
+---@param slot string window, chat or quests
 ---@param visible boolean? false hides it whatever the theme says
 function Theme.PaintWallpaper(wallpaper, slot, visible)
-    local image = visible ~= false and Theme.wallpaper and Theme.wallpaper[slot]
+    local image = visible ~= false and Theme.WallpaperFor(slot)
     wallpaper.photo:SetShown(image and true or false)
     wallpaper.veil:SetShown(image and true or false)
     local frame = wallpaper.frame

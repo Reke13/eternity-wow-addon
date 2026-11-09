@@ -150,9 +150,20 @@ local function buildAppearance(tab)
         L.WALLPAPER_DIM,
         Widgets.Slider(tab, 0.2, 0.9, 0.05, percent, setter("appearance.wallpaperDim"))
     )
+    addRow(tab, "appearance.wallpaperOptions", L.WALLPAPER_OPTIONS, Widgets.Toggle(tab, setter("appearance.wallpaperOptions")))
+    addRow(tab, "appearance.wallpaperChat", L.WALLPAPER_CHAT, Widgets.Toggle(tab, setter("appearance.wallpaperChat")))
+    addRow(tab, "appearance.wallpaperQuests", L.WALLPAPER_QUESTS, Widgets.Toggle(tab, setter("appearance.wallpaperQuests")))
+    -- How to make and place those images, with a request to paste into an AI (WallpaperGuide.lua).
+    local guide = Widgets.Button(tab, L.GUIDE_OPEN, "ghost", function()
+        ns.WallpaperGuide.Toggle()
+    end)
+    guide:SetHeight(28)
+    addRow(tab, "appearance.wallpaperGuide", L.GUIDE_ROW, guide)
+    -- A button, not an option: nothing to refresh from the store.
+    controls["appearance.wallpaperGuide"] = nil
     addRow(tab, "appearance.portraits", L.PORTRAITS, Widgets.Toggle(tab, setter("appearance.portraits")))
     local note = Widgets.Text(tab, 13, "muted")
-    note:SetPoint("TOPLEFT", 0, -ROW * 10 - 6)
+    note:SetPoint("TOPLEFT", 0, -ROW * 14 - 6)
     note:SetText(L.PIXEL_PERFECT_NOTE:format(E.Pixel.PerfectScale()))
 end
 

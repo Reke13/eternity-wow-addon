@@ -37,6 +37,18 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_Auras` | The target's debuffs and your own buffs, each in a frame of its own: filtered by caster, type, duration and your own list of spells per frame, in combat too (`/etauras`) |
 | `EternityUI_Tooltip` | Tooltips |
 
+## Your own background images
+
+Three places can show an image of yours behind them. Put it in `World of Warcraft\_forever_\Interface\AddOns\EternityUI_Wallpapers` (a folder of its own, so updating Eternity never deletes it), as a `.tga` file named after where it shows, and switch it on in General > Appearance:
+
+| File | Where it shows | Recommended size |
+| --- | --- | --- |
+| `Options.tga` | The options window | 1030 × 655 |
+| `Chat.tga` | Behind the chat | 1024 × 512 |
+| `Quests.tga` | Behind the quests (Objectives) | 512 × 1024 |
+
+Other sizes work too: the image is cropped to the place's shape as if it had that one's proportions. "Image dimming" (Appearance) lays a veil over it so text stays readable. A new image file needs the game restarted.
+
 ## License
 
 [MIT](LICENSE). `EternityUI_ActionBars/src/libs` holds third-party libraries under their own licenses: see the [list](Modules/EternityUI_ActionBars/src/libs/README.md).

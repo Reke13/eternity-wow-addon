@@ -179,6 +179,23 @@ function ChatSkin:ApplyBackground(frame)
     if not opt("background.shadow") or alpha == 0 then
         decor.shadow:Hide()
     end
+    self:ApplyCombat(frame)
+end
+
+--- The background's opacity for now: lower in combat if that option is on. Only our background
+--- frame (a sibling of the chat): the messages keep theirs. Not protected, so also in combat.
+---@param frame table a chat frame
+function ChatSkin:ApplyCombat(frame)
+    local decor = self.decor[frame]
+    if not decor then
+        return
+    end
+    local fight = InCombatLockdown() or UnitAffectingCombat("player")
+    if self.running and opt("background.combatFade") and fight then
+        decor:SetAlpha(opt("background.combatOpacity"))
+    else
+        decor:SetAlpha(1)
+    end
 end
 
 function ChatSkin:ApplyFont(frame)
@@ -558,15 +575,26 @@ function ChatSkin:InstallHooks()
     end)
 end
 
+local function onCombat()
+    for frame in pairs(ChatSkin.decor) do
+        ChatSkin:ApplyCombat(frame)
+    end
+end
+
 function ChatSkin:Start()
     self.running = true
     if not self.hooked then
         self:InstallHooks()
     end
+    -- In and out of combat: the background's combat opacity.
+    E.Events.On("PLAYER_REGEN_DISABLED", self, onCombat)
+    E.Events.On("PLAYER_REGEN_ENABLED", self, onCombat)
     self:ApplyAll()
 end
 
 function ChatSkin:Stop()
     self.running = false
+    E.Events.Off("PLAYER_REGEN_DISABLED", self)
+    E.Events.Off("PLAYER_REGEN_ENABLED", self)
     self:ApplyAll()
 end

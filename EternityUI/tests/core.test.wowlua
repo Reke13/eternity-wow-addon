@@ -99,4 +99,14 @@ local function shippedFonts()
         local file = Theme.Font(key)
         expect(file:find("media\\fonts\\", 1, true) ~= nil).toBe(true)
     end
+
+@test("your own image wins over the theme's in its place, and only there")
+local function ownWallpaper()
+    local Theme, store = EternityUI.Theme, EternityUI.store
+    store:Set("EternityUI", "appearance.wallpaperChat", true)
+    local image = Theme.WallpaperFor("chat")
+    expect(image.file).toBe("Chat")
+    expect(Theme.WallpaperFor("quests") == Theme.OWN_WALLPAPERS.quests).toBe(false)
+    store:Set("EternityUI", "appearance.wallpaperChat", false)
+    expect(Theme.WallpaperFor("chat") == Theme.OWN_WALLPAPERS.chat).toBe(false)
 end
