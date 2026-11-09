@@ -903,7 +903,26 @@ function Grid:SetLockMode(on)
                 self:Refresh()
             end
         end)
+        -- A padlock follows the mouse over the items, so it's clear clicks lock instead of use.
+        local cursor = CreateFrame("Frame", nil, UIParent)
+        cursor:SetFrameStrata("TOOLTIP")
+        cursor:SetSize(20, 20)
+        cursor:EnableMouse(false)
+        cursor.icon = cursor:CreateTexture(nil, "OVERLAY")
+        cursor.icon:SetAllPoints()
+        cursor.icon:SetTexture(LOCK_ICON)
+        cursor:Hide()
+        layer.cursor = cursor
         layer:SetScript("OnUpdate", function()
+            if layer:IsMouseOver() then
+                local x, y = GetCursorPosition()
+                local scale = UIParent:GetEffectiveScale()
+                cursor:ClearAllPoints()
+                cursor:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / scale + 14, y / scale - 10)
+                cursor:Show()
+            else
+                cursor:Hide()
+            end
             local b = self:HoveredButton()
             if b ~= layer.target then
                 layer.target = b
@@ -917,6 +936,7 @@ function Grid:SetLockMode(on)
         layer:SetScript("OnHide", function()
             layer.target = nil
             layer.hover:Hide()
+            cursor:Hide()
         end)
         self.lockLayer = layer
     end

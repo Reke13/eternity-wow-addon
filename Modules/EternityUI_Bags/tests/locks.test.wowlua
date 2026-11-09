@@ -124,3 +124,15 @@ local function marker()
     expect(b.etLock:IsShown()).toBe(false)
     CloseAllWindows()
 end
+
+@test("lock mode's padlock by the mouse goes away with lock mode")
+local function cursorIcon()
+    OpenAllBags()
+    local grid = EternityUI:GetModule(NAME).bags
+    grid.lock:Click()
+    local cursor = grid.lockLayer.cursor
+    expect(cursor ~= nil).toBe(true)
+    grid.lock:Click()
+    expect(cursor:IsShown()).toBe(false)
+    CloseAllWindows()
+end
