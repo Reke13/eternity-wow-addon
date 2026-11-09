@@ -1,0 +1,33 @@
+-- The Mover's "Elements" panel: hiding an element only hides its handle in the Mover.
+import test, expect from "wowlua:test"
+
+local E = EternityUI
+
+@test("the Elements panel hides a handle, never the element, and remembers it")
+local function hideHandle()
+    local frame = CreateFrame("Frame", nil, UIParent)
+    frame:SetSize(100, 40)
+    E.Mover.Register({ key = "test.box", label = "Test box", frame = frame, point = "CENTER", x = 0, y = 0 })
+    local session, elements = E.MoverSession, E.MoverElements
+    session.Toggle()
+    expect(session.active).toBe(true)
+    elements.Set({ "test.box" }, false)
+    expect(elements.IsShown("test.box")).toBe(false)
+    expect(E.store.raw.moverHidden["test.box"]).toBe(true)
+    expect(frame:IsShown()).toBe(true)
+    elements.Set({ "test.box" }, true)
+    expect(elements.IsShown("test.box")).toBe(true)
+    session.Discard()
+    E.Mover.Unregister("test.box")
+    frame:Hide()
+end
+
+@test("the panel opens from the toolbar button and closes with the Mover")
+local function panel()
+    E.MoverSession.Toggle()
+    expect(E.MoverElements.IsOpen()).toBe(false)
+    E.MoverElements.Toggle(UIParent)
+    expect(E.MoverElements.IsOpen()).toBe(true)
+    E.MoverSession.Discard()
+    expect(E.MoverElements.IsOpen()).toBe(false)
+end

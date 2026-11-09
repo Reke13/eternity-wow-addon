@@ -41,6 +41,7 @@ local function close()
     Session.selected = nil
     E.Events.Send(Mover.TOGGLED, false)
     ns.MoverScene.Hide()
+    ns.MoverElements.Close()
     for _, frame in ipairs(samples or {}) do
         frame:Hide()
     end

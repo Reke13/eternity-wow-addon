@@ -15,6 +15,7 @@ local Handles = {}
 ns.MoverHandles = Handles
 
 local handles = {}
+Handles.handles = handles -- for the tests
 local drag, resize
 
 local GRIP = 14
@@ -27,7 +28,8 @@ end
 local function others(key)
     local list, rects = {}, {}
     for _, element in ipairs(Mover.List()) do
-        if element.key ~= key then
+        -- Elements hidden in the Mover ("Elements" panel) don't pull or measure.
+        if element.key ~= key and ns.MoverElements.IsShown(element.key) then
             local rect = Mover.Rect(element, session().Entry(element.key))
             list[#list + 1] = { key = element.key, rect = rect }
             rects[#rects + 1] = rect
@@ -181,6 +183,34 @@ local function handleFor(element)
     return handle
 end
 
+-- Puts one handle over its element; returns its rect when it's the selected one.
+local function draw(element)
+    local handle = handleFor(element)
+    -- Hidden in the "Elements" panel: no handle (the element itself stays as it is).
+    if not ns.MoverElements.IsShown(element.key) then
+        handle:Hide()
+        return nil
+    end
+    local rect = Mover.Rect(element, session().Entry(element.key))
+    handle:ClearAllPoints()
+    handle:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", rect.l, rect.b)
+    handle:SetSize(rect.w, rect.h)
+    handle.label:SetText(element.label)
+    local entry = session().Entry(element.key)
+    local size = string.format("%d × %d", math.floor(rect.w + 0.5), math.floor(rect.h + 0.5))
+    if entry.scale then
+        size = size .. string.format(" · x%.2f", entry.scale)
+    end
+    handle.size:SetText(size)
+    local on = session().selected == element.key
+    local a = Theme.accent
+    handle.grip:SetShown(on and not entry.locked and Mover.IsScalable(element.key))
+    handle.grip.texture:SetColorTexture(a[1], a[2], a[3], 1)
+    local edge = on and { a[1], a[2], a[3], 1 } or { a[1], a[2], a[3], 0.45 }
+    Shape.Paint(handle.shape, 5, { a[1], a[2], a[3], on and 0.34 or 0.14 }, edge)
+    return on and rect or nil
+end
+
 --- Puts each handle over its element and marks the selected one.
 function Handles.Refresh()
     local selectedRect
@@ -188,27 +218,7 @@ function Handles.Refresh()
         handle:SetShown(Mover.elements[key] ~= nil)
     end
     for _, element in ipairs(Mover.List()) do
-        local handle = handleFor(element)
-        local rect = Mover.Rect(element, session().Entry(element.key))
-        handle:ClearAllPoints()
-        handle:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", rect.l, rect.b)
-        handle:SetSize(rect.w, rect.h)
-        handle.label:SetText(element.label)
-        local entry = session().Entry(element.key)
-        local size = string.format("%d × %d", math.floor(rect.w + 0.5), math.floor(rect.h + 0.5))
-        if entry.scale then
-            size = size .. string.format(" · x%.2f", entry.scale)
-        end
-        handle.size:SetText(size)
-        local on = session().selected == element.key
-        local a = Theme.accent
-        handle.grip:SetShown(on and not entry.locked and Mover.IsScalable(element.key))
-        handle.grip.texture:SetColorTexture(a[1], a[2], a[3], 1)
-        local edge = on and { a[1], a[2], a[3], 1 } or { a[1], a[2], a[3], 0.45 }
-        Shape.Paint(handle.shape, 5, { a[1], a[2], a[3], on and 0.34 or 0.14 }, edge)
-        if on then
-            selectedRect = rect
-        end
+        selectedRect = draw(element) or selectedRect
     end
     local _, rects = others(session().selected)
     ns.MoverScene.SetMeasures(selectedRect, rects)
