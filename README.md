@@ -36,6 +36,7 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_Bugs` | Collects Lua errors, warnings and blocked actions and lists them to read, copy and clear (`/etbugs`) |
 | `EternityUI_Auras` | The target's debuffs and your own buffs, each in a frame of its own: filtered by caster, type, duration and your own list of spells per frame, in combat too (`/etauras`) |
 | `EternityUI_Tooltip` | Tooltips |
+| `EternityUI_UnitFrames` | Frames for you, your pet, target, target of target, focus, group, raid and the group's pets: sizes, bars, texts, auras with buff filters, icons and range fading per frame, with a live preview |
 
 ## Your own background images
 

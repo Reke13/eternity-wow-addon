@@ -1,0 +1,48 @@
+-- The preview window.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+@test("the preview opens, follows the frame picked and lays out samples")
+local function previewWindow()
+    local m = module()
+    local holder = CreateFrame("Frame", nil, UIParent)
+    holder:SetSize(600, 40)
+    local strip = m.Preview.Strip(holder)
+    strip.button:Click()
+    local w = m.Preview.window
+    expect(w:IsShown()).toBe(true)
+    expect(m.Preview.frames[1]:IsShown()).toBe(true)
+    strip:Refresh("party")
+    local shown = 0
+    for _, f in ipairs(m.Preview.frames) do
+        if f:IsShown() then
+            shown = shown + 1
+        end
+    end
+    expect(shown).toBe(4)
+    -- A made-up group: names, and sample auras where the real ones go.
+    expect(m.Preview.frames[1].healthLeft:GetText()).toBe("Aldric")
+    local icons = 0
+    for _, b in ipairs(m.Preview.frames[1].sampleAuras or {}) do
+        if b:IsShown() then
+            icons = icons + 1
+        end
+    end
+    expect(icons > 0).toBe(true)
+    strip:Refresh("raid")
+    shown = 0
+    for _, f in ipairs(m.Preview.frames) do
+        if f:IsShown() then
+            shown = shown + 1
+        end
+    end
+    expect(shown).toBe(10)
+    strip.button:Click()
+    expect(w:IsShown()).toBe(false)
+    holder:Hide()
+end
