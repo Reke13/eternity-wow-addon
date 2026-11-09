@@ -336,6 +336,28 @@ ns.OptionsSchema = {
             },
         },
         {
+            id = "mail",
+            label = {
+                enUS = "Mail",
+                esES = "Correo",
+            },
+            options = {
+                {
+                    id = "keepRecipient",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Keep the recipient after sending",
+                        esES = "Mantener el destinatario al enviar",
+                    },
+                    description = {
+                        enUS = "After a letter is sent, its recipient stays in the form, to send them another one. Forgotten when the mailbox closes.",
+                        esES = "Tras enviar una carta, su destinatario se queda en el formulario, para mandarle otra. Se olvida al cerrar el buzón.",
+                    },
+                },
+            },
+        },
+        {
             id = "cinematics",
             label = {
                 enUS = "Cinematics and clutter",
