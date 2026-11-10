@@ -61,3 +61,57 @@ local function combatEveryPart()
     expect(plain > 0).toBe(true)
 end
 
+local function messengerWith(name)
+    local ns = EternityUI:GetModule("EternityUI_Chat").ns
+    EternityUI.store:Set("EternityUI_Chat", "mode.style", "messenger")
+    local conversation = ns.History:Conversation("w:" .. name, "whisper", name, name)
+    ns.Messenger:Open(conversation.key)
+    return ns.Messenger, conversation
+end
+
+@test("a shift-click link goes in the messenger's box while writing there")
+local function messengerLinks()
+    local messenger = messengerWith("Linkfriend")
+    local w = messenger.frame
+    local link = "|cff0070dd|Hitem:6948::::::::60:::::::::|h[Hearthstone]|h|r"
+    w.input:SetText("look: ")
+    w.input:SetFocus()
+    ChatFrameUtil.InsertLink(link)
+    expect(w.input:GetText()).toBe("look: " .. link)
+    -- Not written in: the link isn't taken.
+    w.input:ClearFocus()
+    w.input:SetText("")
+    ChatFrameUtil.InsertLink(link)
+    expect(w.input:GetText()).toBe("")
+    w:Hide()
+    EternityUI.store:Set("EternityUI_Chat", "mode.style", "tabs")
+end
+
+@test("a new whisper plays the game's sound, also with its conversation open if the option says so")
+local function whisperSound()
+    local messenger, conversation = messengerWith("Soundfriend")
+    local store = EternityUI.store
+    local played = 0
+    local playSound = PlaySound
+    ---@type any
+    local count = function(kit)
+        if kit == SOUNDKIT.TELL_MESSAGE then
+            played = played + 1
+        end
+    end
+    PlaySound = count
+    store:Set("EternityUI_Chat", "messenger.sound", true)
+    store:Set("EternityUI_Chat", "messenger.soundOpen", true)
+    messenger:OnMessage(conversation, { t = time(), text = "hi" })
+    store:Set("EternityUI_Chat", "messenger.soundOpen", false)
+    messenger:OnMessage(conversation, { t = time(), text = "hi again" })
+    store:Set("EternityUI_Chat", "messenger.sound", false)
+    messenger.frame:Hide()
+    messenger:OnMessage(conversation, { t = time(), text = "and again" })
+    PlaySound = playSound
+    store:Set("EternityUI_Chat", "messenger.sound", true)
+    store:Set("EternityUI_Chat", "messenger.soundOpen", true)
+    store:Set("EternityUI_Chat", "mode.style", "tabs")
+    expect(played).toBe(1)
+end
+
