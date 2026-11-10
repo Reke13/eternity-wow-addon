@@ -5,6 +5,9 @@
 --   * Sending uses Blizzard's chat API from the Enter key or the button (a hardware event).
 --     While Blizzard restricts the chat, the text goes to Blizzard's chat box instead.
 --   * A button on the main chat window opens it and shows the unread count.
+--   * A shift-click on an item (or anything else the game links) while writing here puts its
+--     link in the box: a hook after Blizzard's ChatFrameUtil.InsertLink, which only knows its
+--     own chat boxes. Links in the bubbles show their tooltip on mouseover and click as in chat.
 
 ---@type string, EternityUIChatNamespace
 local addonName, ns = ...
@@ -249,6 +252,14 @@ function Messenger:Bubble(index)
     bubble:SetHyperlinksEnabled(true)
     bubble:SetScript("OnHyperlinkClick", function(_, link, text, button)
         SetItemRef(link, text, button)
+    end)
+    bubble:SetScript("OnHyperlinkEnter", function(self, link)
+        Messenger.ShowLinkTooltip(self, link)
+    end)
+    bubble:SetScript("OnHyperlinkLeave", function(self)
+        if GameTooltip:IsOwned(self) then
+            GameTooltip:Hide()
+        end
     end)
     self.bubbles[index] = bubble
     return bubble
@@ -511,7 +522,7 @@ function Messenger:OnMessage(conversation, message)
     end
     local whisper = conversation.kind == "whisper" or conversation.kind == "bnet"
     if whisper and not message.m then
-        if opt("messenger.sound") and not open then
+        if opt("messenger.sound") and (not open or opt("messenger.soundOpen")) then
             PlaySound(NEW_WHISPER_SOUND)
         end
         if opt("messenger.autoOpen") and not (self.frame and self.frame:IsShown()) then
@@ -902,8 +913,72 @@ function Messenger:Apply()
     self:UpdateLauncher()
 end
 
+-- Links --------------------------------------------------------------------------------------
+
+-- Link kinds GameTooltip:SetHyperlink can show.
+local TOOLTIP_LINKS = {
+    item = true, spell = true, enchant = true, quest = true, achievement = true, talent = true,
+    currency = true, unit = true, instancelock = true, mount = true,
+}
+
+--- The tooltip of a link in a bubble (items, spells, quests...), beside the mouse.
+---@param owner table
+---@param link string
+function Messenger.ShowLinkTooltip(owner, link)
+    local kind = type(link) == "string" and link:match("^([^:]+)")
+    if not (kind and TOOLTIP_LINKS[kind]) then
+        return
+    end
+    GameTooltip:SetOwner(owner, "ANCHOR_CURSOR")
+    if pcall(GameTooltip.SetHyperlink, GameTooltip, link) then
+        GameTooltip:Show()
+    else
+        GameTooltip:Hide()
+    end
+end
+
+--- Puts a link the game is inserting (a shift-click) in the box to write, when that box is the
+--- one being written in and Blizzard has no chat box of its own open to take it.
+---@param text any
+---@return boolean inserted
+function Messenger:InsertLink(text)
+    local w = self.frame
+    if not (self.running and type(text) == "string" and text ~= "" and w and w:IsShown()) then
+        return false
+    end
+    if not (w.input:HasFocus() and w.pane:IsShown()) then
+        return false
+    end
+    local util = _G.ChatFrameUtil
+    if util and util.GetActiveWindow and util.GetActiveWindow() then
+        return false
+    end
+    w.input:Insert(text)
+    return true
+end
+
+-- Once: after Blizzard's InsertLink, under both names it has (ChatEdit_InsertLink is the same
+-- function, kept apart, so each name gets its own hook and a call goes through one of them).
+local function hookInsertLink()
+    if Messenger.linkHooked then
+        return
+    end
+    Messenger.linkHooked = true
+    local function after(text)
+        Messenger:InsertLink(text)
+    end
+    local util = _G.ChatFrameUtil
+    if util and type(util.InsertLink) == "function" then
+        hooksecurefunc(util, "InsertLink", after)
+    end
+    if type(_G.ChatEdit_InsertLink) == "function" then
+        hooksecurefunc("ChatEdit_InsertLink", after)
+    end
+end
+
 function Messenger:Start()
     self.running = true
+    hookInsertLink()
     self:Apply()
 end
 

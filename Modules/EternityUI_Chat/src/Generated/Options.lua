@@ -181,6 +181,22 @@ ns.OptionsSchema = {
                         enUS = "Sound on a new whisper",
                         esES = "Sonido con un susurro nuevo",
                     },
+                    description = {
+                        enUS = "The game's own whisper sound. The messenger takes whispers out of the normal chat, so the game doesn't play it then.",
+                        esES = "El sonido de susurro del propio juego. La mensajería quita los susurros del chat normal, así que entonces el juego no lo reproduce.",
+                    },
+                },
+                {
+                    id = "soundOpen",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Also while reading that conversation",
+                        esES = "También con esa conversación abierta",
+                    },
+                    visibleWhen = {
+                        ["messenger.sound"] = true,
+                    },
                 },
                 {
                     id = "launcher",
