@@ -1,0 +1,118 @@
+-- The list keeps players by name, filters them and the module stops cleanly.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Blacklist"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function reset()
+    local list = module().List
+    list.Bind()
+    list.db.players = {}
+    return list
+end
+
+@test("the module starts")
+local function starts()
+    expect(module().active).toBe(true)
+    expect(module().Warnings.running).toBe(true)
+end
+
+@test("a name drops its realm and spaces, and its key ignores case")
+local function names()
+    local list = module().List
+    expect(list.Clean("  Thrall-Forever ")).toBe("Thrall")
+    expect(list.Key("THRALL")).toBe("thrall")
+    expect(list.Clean("   ") == nil).toBe(true)
+    expect(list.Clean(nil) == nil).toBe(true)
+end
+
+@test("adding twice updates the same entry and keeps what isn't given")
+local function adds()
+    local list = reset()
+    list.Add({ name = "Garrosh", faction = "Horde", guild = "Kor'kron", reason = "ninja" })
+    local entry = list.Add({ name = "garrosh", level = 60 })
+    expect(list.Count()).toBe(1)
+    expect(entry.reason).toBe("ninja")
+    expect(entry.faction).toBe("Horde")
+    expect(entry.level).toBe(60)
+end
+
+@test("saving renames an entry and refuses a name already listed")
+local function saves()
+    local list = reset()
+    list.Add({ name = "Varian", reason = "a" })
+    list.Add({ name = "Anduin", reason = "b" })
+    local _, problem = list.Save("Varian", { name = "anduin", faction = "", guild = "", reason = "c" })
+    expect(problem).toBe("taken")
+    local entry = list.Save("Varian", { name = "Wrynn", faction = "Alliance", guild = " ", reason = " c " })
+    expect(entry.reason).toBe("c")
+    expect(entry.faction).toBe("Alliance")
+    expect(entry.guild == nil).toBe(true)
+    expect(list.Get("Varian") == nil).toBe(true)
+    expect(list.Get("wrynn") ~= nil).toBe(true)
+    local _, empty = list.Save(nil, { name = "  ", reason = "" })
+    expect(empty).toBe("name")
+end
+
+@test("the filter searches name, guild and reason, by faction, sorted by name")
+local function filters()
+    local list = reset()
+    list.Add({ name = "Zed", faction = "Horde", reason = "spam" })
+    list.Add({ name = "Abe", faction = "Alliance", guild = "Spammers" })
+    list.Add({ name = "Moe", reason = "afk" })
+    local all = list.Filter(list.db.players, { text = "", faction = "all" })
+    expect(#all).toBe(3)
+    expect(all[1].name).toBe("Abe")
+    local spam = list.Filter(list.db.players, { text = "SPAM", faction = "all" })
+    expect(#spam).toBe(2)
+    local horde = list.Filter(list.db.players, { text = "spam", faction = "Horde" })
+    expect(#horde).toBe(1)
+    local unknown = list.Filter(list.db.players, { text = "", faction = "unknown" })
+    expect(unknown[1].name).toBe("Moe")
+end
+
+@test("/bl add and /bl remove work by name")
+local function slash()
+    local list = reset()
+    module().Slash("add Illidan betrayed us all")
+    expect(list.Get("illidan").reason).toBe("betrayed us all")
+    module().Slash("remove illidan")
+    expect(list.Count()).toBe(0)
+end
+
+@test("the menu is about the named player, never yourself")
+local function menu()
+    local m = module().Menu
+    expect(m.Target({ name = "Jaina-Forever" }).name).toBe("Jaina")
+    expect(m.Target(nil) == nil).toBe(true)
+    local me = module().List.Me()
+    if me then
+        expect(m.Target({ name = me }) == nil).toBe(true)
+    end
+end
+
+@test("the window lists the players")
+local function window()
+    local list = reset()
+    list.Add({ name = "Sylvanas", faction = "Horde", reason = "ganks" })
+    local w = module().Window
+    w.Toggle()
+    expect(w.frame:IsShown()).toBe(true)
+    expect(#w.view).toBe(1)
+    w.Toggle()
+    expect(w.frame:IsShown()).toBe(false)
+end
+
+@test("disabling stops the warnings and closes the windows")
+local function disables()
+    module().Editor.Open(nil, { name = "Arthas" })
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(module().Warnings.running).toBe(false)
+    expect(module().Menu.running).toBe(false)
+    expect(module().Editor.frame:IsShown()).toBe(false)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    expect(module().Warnings.running).toBe(true)
+end

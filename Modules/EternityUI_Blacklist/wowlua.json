@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-blacklist",
+    "version": "0.7.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Blacklist",
+    "title": "Eternity Blacklist",
+    "notes": "Eternity module: your own list of players of either faction, with the reason for each, and a warning when you meet one of them.",
+    "saved-variables": ["EternityUIBlacklistDB"]
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/List.lua",
+      "src/Editor.lua",
+      "src/Window.lua",
+      "src/Warnings.lua",
+      "src/Menu.lua",
+      "src/Blacklist.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "EternityUIBlacklistDB",
+      "SOUNDKIT",
+      "Menu"
+    ]
+  }
+}

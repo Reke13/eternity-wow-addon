@@ -2,6 +2,13 @@
 
 What changed in each release of the Eternity suite, newest first. Every addon shares the release's version.
 
+## 0.7.0 (2026-11-11)
+
+### Added
+- Blacklist: a new addon to keep your own list of players of either faction with the reason for each (`/bl`). Add them from a player's right-click menu or the list window; listed players are flagged in the tooltip, on target and when they join your group.
+- Chat: shift-click an item (or any link) while writing in the messenger to put its link there; links in the conversation show their tooltip on mouseover.
+- Chat: an option to play the whisper sound even while that conversation is open.
+
 ## 0.6.0 (2026-11-10)
 
 ### Added
