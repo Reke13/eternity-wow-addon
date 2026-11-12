@@ -10,6 +10,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 - Bags: the tooltip of a supply crate lists each material it takes, how many you have and on which characters.
 - Bags: what waits in each character's mailbox, and what you mail to your own characters, counts in the item tooltips and the supply crates.
 - Bags: the item tooltip shows where each count is (bags, bank, mail, equipped) as a small icon, with an option to keep the words.
+- Chat: a copy button on each chat window (and `/etchat copy`) opens its text in a box to select and copy, without colors or icons. Protected lines show as "(protected)". It can be hidden in the options.
 
 ### Changed
 - Automation: "Keep the recipient after sending" moves to the new Mail addon.

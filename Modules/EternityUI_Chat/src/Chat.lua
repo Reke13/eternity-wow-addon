@@ -2,7 +2,8 @@
 --   * Players.lua decorates sender names (icon, level, class) in Blizzard's chat;
 --   * History.lua files messages into conversations and saves them;
 --   * Skin.lua restyles Blizzard's chat windows and applies the mode;
---   * Messenger.lua shows the conversations as a messaging app.
+--   * Messenger.lua shows the conversations as a messaging app;
+--   * Copy.lua opens a chat window's text to copy it.
 -- Chat events whose values are secret (Blizzard's chat restrictions) are ignored: Blizzard shows
 -- them in its chat as usual and they're neither filed nor saved. Removing messages from the
 -- normal chat uses Blizzard's message event filters, which are removed when disabled.
@@ -75,7 +76,9 @@ end
 
 function Module:Slash(input)
     local command = strtrim(input or ""):lower()
-    if command == "clear" then
+    if command == "copy" then
+        ns.Copy:Open()
+    elseif command == "clear" then
         History:ClearAll()
         Messenger:Apply()
         print(L.HISTORY_CLEARED)

@@ -27,6 +27,7 @@
       "src/Players.lua",
       "src/History.lua",
       "src/Skin.lua",
+      "src/Copy.lua",
       "src/Messenger.lua",
       "src/Chat.lua"
     ]

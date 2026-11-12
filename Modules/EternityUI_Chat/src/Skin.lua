@@ -531,6 +531,7 @@ function ChatSkin:ApplyAll()
     self:ApplyButtons()
     self:ApplyPlacements()
     self:ApplyMode()
+    ns.Copy:Apply()
 end
 
 function ChatSkin:Schedule()
