@@ -2,6 +2,11 @@
 
 What changed in each release of the Eternity suite, newest first. Every addon shares the release's version.
 
+## Unreleased
+
+### Added
+- Chat: a copy button on each chat window (and `/etchat copy`) opens its text in a box to select and copy, without colors or icons. Protected lines show as "(protected)". It can be hidden in the options.
+
 ## 0.7.0 (2026-11-11)
 
 ### Added

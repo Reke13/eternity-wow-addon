@@ -1,0 +1,148 @@
+-- Copy chat: the button on each chat window and the window with its text.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Chat"
+
+local function ns()
+    return EternityUI:GetModule(NAME).ns
+end
+
+-- A chat frame stand-in: GetNumMessages and GetMessageInfo over a list. A `true` entry errors,
+-- like a line the client won't hand over.
+local function fakeFrame(messages)
+    return {
+        GetNumMessages = function()
+            return #messages
+        end,
+        GetMessageInfo = function(_, index)
+            if messages[index] == true then
+                error("protected")
+            end
+            return messages[index], 1, 1, 1
+        end,
+        GetID = function()
+            return 1
+        end,
+        GetName = function()
+            return "EternityUIChatFakeFrame"
+        end,
+    }
+end
+
+-- Marks the given strings as secret while fn runs.
+local function withSecrets(secrets, fn)
+    local before = issecretvalue
+    ---@type any
+    local check = function(value)
+        return secrets[value] == true
+    end
+    issecretvalue = check
+    local ok, err = pcall(fn)
+    issecretvalue = before
+    if not ok then
+        error(err)
+    end
+end
+
+@test("colors, icons and textures go; links keep their text")
+local function clean()
+    local Copy = ns().Copy
+    expect(Copy.Clean("|cff0070dd|Hitem:6948::::::::60:::::::::|h[Hearthstone]|h|r for sale")).toBe(
+        "[Hearthstone] for sale"
+    )
+    expect(Copy.Clean("|cnGREEN_FONT_COLOR:Done|r")).toBe("Done")
+    expect(Copy.Clean("|TInterface\\Icons\\INV_Misc_Coin_01:0|t 5 gold |A:raidicon:0:0|a")).toBe(" 5 gold ")
+    expect(Copy.Clean("[2. Trade] |Hplayer:Hero-Realm:12:CHANNEL:2|h[Hero]|h: hi")).toBe("[2. Trade] [Hero]: hi")
+    expect(Copy.Clean("a || b")).toBe("a || b")
+    expect(Copy.Clean(nil)).toBe("")
+end
+
+@test("protected strings and secret lines show as protected, without breaking the rest")
+local function protected()
+    local Copy, L = ns().Copy, ns().L
+    expect(Copy.Clean("|Kq12|k: hello")).toBe(L.PROTECTED .. ": hello")
+    withSecrets({ ["secret line"] = true }, function()
+        expect(Copy.Clean("secret line")).toBe(L.PROTECTED)
+        local lines = Copy.Lines(fakeFrame({ "first", "secret line", true, "|cffff0000last|r" }))
+        expect(#lines).toBe(4)
+        expect(lines[1]).toBe("first")
+        expect(lines[2]).toBe(L.PROTECTED)
+        expect(lines[3]).toBe(L.PROTECTED)
+        expect(lines[4]).toBe("last")
+    end)
+end
+
+@test("the copy window opens with the window's lines, read only")
+local function window()
+    local Copy, L = ns().Copy, ns().L
+    Copy:Open(fakeFrame({ "one", "|cffffff00two|r" }))
+    local w = Copy.window
+    expect(w:IsShown()).toBe(true)
+    expect(w.edit:GetText()).toBe("one\ntwo")
+    expect(w.edit:IsMultiLine()).toBe(true)
+    -- Typing doesn't change it.
+    w.edit:GetScript("OnTextChanged")(w.edit, true)
+    expect(w.edit:GetText()).toBe("one\ntwo")
+    -- No secure template anywhere in it: it closes in combat too.
+    expect(w:IsProtected()).toBe(false)
+    w:Hide()
+    Copy:Open(fakeFrame({}))
+    expect(w.edit:GetText()).toBe(L.COPY_EMPTY)
+    w:Hide()
+end
+
+@test("the copy window looks like the options window: surface, shadow, background image and scale")
+local function look()
+    local Copy = ns().Copy
+    local store = EternityUI.store
+    Copy:Open(fakeFrame({ "one" }))
+    local w = Copy.window
+    expect(w.shape ~= nil and w.shadow ~= nil and w.wallpaper ~= nil).toBe(true)
+    local scale = store:Get("EternityUI", "general.optionsScale")
+    store:Set("EternityUI", "general.optionsScale", 1.2)
+    expect(math.floor(w:GetScale() * 100 + 0.5)).toBe(120)
+    store:Set("EternityUI", "general.optionsScale", scale)
+    expect(math.floor(w:GetScale() * 100 + 0.5)).toBe(math.floor(scale * 100 + 0.5))
+    w:Hide()
+end
+
+@test("the real chat window's messages reach the copy window")
+local function realChat()
+    local Copy = ns().Copy
+    local frame = ChatFrame1
+    expect(frame ~= nil and frame.GetNumMessages ~= nil).toBe(true)
+    frame:AddMessage("|cff00ff00Eternity copy test|r")
+    local lines = Copy.Lines(frame)
+    expect(lines[#lines]).toBe("Eternity copy test")
+end
+
+@test("each chat window has the button while the option is on")
+local function buttons()
+    local Copy = ns().Copy
+    local store = EternityUI.store
+    local frame = ChatFrame1
+    expect(frame ~= nil).toBe(true)
+    store:Set(NAME, "copy.button", true)
+    Copy:Apply()
+    local button = Copy.buttons[frame]
+    expect(button ~= nil).toBe(true)
+    expect(button:IsShown()).toBe(frame:IsShown())
+    expect(button:IsProtected()).toBe(false)
+    store:Set(NAME, "copy.button", false)
+    expect(button:IsShown()).toBe(false)
+    store:Set(NAME, "copy.button", true)
+    expect(button:IsShown()).toBe(frame:IsShown())
+    -- Disabling the module takes the buttons away.
+    store:SetModuleEnabled(NAME, false)
+    expect(button:IsShown()).toBe(false)
+    store:SetModuleEnabled(NAME, true)
+    expect(button:IsShown()).toBe(frame:IsShown())
+end
+
+@test("/etchat copy opens the selected chat window")
+local function slash()
+    local Copy = ns().Copy
+    SlashCmdList.ETERNITYCHAT("copy")
+    expect(Copy.window:IsShown()).toBe(true)
+    Copy.window:Hide()
+end
