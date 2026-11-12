@@ -5,8 +5,8 @@
 --   * Colors, textures and icons are removed and links keep their text ("[Hearthstone]").
 --   * Protected text can't be read: a secret line, or a |K...|k string inside one, shows as
 --     "(protected)" instead. Nothing is compared or cut on a secret value.
--- The window looks like Eternity's options window: the theme's surface, opacity and edge, its
--- shadow, the "window" background image and the options' scale.
+-- The window looks like Eternity's options window: the theme's surface, opacity and edge, the
+-- "window" background image and the options' scale, and no shadow (the options window has none).
 -- Taint: the buttons are our own frames in UIParent, following their chat window through
 -- HookScript; nothing is written into Blizzard's frames. No secure templates: the window and the
 -- buttons stay plain frames, so they also open and close in combat.
@@ -164,6 +164,7 @@ function Copy:Build()
     w.hint:SetText(L.COPY_HINT)
 
     function w.onPaint(frame)
+        frame.shadow:Hide()
         Theme.PaintWallpaper(frame.wallpaper, "window")
         frame:SetScale(E.store:Get("EternityUI", "general.optionsScale") or 1)
         edit:SetFont(Theme.font, 13 * Theme.fontScale, "")

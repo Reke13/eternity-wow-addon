@@ -91,13 +91,17 @@ local function window()
     w:Hide()
 end
 
-@test("the copy window looks like the options window: surface, shadow, background image and scale")
+@test("the copy window looks like the options window: surface, background image and scale, no shadow")
 local function look()
     local Copy = ns().Copy
     local store = EternityUI.store
     Copy:Open(fakeFrame({ "one" }))
     local w = Copy.window
-    expect(w.shape ~= nil and w.shadow ~= nil and w.wallpaper ~= nil).toBe(true)
+    expect(w.shape ~= nil and w.wallpaper ~= nil).toBe(true)
+    expect(w.shadow:IsShown()).toBe(false)
+    -- A theme change repaints it: the shadow stays hidden.
+    w:Paint()
+    expect(w.shadow:IsShown()).toBe(false)
     local scale = store:Get("EternityUI", "general.optionsScale")
     store:Set("EternityUI", "general.optionsScale", 1.2)
     expect(math.floor(w:GetScale() * 100 + 0.5)).toBe(120)
