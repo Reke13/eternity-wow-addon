@@ -11,6 +11,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 - Bags: what waits in each character's mailbox, and what you mail to your own characters, counts in the item tooltips and the supply crates.
 - Bags: the item tooltip shows where each count is (bags, bank, mail, equipped) as a small icon, with an option to keep the words.
 - Chat: a copy button on each chat window (and `/etchat copy`) opens its text in a box to select and copy, without colors or icons. Protected lines show as "(protected)". It can be hidden in the options.
+- Unit frames: PvP and combat icons on every frame (all but the raid by default): the faction's icon while flagged for PvP, another in free-for-all, and crossed swords while the unit is in combat. Each can be switched off, placed and sized per frame.
 
 ### Changed
 - Automation: "Keep the recipient after sending" moves to the new Mail addon.
@@ -21,6 +22,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 - Unit frames: a target close by is no longer faded when the game hides its group range; out of range goes by a class spell or the follow distance.
 - Unit frames: the raid target icon shows when the game gives its index as a secret, centred on the health and power bars.
 - Unit frames: a unit without power hides the power bar and gives its room to health.
+- Unit frames: the combat and resting icons show again, with the client's own art (resting is animated).
 - Bags: using an item from the bags (Hearthstone, a sleeping bag...) with the mouse still on it no longer shows "EternityUI_Bags was forbidden to call UNKNOWN()".
 
 ## 0.7.0 (2026-11-11)
