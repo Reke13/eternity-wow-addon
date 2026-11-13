@@ -273,7 +273,7 @@ function Tab.Refresh()
     end
     local kind = Tab.kind
     local player = kind.key == "player"
-    v.intro:SetText(player and L.SPELLS_INTRO_PLAYER or L.SPELLS_INTRO_TARGET)
+    v.info:Set(kind.label, player and L.SPELLS_INTRO_PLAYER or L.SPELLS_INTRO_TARGET)
     v.fromUnit.label:SetText(player and L.FROM_PLAYER or L.FROM_TARGET)
     v.fromUnit:SetWidth(v.fromUnit.label:GetStringWidth() + 28)
     v.empty:SetText(player and L.NO_SPELLS_PLAYER or L.NO_SPELLS_TARGET)
@@ -299,7 +299,8 @@ function Tab.Refresh()
     v.empty:SetShown(#list == 0)
     local listHeight = math.max(#list * ROW, 40)
     v.list:SetHeight(listHeight)
-    -- picker, the "off" note, intro, the box and the example, then the list.
+    -- picker (with the "i" that explains the list), the "off" note, the box and the example, then
+    -- the list.
     local top = GAP + BAR + GAP
     v.off:ClearAllPoints()
     v.off:SetPoint("TOPLEFT", 0, -top)
@@ -307,10 +308,9 @@ function Tab.Refresh()
     if off then
         top = top + v.off:GetStringHeight() + GAP
     end
-    v.intro:ClearAllPoints()
-    v.intro:SetPoint("TOPLEFT", 0, -top)
-    v.intro:SetPoint("TOPRIGHT", 0, -top)
-    top = top + v.intro:GetStringHeight() + GAP + BAR + GAP + 16 + v.example:GetStringHeight() + GAP
+    v.input:ClearAllPoints()
+    v.input:SetPoint("TOPLEFT", 0, -top)
+    top = top + BAR + GAP + 16 + v.example:GetStringHeight() + GAP
     v.list:ClearAllPoints()
     v.list:SetPoint("TOPLEFT", 0, -top)
     v.list:SetPoint("TOPRIGHT", 0, -top)
@@ -348,14 +348,13 @@ function Tab.Build(parent, setHeight)
     v.off = Widgets.Text(v, 13, "text")
     v.off:SetJustifyH("LEFT")
 
-    v.intro = Widgets.Text(v, 13, "muted")
-    v.intro:SetJustifyH("LEFT")
+    v.info = Widgets.Info(v)
+    v.info:SetPoint("LEFT", v.picker, "RIGHT", 10, 0)
 
     v.input = Widgets.Input(v, Tab.AddText, L.SPELL_ID)
     hookLinks()
     v.input:SetHeight(BAR)
     v.input:SetWidth(240)
-    v.input:SetPoint("TOPLEFT", v.intro, "BOTTOMLEFT", 0, -GAP)
     v.add = Widgets.Button(v, L.ADD, "primary", function()
         Tab.AddText(v.input:GetText())
     end)

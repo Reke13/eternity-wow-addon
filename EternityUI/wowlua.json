@@ -40,6 +40,7 @@
       "src/UI/Shape.lua",
       "src/UI/Widgets.lua",
       "src/UI/Tooltip.lua",
+      "src/UI/Info.lua",
       "src/UI/Window.lua",
       "src/UI/Integration.lua",
       "src/Main.lua"

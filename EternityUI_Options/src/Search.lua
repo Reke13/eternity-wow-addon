@@ -49,7 +49,7 @@ local function buildIndex()
             label = page.title,
             where = L.SEARCH_PAGE,
             folded = Search.Fold(page.title),
-            haystack = Search.Fold(page.title .. " " .. page.note),
+            haystack = Search.Fold(page.title .. " " .. (page.note or "")),
         }
         for _, entry in ipairs(page.Entries and page.Entries() or {}) do
             entry.page = page
@@ -190,7 +190,7 @@ function Search.Update(text)
         page.nav:SetActive(false)
     end
     Search.frame:Show()
-    Window.SetHeader(L.SEARCH_TITLE, #results > 0 and L.SEARCH_COUNT:format(#results) or L.SEARCH_NONE:format(text))
+    Window.SetHeader(L.SEARCH_TITLE, nil, #results > 0 and L.SEARCH_COUNT:format(#results) or L.SEARCH_NONE:format(text))
     draw(results)
 end
 

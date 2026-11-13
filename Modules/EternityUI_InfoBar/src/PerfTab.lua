@@ -130,10 +130,11 @@ local function heading(parent, title, size)
     return text
 end
 
-local function note(parent)
-    local text = Widgets.Text(parent, 12, "muted")
-    text:SetJustifyH("LEFT")
-    return text
+-- A heading with an "i" right after its text, which explains the block.
+local function headingWithInfo(parent, title, text)
+    local line = heading(parent, title)
+    line.info = Widgets.Info(parent, title, text)
+    return line
 end
 
 local function addonRow(parent)
@@ -185,6 +186,10 @@ local function layout(v)
             region:ClearAllPoints()
             region:SetPoint("TOPLEFT", 0, -y)
             region:SetPoint("TOPRIGHT", 0, -y)
+            if region.info then
+                region.info:ClearAllPoints()
+                region.info:SetPoint("LEFT", region, "LEFT", region:GetStringWidth() + 8, 0)
+            end
             local height = region.GetStringHeight and region:GetStringHeight() or region:GetHeight()
             y = y + math.max(height, 1)
         end
@@ -232,8 +237,7 @@ function PerfTab.Build(parent, setHeight)
     end
 
     -- Graphics.
-    add(heading(v, L.GRAPHICS), GAP)
-    add(note(v), 2):SetText(L.GRAPHICS_NOTE)
+    add(headingWithInfo(v, L.GRAPHICS, L.GRAPHICS_NOTE), GAP)
     v.graphics = {}
     for i, name in ipairs(Perf.CVARS) do
         if Perf.CVar(name) ~= nil then
@@ -242,14 +246,12 @@ function PerfTab.Build(parent, setHeight)
     end
 
     -- Drops.
-    add(heading(v, L.DROPS), GAP)
-    v.dropsNote = add(note(v), 2)
+    v.dropsHeading = add(headingWithInfo(v, L.DROPS), GAP)
     v.drops = add(Widgets.Text(v, 13, "text"), 6)
     v.drops:SetJustifyH("LEFT")
 
     -- Addons.
-    add(heading(v, L.ADDONS), GAP)
-    add(note(v), 2):SetText(L.ADDONS_NOTE)
+    add(headingWithInfo(v, L.ADDONS, L.ADDONS_NOTE), GAP)
     local choices = {}
     for i, sort in ipairs(Perf.SORTS) do
         choices[i] = { sort, L["SORT_" .. sort] }
@@ -356,7 +358,7 @@ function PerfTab.Refresh()
         row.value:SetText(PerfTab.CVarText(name) or L.UNKNOWN)
     end
 
-    v.dropsNote:SetText(L.DROPS_NOTE:format(threshold, Perf.DROP_SECONDS))
+    v.dropsHeading.info:Set(L.DROPS, L.DROPS_NOTE:format(threshold, Perf.DROP_SECONDS))
     local lines = {}
     for i, drop in ipairs(Perf.drops) do
         lines[i] = PerfTab.DropText(drop)

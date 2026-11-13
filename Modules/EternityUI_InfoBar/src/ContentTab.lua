@@ -128,7 +128,7 @@ function Tab.Refresh()
         return
     end
     local order = Tab.Order()
-    local top = GAP + v.intro:GetStringHeight() + GAP
+    local top = GAP
     for i, id in ipairs(order) do
         local row = Tab.rows[i]
         if not row then
@@ -162,11 +162,6 @@ function Tab.Build(parent, setHeight)
     v:SetPoint("TOPRIGHT")
     v.setHeight = setHeight
     Tab.frame = v
-    v.intro = Widgets.Text(v, 13, "muted")
-    v.intro:SetPoint("TOPLEFT", 0, -GAP)
-    v.intro:SetPoint("TOPRIGHT", 0, -GAP)
-    v.intro:SetJustifyH("LEFT")
-    v.intro:SetText(L.CONTENT_INTRO)
     v:SetScript("OnShow", Tab.Refresh)
     v:SetScript("OnSizeChanged", Tab.Refresh)
     v.Refresh = Tab.Refresh

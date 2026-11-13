@@ -1,0 +1,189 @@
+-- Descriptions live in an "i" beside the title (the page's and each option's), not as text.
+import test, expect from "wowlua:test"
+
+local E = EternityUI
+
+local DESCRIPTION = "What this test module is about."
+local OPTION_DESCRIPTION = "What the described switch does, long enough to need more than one line in the tooltip."
+
+E:RegisterModule("EternityUI_InfoTest", {
+    schema = {
+        format = 1,
+        module = "EternityUI_InfoTest",
+        title = { enUS = "Info test", esES = "Info test" },
+        description = { enUS = DESCRIPTION, esES = DESCRIPTION },
+        groups = {
+            {
+                id = "main",
+                label = { enUS = "Main", esES = "Main" },
+                options = {
+                    {
+                        id = "described",
+                        type = "toggle",
+                        default = true,
+                        label = { enUS = "Described", esES = "Described" },
+                        description = { enUS = OPTION_DESCRIPTION, esES = OPTION_DESCRIPTION },
+                    },
+                    {
+                        id = "plain",
+                        type = "toggle",
+                        default = true,
+                        label = { enUS = "Plain", esES = "Plain" },
+                    },
+                },
+            },
+        },
+    },
+    tabs = {
+        {
+            key = "drawn",
+            text = "Drawn",
+            description = function()
+                return "What the drawn tab is for."
+            end,
+            build = function(parent)
+                local view = CreateFrame("Frame", nil, parent)
+                view.Refresh = function() end
+                return view
+            end,
+        },
+    },
+})
+
+local function pageOf(key)
+    for _, page in ipairs(E.OptionsWindow.pages) do
+        if page.key == key then
+            return page
+        end
+    end
+end
+
+local function rowsOf(page)
+    page.ShowTab("general")
+    local rows = {}
+    for _, list in ipairs(page.lists) do
+        for _, item in ipairs(list.items) do
+            if item.row then
+                rows[item.path] = item.row
+            end
+        end
+    end
+    return rows
+end
+
+@test("a module's description is in the i beside its title, with no line under it")
+local function header()
+    E:ToggleOptions()
+    local window = E.OptionsWindow
+    local page = pageOf("EternityUI_InfoTest")
+    expect(page ~= nil).toBe(true)
+    window.Show(page)
+    local chrome = window.chrome
+    expect(chrome.title:GetText()).toBe("Info test")
+    expect(chrome.info:IsShown()).toBe(true)
+    expect(chrome.info.text).toBe(DESCRIPTION)
+    expect(chrome.note:IsShown()).toBe(false)
+    -- Without the line, the body moves up to just under the title.
+    local _, _, _, _, y = chrome.body:GetPoint(1)
+    expect(y > -84).toBe(true)
+    window.Toggle()
+end
+
+@test("an option with a description gets the i beside its label; the label stays clean")
+local function optionRows()
+    local window = E.OptionsWindow
+    window.Toggle()
+    local page = pageOf("EternityUI_InfoTest")
+    window.Show(page)
+    local rows = rowsOf(page)
+    local described, plain = rows["main.described"], rows["main.plain"]
+    expect(described.label:GetText()).toBe("Described")
+    expect(described.info:IsShown()).toBe(true)
+    expect(described.info.title).toBe("Described")
+    expect(described.info.text).toBe(OPTION_DESCRIPTION)
+    local point, relativeTo, relativePoint = described.info:GetPoint(1)
+    expect(point).toBe("LEFT")
+    expect(relativeTo == described.label).toBe(true)
+    expect(relativePoint).toBe("RIGHT")
+    expect(plain.info == nil).toBe(true)
+    expect(plain.label:GetText()).toBe("Plain")
+    -- Rows keep their height.
+    expect(described:GetHeight()).toBe(44)
+    window.Toggle()
+end
+
+@test("the search shows its count as a line and no i")
+local function search()
+    local window = E.OptionsWindow
+    window.Toggle()
+    window.SetHeader("Search", nil, "3 results")
+    expect(window.chrome.info:IsShown()).toBe(false)
+    expect(window.chrome.note:IsShown()).toBe(true)
+    expect(window.chrome.note:GetText()).toBe("3 results")
+    window.Show(pageOf("EternityUI_InfoTest"))
+    expect(window.chrome.note:IsShown()).toBe(false)
+    expect(window.chrome.info:IsShown()).toBe(true)
+    window.Toggle()
+end
+
+@test("the i fills the tooltip with its description, wrapped, and hides without one")
+local function tooltip()
+    local window = E.OptionsWindow
+    window.Toggle()
+    local page = pageOf("EternityUI_InfoTest")
+    window.Show(page)
+    local info = rowsOf(page)["main.described"].info
+    expect(info:IsMouseEnabled()).toBe(true)
+    -- Not a secure frame, so it answers in combat too.
+    expect(info:IsProtected()).toBe(false)
+    local lines = {}
+    local tip = {}
+    function tip:SetTitle(text)
+        lines[#lines + 1] = text
+    end
+    function tip:AddLine(text)
+        lines[#lines + 1] = text
+    end
+    info:FillTooltip(tip)
+    expect(lines[1]).toBe("Described")
+    expect(#lines).toBe(3)
+    expect(table.concat(lines, " ", 2)).toBe(OPTION_DESCRIPTION)
+    for i = 2, #lines do
+        expect(#lines[i] <= 60).toBe(true)
+    end
+    -- Without a text there's no i.
+    info:Set("Described", "")
+    expect(info:IsShown()).toBe(false)
+    info:Set("Described", OPTION_DESCRIPTION)
+    expect(info:IsShown()).toBe(true)
+    window.Toggle()
+end
+
+@test("the open tab's description goes under the module's in the title's i")
+local function tabDescription()
+    local window = E.OptionsWindow
+    window.Toggle()
+    local page = pageOf("EternityUI_InfoTest")
+    window.Show(page)
+    local info = window.chrome.info
+    page.ShowTab("drawn")
+    expect(info.text).toBe(DESCRIPTION)
+    expect(#info.sections).toBe(1)
+    expect(info.sections[1][1]).toBe("Drawn")
+    expect(info.sections[1][2]).toBe("What the drawn tab is for.")
+    local lines = {}
+    local tip = {}
+    function tip:SetTitle(text)
+        lines[#lines + 1] = text
+    end
+    function tip:AddLine(text)
+        lines[#lines + 1] = text
+    end
+    info:FillTooltip(tip)
+    expect(lines[#lines - 1]).toBe("Drawn")
+    expect(lines[#lines]).toBe("What the drawn tab is for.")
+    -- Another tab, no section.
+    page.ShowTab("general")
+    expect(#info.sections).toBe(0)
+    window.Toggle()
+end

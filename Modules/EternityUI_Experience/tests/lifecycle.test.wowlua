@@ -23,3 +23,21 @@ local function columns()
     local list = EternityUI:GetModule(NAME).Charts.SessionColumns(5)
     expect(type(list)).toBe("table")
 end
+
+@test("each chart's hint is in the i beside its title")
+local function hints()
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 500)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    local view = EternityUI:GetModule(NAME).Charts.Build(child, function() end)
+    for _, card in ipairs({ view.session, view.levels, view.sources }) do
+        expect(card.hint == nil).toBe(true)
+        expect(card.info:IsShown()).toBe(true)
+        expect(card.info.title).toBe(card.title:GetText())
+        local _, relativeTo = card.info:GetPoint(1)
+        expect(relativeTo == card.title).toBe(true)
+        local _, legendTo = card.legend:GetPoint(1)
+        expect(legendTo == card.title).toBe(true)
+    end
+end

@@ -203,9 +203,18 @@ local function buildForm(view)
                 after(value)
             end
         end)
-        add(Widgets.Row(form, label, control), kinds, function(rule)
+        local row = Widgets.Row(form, label, control)
+        add(row, kinds, function(rule)
             control:SetValue(rule[key])
         end)
+        return row
+    end
+
+    -- An "i" after a row's label, with a text that explains the field.
+    local function info(row, text)
+        row.info = Widgets.Info(row, row.label:GetText(), text)
+        row.info:SetPoint("LEFT", row.label, "RIGHT", 6, 0)
+        return row.info
     end
 
     local function toggle(label, key, kinds, when)
@@ -264,18 +273,11 @@ local function buildForm(view)
     end)
     pick:SetWidth(112)
     pick:SetPoint("RIGHT")
-    add(Widgets.Row(form, L.FIELD_SPELLS, holder), { buff = true }, function(rule)
+    local spellsRow = Widgets.Row(form, L.FIELD_SPELLS, holder)
+    form.spellsInfo = info(spellsRow, L.BUFF_REMINDER)
+    add(spellsRow, { buff = true }, function(rule)
         spells:SetText(rule.spells)
     end)
-
-    local reminder = CreateFrame("Frame", nil, form)
-    reminder:SetHeight(34)
-    local reminderText = Widgets.Text(reminder, 12, "muted")
-    reminderText:SetPoint("TOPLEFT", 0, -4)
-    reminderText:SetPoint("RIGHT")
-    reminderText:SetJustifyH("LEFT")
-    reminderText:SetText(L.BUFF_REMINDER)
-    add(reminder, { buff = true })
 
     toggle(L.FIELD_CLICK, "click", { buff = true }, clickable)
     textField(L.FIELD_CLICK_USE, "clickUse", L.CLICK_USE_HINT, { buff = true }, clickable)
@@ -300,20 +302,17 @@ local function buildForm(view)
     end)
     dropdown(L.FIELD_GROUP, "group", choices("GROUP_", { "any", "solo", "group", "raid" }))
     dropdown(L.FIELD_PLACE, "place", choices("PLACE_", { "any", "instance", "world" }))
-    dropdown(L.FIELD_COMBAT, "combat", choices("COMBAT_", { "out", "any", "in" }), nil, function()
+    local combatRow = dropdown(L.FIELD_COMBAT, "combat", choices("COMBAT_", { "out", "any", "in" }), nil, function()
         view:Refresh()
     end)
     -- Buff rules that show in combat: what they can't know there.
-    local note = CreateFrame("Frame", nil, form)
-    note:SetHeight(34)
-    local noteText = Widgets.Text(note, 12, "muted")
-    noteText:SetPoint("TOPLEFT", 0, -4)
-    noteText:SetPoint("RIGHT")
-    noteText:SetJustifyH("LEFT")
-    noteText:SetText(L.COMBAT_BUFF_HINT)
-    add(note, { buff = true }, nil, function(rule)
-        return rule.combat ~= "out"
-    end)
+    form.combatInfo = info(combatRow, L.COMBAT_BUFF_HINT)
+    local combatField = form.fields[#form.fields]
+    local loadCombat = combatField.load
+    combatField.load = function(rule)
+        loadCombat(rule)
+        form.combatInfo:SetShown(rule.kind == "buff" and rule.combat ~= "out")
+    end
     toggle(L.HIDE_RESTING, "hideResting")
     toggle(L.HIDE_MOUNTED, "hideMounted")
 
@@ -391,9 +390,6 @@ function Editor.Build(parent, setHeight)
     view.rows = {}
     Editor.view = view
 
-    local hint = Widgets.Text(view, 14, "muted")
-    hint:SetPoint("TOPLEFT", 0, -14)
-    hint:SetText(L.RULES_HINT)
     local empty = Widgets.Text(view, 14, "muted")
     empty:SetPoint("TOPLEFT", 0, -HEADER - 6)
     empty:SetText(L.EMPTY)

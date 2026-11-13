@@ -18,6 +18,9 @@ local function filtersTab()
     local filter = m.Filters.All()[1]
     expect(filter ~= nil).toBe(true)
     expect(view.empty:IsShown()).toBe(false)
+    -- Its intro is the tab's description (the options window shows it in the title's "i").
+    expect(view.intro == nil).toBe(true)
+    expect(#m.tabs[#m.tabs].description > 0).toBe(true)
     m.FiltersTab.AddText("1243, 21562")
     expect(#filter.spells).toBe(2)
     m.FiltersTab.checks[6].toggle:Click()

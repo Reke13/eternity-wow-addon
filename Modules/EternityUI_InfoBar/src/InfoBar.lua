@@ -24,7 +24,13 @@ local Module = {
     schema = ns.OptionsSchema,
     tabs = {
         -- Its switches and the order leave General: they're in this tab.
-        { key = ContentTab.TAB, text = L.CONTENT_TAB, build = ContentTab.Build, paths = ContentTab.Paths() },
+        {
+            key = ContentTab.TAB,
+            text = L.CONTENT_TAB,
+            build = ContentTab.Build,
+            paths = ContentTab.Paths(),
+            description = L.CONTENT_INTRO,
+        },
         { key = PerfTab.TAB, text = L.TAB, build = PerfTab.Build },
     },
     Perf = Perf,

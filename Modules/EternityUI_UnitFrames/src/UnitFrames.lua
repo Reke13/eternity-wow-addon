@@ -44,7 +44,7 @@ local Module = {
                 ns.Preview.Pick(id)
             end,
         },
-        { key = FiltersTab.TAB, text = L.FILTERS, build = FiltersTab.Build },
+        { key = FiltersTab.TAB, text = L.FILTERS, build = FiltersTab.Build, description = L.FILTER_INTRO },
     },
     Filters = Filters,
     FiltersTab = FiltersTab,

@@ -86,4 +86,18 @@ local function tab()
     expect(height > 300).toBe(true)
     expect(view.verdict:GetText() ~= nil).toBe(true)
     expect(module.PerfTab.rows[1]:IsShown()).toBe(true)
+    -- The blocks' notes are in an "i" right after their headings.
+    local infos = 0
+    for _, block in ipairs(view.blocks) do
+        local info = block[1].info
+        if info then
+            infos = infos + 1
+            expect(info:IsShown()).toBe(true)
+            local _, relativeTo, _, x = info:GetPoint(1)
+            expect(relativeTo == block[1]).toBe(true)
+            expect(x > 8).toBe(true)
+        end
+    end
+    expect(infos).toBe(3)
+    expect(view.dropsHeading.info.text:find("%d") ~= nil).toBe(true)
 end
