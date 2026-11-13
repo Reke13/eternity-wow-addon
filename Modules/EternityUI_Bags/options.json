@@ -32,6 +32,36 @@
           }
         },
         {
+          "id": "bagsWithBank",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Open the bags with the bank", "esES": "Abrir las bolsas con el banco" },
+          "description": {
+            "enUS": "The personal, warband and guild bank. Only with Eternity's bags.",
+            "esES": "El banco personal, el de banda y el de hermandad. Solo con las bolsas de Eternity."
+          }
+        },
+        {
+          "id": "bankWithBags",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Close the bank with the bags key", "esES": "Cerrar el banco con la tecla de bolsas" },
+          "description": {
+            "enUS": "At the bank, B closes the bags and the bank together.",
+            "esES": "En el banco, B cierra las bolsas y el banco a la vez."
+          }
+        },
+        {
+          "id": "keepBagsAway",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Keep the bags open when walking away", "esES": "Dejar las bolsas abiertas al alejarte" },
+          "description": {
+            "enUS": "If you walk away from the bank, the bags it opened stay open. Closing the bank yourself (Esc, B, its close button) always closes them.",
+            "esES": "Si te alejas del banco, las bolsas que abrió siguen abiertas. Cerrar tú el banco (Esc, B, su botón de cerrar) siempre las cierra."
+          }
+        },
+        {
           "id": "layout",
           "type": "select",
           "default": "single",

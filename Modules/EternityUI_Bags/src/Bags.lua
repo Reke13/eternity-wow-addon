@@ -41,7 +41,12 @@ local EVENTS = {
     "BANK_TAB_SETTINGS_UPDATED",
     "BANKFRAME_OPENED",
     "BANKFRAME_CLOSED",
+    "GUILDBANKFRAME_OPENED",
+    "GUILDBANKFRAME_CLOSED",
 }
+-- A bank that closes this soon after the player closed something (Esc, B, a close button)
+-- was closed by them; later, it closed because they walked away.
+local USER_CLOSE_WINDOW = 1
 -- Events that change which slots there are (a bag or tab swapped or bought): the grid is laid
 -- out again. The rest only change how the items look.
 local RELAYOUT = {
@@ -57,6 +62,10 @@ local RELAYOUT = {
 ---@field bankHidden table? BankFrame's original parent while it's hidden
 ---@field bankOpen boolean?
 ---@field blizzardBank boolean? this bank visit uses Blizzard's window
+---@field guildOpen boolean?
+---@field bankBags boolean? the bags window is open because a bank opened it
+---@field userClosedAt number? GetTime() of the player's last Esc, B or close button
+---@field guildHooked boolean?
 ---@field bags EternityUIBagsGrid?
 ---@field bank EternityUIBagsGrid?
 ---@field inventory EternityUIBagsInventory
@@ -1368,7 +1377,7 @@ function Module:SyncBags()
     if not self.running or not self:BagsReplaced() then
         return
     end
-    local open = self:AnyBlizzardBagOpen()
+    local open = self:AnyBlizzardBagOpen() or self.bankBags == true
     if open and not self.bags then
         self.bags = Grid.New(self, "bags")
     end
@@ -1432,16 +1441,98 @@ function Module:OnWindowHidden(grid)
         return
     end
     if grid.kind == "bags" then
+        self.bankBags = false
         if self:AnyBlizzardBagOpen() then
             CloseAllBags()
         end
     elseif self.bankOpen and not self.blizzardBank then
+        self.userClosedAt = GetTime()
+        self:CloseBank()
+    end
+end
+
+--- Ends the bank visit (personal or warband) and the guild bank one. The game closes Blizzard's
+--- frames itself, as when the player walks away.
+function Module:CloseBank()
+    if self.bankOpen then
         if C_Bank and C_Bank.CloseBankFrame then
             C_Bank.CloseBankFrame()
         elseif _G.CloseBankFrame then
             _G.CloseBankFrame()
         end
     end
+    if self.guildOpen and _G.CloseGuildBankFrame then
+        _G.CloseGuildBankFrame()
+    end
+end
+
+-- Bags opened by the bank -------------------------------------------------------------------
+-- The bags open with the bank ("windows.bagsWithBank"): our window is held open apart from
+-- Blizzard's bag frames, because BankFrame (hidden inside our parent) never runs the OnShow that
+-- opens them, and the guild bank doesn't open them at all. Nothing of Blizzard's is called.
+
+--- A bank opened: the bags open with it.
+function Module:OnBankOpened()
+    if self.running and opt("windows.bagsWithBank") then
+        self.bankBags = true
+        self:SyncBags()
+    end
+end
+
+--- A bank closed: the bags it opened close too, unless the player walked away
+--- ("windows.keepBagsAway").
+function Module:OnBankClosed()
+    if not self.bankBags or self.bankOpen or self.guildOpen then
+        return
+    end
+    local byPlayer = self.userClosedAt ~= nil and GetTime() - self.userClosedAt < USER_CLOSE_WINDOW
+    if byPlayer or not opt("windows.keepBagsAway") then
+        self.bankBags = false
+        self:SyncBags()
+    end
+end
+
+--- B (or the backpack key) while the bank holds the bags open: it closes them, and the bank
+--- too ("windows.bankWithBags"). Blizzard's toggle has just opened its own bags (ours looked
+--- open, Blizzard's weren't), so they're closed again.
+function Module:OnBagsToggled()
+    if not (self.running and self.bankBags) then
+        return
+    end
+    self.bankBags = false
+    self.userClosedAt = GetTime()
+    if self:AnyBlizzardBagOpen() then
+        CloseAllBags()
+    end
+    self:SyncBags()
+    if opt("windows.bankWithBags") then
+        self:CloseBank()
+    end
+end
+
+--- Esc (CloseAllWindows) closes every bag, these too.
+function Module:OnCloseAllWindows()
+    if not self.running then
+        return
+    end
+    self.userClosedAt = GetTime()
+    if self.bankBags then
+        self.bankBags = false
+        self:SyncBags()
+    end
+end
+
+--- The guild bank's close button is a close by the player (it's Blizzard's frame, loaded
+--- on demand).
+function Module:HookGuildBank()
+    local frame = _G.GuildBankFrame
+    if self.guildHooked or not (frame and frame.CloseButton) then
+        return
+    end
+    self.guildHooked = true
+    frame.CloseButton:HookScript("OnClick", function()
+        self.userClosedAt = GetTime()
+    end)
 end
 
 -- Saved bank --------------------------------------------------------------------------------
@@ -1503,11 +1594,22 @@ function Module:OnEvent(event)
             self.saved.frame:Hide()
         end
         self:ApplyBank()
+        self:OnBankOpened()
         return
     elseif event == "BANKFRAME_CLOSED" then
         self.bankOpen = false
         self.blizzardBank = false
         self:ApplyBank()
+        self:OnBankClosed()
+        return
+    elseif event == "GUILDBANKFRAME_OPENED" then
+        self.guildOpen = true
+        self:HookGuildBank()
+        self:OnBankOpened()
+        return
+    elseif event == "GUILDBANKFRAME_CLOSED" then
+        self.guildOpen = false
+        self:OnBankClosed()
         return
     end
     if not self.running then
@@ -1550,6 +1652,18 @@ function Module:InstallHooks()
             if self.running and not self.bankHidden then
                 self:ApplyBank()
             end
+        end)
+    end
+    for _, name in ipairs({ "ToggleAllBags", "ToggleBackpack" }) do
+        if _G[name] then
+            hooksecurefunc(name, function()
+                self:OnBagsToggled()
+            end)
+        end
+    end
+    if _G.CloseAllWindows then
+        hooksecurefunc("CloseAllWindows", function()
+            self:OnCloseAllWindows()
         end)
     end
     local events = CreateFrame("Frame")
@@ -1615,6 +1729,7 @@ end
 
 function Module:OnDisable()
     self.running = false
+    self.bankBags = false
     Inventory:Stop()
     self:ApplyAll()
     for _, grid in ipairs({ self.bags, self.bank, self.saved }) do
