@@ -3470,8 +3470,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -3501,8 +3501,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["petIndicators.rangeFade"] = true,
@@ -4850,8 +4850,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -4881,8 +4881,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["targetIndicators.rangeFade"] = true,
@@ -6179,14 +6179,14 @@ ns.OptionsSchema = {
                 {
                     id = "rangeFade",
                     type = "toggle",
-                    default = false,
+                    default = true,
                     label = {
                         enUS = "Fade out of range",
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -6216,8 +6216,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["targettargetIndicators.rangeFade"] = true,
@@ -7565,8 +7565,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -7596,8 +7596,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["focusIndicators.rangeFade"] = true,
@@ -8962,8 +8962,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -8993,8 +8993,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["partyIndicators.rangeFade"] = true,
@@ -10412,8 +10412,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -10443,8 +10443,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["raidIndicators.rangeFade"] = true,
@@ -11848,8 +11848,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -11879,8 +11879,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["grouppetsIndicators.rangeFade"] = true,

@@ -248,6 +248,20 @@ end
 ---@param f table
 ---@param width number
 ---@param height number
+--- Health and power bars' heights: the power bar, if its option is on, unless the unit has no
+--- power at all (most NPCs that don't cast, f.noPower), when the health bar fills the frame.
+function Elements.FitBars(f)
+    local bars = f.bars
+    if not bars then
+        return
+    end
+    local showPower = bars.power and not f.noPower
+    local powerHeight = showPower and bars.powerHeight or 0
+    f.health:SetHeight(math.max(1, bars.inner - powerHeight - (showPower and bars.gap or 0)))
+    f.power:SetShown(showPower)
+    f.powerText:SetShown(showPower and bars.powerText)
+end
+
 function Elements.Layout(f, width, height)
     local key = f.uf.key
     local border = opt("look.border")
@@ -280,18 +294,16 @@ function Elements.Layout(f, width, height)
         showPower = false
     end
     local powerHeight = showPower and math.max(3, math.floor(inner * U(key, "Bars", "powerHeight") / 100)) or 0
-    local healthHeight = inner - powerHeight - (showPower and gap or 0)
     f.health:ClearAllPoints()
     f.health:SetPoint("TOPLEFT", f, "TOPLEFT", left, -inset)
     f.health:SetPoint("TOPRIGHT", f, "TOPRIGHT", -right, -inset)
-    f.health:SetHeight(math.max(1, healthHeight))
-    f.power:SetShown(showPower)
     if showPower then
         f.power:ClearAllPoints()
         f.power:SetPoint("TOPLEFT", f.health, "BOTTOMLEFT", 0, -gap)
         f.power:SetPoint("TOPRIGHT", f.health, "BOTTOMRIGHT", 0, -gap)
         f.power:SetHeight(powerHeight)
     end
+    f.bars = { inner = inner, gap = gap, power = showPower, powerHeight = powerHeight }
     Style.PaintBar(f.health)
     Style.PaintBar(f.power)
     Elements.LayoutHeals(f, width - left - right)
@@ -305,7 +317,8 @@ function Elements.Layout(f, width, height)
     Elements.PlaceText(f, f.healthLeft, f.health, U(key, "Text", "leftV"), U(key, "Text", "leftH"), inner)
     Elements.PlaceText(f, f.healthRight, f.health, U(key, "Text", "rightV"), U(key, "Text", "rightH"), inner)
     Elements.PlaceText(f, f.powerText, f.power, U(key, "Text", "powerV"), U(key, "Text", "powerH"), inner)
-    f.powerText:SetShown(showPower and powerHeight >= size * 0.8)
+    f.bars.powerText = showPower and powerHeight >= size * 0.8
+    Elements.FitBars(f)
 
     -- Cast bar.
     local cast = f.cast
@@ -560,11 +573,22 @@ end
 
 -- Power ---------------------------------------------------------------------------------------
 
+-- Whether a unit has no power at all: a maximum of 0 (false when the game won't say).
+local function powerless(unit)
+    local max = try(UnitPowerMax, unit)
+    return not secret(max) and max == 0
+end
+
 function Elements.UpdatePower(f)
+    local unit, key = f.unit, f.uf.key
+    local none = (unit and not f.previewing and powerless(unit)) or false
+    if none ~= (f.noPower or false) then
+        f.noPower = none
+        Elements.FitBars(f)
+    end
     if not f.power:IsShown() then
         return
     end
-    local unit, key = f.unit, f.uf.key
     local powerType, token = UnitPowerType(unit)
     Style.SetBar(f.power, UnitPower(unit, powerType), UnitPowerMax(unit, powerType))
     local color = Style.PowerColor(powerType, token)
@@ -840,12 +864,14 @@ function Elements.UpdateTargeted(f)
 end
 
 -- Spells of each class whose range tells whether a unit is in reach: an attack for enemies, a
--- heal or buff for friends. Forever's own (1.x) IDs; the first one the player knows is used.
+-- heal or buff for friends. Forever's own (1.x) IDs. Of those the player knows, the one whose reach
+-- is nearest the distance wanted is used; melee ones (Wing Clip, Sinister Strike, Heroic Strike,
+-- Taunt) cover the dead zone up close of ranged attacks with a minimum range (Shoot, Throw, shots).
 local RANGE_SPELLS = {
     hostile = {
         MAGE = { 133, 116, 5143 }, WARLOCK = { 686, 172 }, PRIEST = { 585, 589 }, DRUID = { 5176, 8921 },
-        SHAMAN = { 403, 8042 }, HUNTER = { 75, 3044, 1978 }, PALADIN = { 879, 20271 },
-        ROGUE = { 2764, 3018 }, WARRIOR = { 3018, 2764, 355 },
+        SHAMAN = { 403, 8042 }, HUNTER = { 75, 3044, 1978, 2974 }, PALADIN = { 879, 20271 },
+        ROGUE = { 2764, 3018, 1752 }, WARRIOR = { 3018, 2764, 355, 78 },
     },
     friendly = {
         PRIEST = { 2050, 2061, 17 }, DRUID = { 5185, 774 }, SHAMAN = { 331, 8004 }, PALADIN = { 635, 19750 },
@@ -855,19 +881,53 @@ local RANGE_SPELLS = {
 Elements.RANGE_SPELLS = RANGE_SPELLS
 local rangeSpell = {}
 
--- The spell for a kind ("hostile" or "friendly"), once found; false when there's none.
-local function spellFor(kind)
-    if rangeSpell[kind] == nil then
-        rangeSpell[kind] = false
+-- A spell's minimum and maximum range in yards (0 and nil when the game doesn't say).
+local function reach(id)
+    local info = C_Spell and C_Spell.GetSpellInfo and try(C_Spell.GetSpellInfo, id)
+    if type(info) ~= "table" then
+        return 0, nil
+    end
+    local low, high = Plain(info.minRange, nil), Plain(info.maxRange, nil)
+    return type(low) == "number" and low or 0, type(high) == "number" and high > 0 and high or nil
+end
+
+-- How far a spell's reach is from the distance wanted (lower is better): the longest reach within
+-- it first, then the shortest beyond it, then spells whose reach is unknown (in the list's order).
+local function score(high, yards)
+    if not high then
+        return 2000
+    elseif high <= yards then
+        return yards - high
+    end
+    return 1000 + high - yards
+end
+
+-- The spells for a kind ("hostile" or "friendly") and a distance, once found: the one to ask, its
+-- minimum range, and a spell without one for up close. False when the player knows none.
+local function spellFor(kind, yards)
+    local id = kind .. ":" .. yards
+    if rangeSpell[id] == nil then
+        rangeSpell[id] = false
         local _, class = UnitClass("player")
-        for _, id in ipairs((not secret(class) and RANGE_SPELLS[kind][class]) or {}) do
-            if IsPlayerSpell and IsPlayerSpell(id) then
-                rangeSpell[kind] = id
-                break
+        local best, bestScore, close, closeHigh
+        for _, spell in ipairs((not secret(class) and RANGE_SPELLS[kind][class]) or {}) do
+            if IsPlayerSpell and IsPlayerSpell(spell) then
+                local low, high = reach(spell)
+                local s = score(high, yards)
+                if not best or s < bestScore then
+                    best, bestScore = { spell = spell, low = low }, s
+                end
+                if low <= 0 and (not close or (high or 0) > closeHigh) then
+                    close, closeHigh = spell, high or 0
+                end
             end
         end
+        if best then
+            best.close = close ~= best.spell and close or nil
+            rangeSpell[id] = best
+        end
     end
-    return rangeSpell[kind]
+    return rangeSpell[id]
 end
 
 --- Forgets the spells found (new spells learned).
@@ -875,36 +935,105 @@ function Elements.ResetRangeSpells()
     rangeSpell = {}
 end
 
+-- Whether a unit is the player: true, false, or nil when the game won't say (a secret answer).
+local function isPlayer(unit)
+    if unit == "player" then
+        return true
+    end
+    local same = try(UnitIsUnit, unit, "player")
+    if secret(same) or same == nil then
+        return nil
+    end
+    return same == true
+end
+
+-- Tokens that always name another group member or their pet (party1, raid12, partypet2...).
+local function groupToken(unit)
+    return unit:match("^party%d") ~= nil or unit:match("^raid%d") ~= nil
+        or unit:match("^partypet%d") ~= nil or unit:match("^raidpet%d") ~= nil
+end
+
+-- Whether the game's group range can be asked about a unit: a member of the player's group (or a
+-- pet of one), known not to be the player. Forever hands UnitInRange's answers as secrets for
+-- anyone, so they can't tell a member from a stranger (whose "in range" is always false), nor from
+-- the player (never "checked": also false). A target of target, often the player, counts only
+-- when the game says plainly it isn't.
+local function inGroup(unit, me)
+    if me ~= false and not groupToken(unit) then
+        return false
+    end
+    return Plain(try(UnitPlayerOrPetInParty, unit), false) == true
+        or Plain(try(UnitPlayerOrPetInRaid, unit), false) == true
+end
+
+-- Whether a spell reaches a unit: true, false, a secret boolean, or nil.
+local function spellInRange(spell, unit)
+    local ok, result = pcall(C_Spell.IsSpellInRange, spell, unit)
+    if ok then
+        return result
+    end
+    return nil
+end
+
+-- Whether a unit is within one of the game's interaction distances (3: duel, about 10 yards;
+-- 4: follow, about 28): true, false, or nil when it can't be told. Out of combat only: in combat
+-- the game may restrict it for enemies.
+local function interact(unit, index)
+    if not CheckInteractDistance or (InCombatLockdown and InCombatLockdown()) then
+        return nil
+    end
+    local near = try(CheckInteractDistance, unit, index)
+    if secret(near) or type(near) ~= "boolean" then
+        return nil
+    end
+    return near
+end
+
 --- Whether a unit is in reach: true, false, a secret boolean, or nil when it can't be told.
 ---@param unit string
----@param yards number? the distance wanted, where the real one is known
+---@param yards number? the distance wanted (40 by default)
 function Elements.InRange(unit, yards)
+    yards = tonumber(yards) or 40
+    local me = isPlayer(unit)
+    if me then
+        return true
+    end
     -- Group members outside instances: the real distance.
-    if yards and UnitDistanceSquared then
+    if UnitDistanceSquared then
         local ok, squared, measured = pcall(UnitDistanceSquared, unit)
         if ok and measured == true and type(squared) == "number" and not secret(squared) then
             return squared <= yards * yards
         end
     end
     -- Group members inside them: the game's group range (about 40 yards).
-    local inRange, checked = UnitInRange(unit)
-    if secret(checked) or checked == true then
-        return inRange
+    if inGroup(unit, me) then
+        local inRange, checked = UnitInRange(unit)
+        if secret(checked) or checked == true then
+            return inRange
+        end
     end
     -- Anyone else: a spell of the player's class.
-    local hostile = Plain(UnitCanAttack("player", unit), nil)
-    if hostile == nil then
-        return nil
+    local hostile = Plain(try(UnitCanAttack, "player", unit), nil)
+    local found = hostile ~= nil and C_Spell and C_Spell.IsSpellInRange
+        and spellFor(hostile and "hostile" or "friendly", yards)
+    if found then
+        local result = spellInRange(found.spell, unit)
+        -- Too close for a spell with a minimum range: a melee spell, or the duel distance.
+        if found.low > 0 and not secret(result) and result == false then
+            if found.close and Plain(spellInRange(found.close, unit), false) == true then
+                return true
+            end
+            if interact(unit, 3) then
+                return true
+            end
+        end
+        if secret(result) or result ~= nil then
+            return result
+        end
     end
-    local spell = spellFor(hostile and "hostile" or "friendly")
-    if not spell or not (C_Spell and C_Spell.IsSpellInRange) then
-        return nil
-    end
-    local ok, result = pcall(C_Spell.IsSpellInRange, spell, unit)
-    if ok then
-        return result
-    end
-    return nil
+    -- No spell can tell (a warrior and a friendly NPC, Throw without a thrown weapon): the
+    -- game's follow distance, about 28 yards.
+    return interact(unit, 4)
 end
 
 --- Faded out of range, if the frame's option is on. The answer may be secret: SetAlphaFromBoolean.

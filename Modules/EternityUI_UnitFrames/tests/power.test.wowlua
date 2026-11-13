@@ -1,0 +1,35 @@
+-- Units without power at all (most NPCs that don't cast): no empty power bar, the health bar
+-- fills the frame.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+@test("a unit without power hides the power bar and gives its room to health, and back")
+local function noPower()
+    local m = EternityUI:GetModule(NAME)
+    local f = m.holders.target.button
+    local saved, unit = UnitPowerMax, f.unit
+    local max = 0
+    ---@type any
+    local fake = function()
+        return max
+    end
+    UnitPowerMax = fake
+    f.unit = "target"
+    local ok, err = pcall(function()
+        EternityUI.store:Set(NAME, "targetBars.power", true)
+        local full = f.health:GetHeight()
+        m.Elements.UpdatePower(f)
+        expect(f.power:IsShown()).toBe(false)
+        expect(f.health:GetHeight() > full).toBe(true)
+        max = 100
+        m.Elements.UpdatePower(f)
+        expect(f.power:IsShown()).toBe(true)
+        expect(f.health:GetHeight()).toBe(full)
+    end)
+    UnitPowerMax, f.unit = saved, unit
+    m.Elements.UpdatePower(f)
+    if not ok then
+        error(err)
+    end
+end

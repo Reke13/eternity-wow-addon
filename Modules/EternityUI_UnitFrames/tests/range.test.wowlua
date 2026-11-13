@@ -1,0 +1,326 @@
+-- Range fading of frames for units outside the group (target, focus). Forever hands UnitInRange's
+-- answers as secrets for anyone, and some class spells have a minimum range: neither may leave a
+-- unit next to you faded.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+-- The secret UnitInRange gives for a unit outside the group: "not in range, not checked".
+local SECRET = {}
+
+-- Runs `body` with some globals (and C_Spell fields) replaced, restoring them afterwards.
+local function with(globals, spell, body)
+    local saved, savedSpell = {}, {}
+    for name, value in pairs(globals) do
+        saved[name] = _G[name]
+        _G[name] = value
+    end
+    for name, value in pairs(spell) do
+        savedSpell[name] = C_Spell[name]
+        C_Spell[name] = value
+    end
+    local m = EternityUI:GetModule(NAME)
+    m.Elements.ResetRangeSpells()
+    local ok, err = pcall(body, m)
+    for name in pairs(globals) do
+        _G[name] = saved[name]
+    end
+    for name in pairs(spell) do
+        C_Spell[name] = savedSpell[name]
+    end
+    m.Elements.ResetRangeSpells()
+    if not ok then
+        error(err)
+    end
+end
+
+-- Every class's spells (on enemies and friends) for the test, restored afterwards.
+local function withSpells(ids, body)
+    local lists = EternityUI:GetModule(NAME).Elements.RANGE_SPELLS
+    local classes = {}
+    for class in pairs(lists.hostile) do
+        classes[#classes + 1] = class
+    end
+    local old = { hostile = {}, friendly = {} }
+    for kind, list in pairs(lists) do
+        for _, class in ipairs(classes) do
+            old[kind][class] = list[class]
+            list[class] = ids
+        end
+    end
+    local ok, err = pcall(body)
+    for kind, list in pairs(lists) do
+        for _, class in ipairs(classes) do
+            list[class] = old[kind][class]
+        end
+    end
+    if not ok then
+        error(err)
+    end
+end
+
+-- The game outside the group: secret UnitInRange, no distance, an enemy target.
+local function outsider(extra)
+    local globals = {
+        issecretvalue = function(value)
+            return value == SECRET
+        end,
+        UnitInRange = function()
+            return SECRET, SECRET
+        end,
+        UnitDistanceSquared = function()
+            return 0, false
+        end,
+        UnitPlayerOrPetInParty = function()
+            return false
+        end,
+        UnitPlayerOrPetInRaid = function()
+            return false
+        end,
+        UnitIsUnit = function()
+            return false
+        end,
+        UnitCanAttack = function()
+            return true
+        end,
+        IsPlayerSpell = function()
+            return true
+        end,
+    }
+    for name, value in pairs(extra or {}) do
+        globals[name] = value
+    end
+    return globals
+end
+
+-- Ranges by spell: { [id] = { min, max } }.
+local function ranges(map)
+    return function(id)
+        local r = map[id]
+        return r and { spellID = id, minRange = r[1], maxRange = r[2] } or nil
+    end
+end
+
+@test("a target close by isn't faded though the game's group range comes as a secret")
+local function secretGroupRange()
+    withSpells({ 101 }, function()
+        with(outsider(), {
+            IsSpellInRange = function()
+                return true
+            end,
+        }, function(m)
+            expect(m.Elements.InRange("target", 40)).toBe(true)
+            local f = m.holders.target.button
+            EternityUI.store:Set(NAME, "targetIndicators.rangeFade", true)
+            local unit = f.unit
+            f.unit = "target"
+            m.Elements.UpdateRange(f)
+            local alpha = f:GetAlpha()
+            EternityUI.store:Set(NAME, "targetIndicators.rangeFade", nil)
+            m.Elements.UpdateRange(f)
+            f.unit = unit
+            expect(alpha).toBe(1)
+        end)
+    end)
+end
+
+@test("a target out of the spell's reach is still faded")
+local function farTarget()
+    withSpells({ 101 }, function()
+        with(outsider(), {
+            IsSpellInRange = function()
+                return false
+            end,
+        }, function(m)
+            expect(m.Elements.InRange("target", 40)).toBe(false)
+        end)
+    end)
+end
+
+@test("up close, a spell with a minimum range doesn't fade the target: a melee spell covers it")
+local function minimumRange()
+    withSpells({ 101, 102 }, function()
+        with(outsider({ InCombatLockdown = function()
+            return true
+        end }), {
+            GetSpellInfo = ranges({ [101] = { 8, 30 }, [102] = { 0, 5 } }),
+            IsSpellInRange = function(id)
+                return id == 102 -- next to the target: too close to shoot, in melee reach
+            end,
+        }, function(m)
+            expect(m.Elements.InRange("target", 40)).toBe(true)
+        end)
+    end)
+end
+
+@test("the spell used is the one whose reach is nearest the distance chosen")
+local function nearestReach()
+    local asked
+    withSpells({ 101, 102, 103 }, function()
+        with(outsider(), {
+            GetSpellInfo = ranges({ [101] = { 0, 20 }, [102] = { 0, 36 }, [103] = { 0, 100 } }),
+            IsSpellInRange = function(id)
+                asked = id
+                return true
+            end,
+        }, function(m)
+            m.Elements.InRange("target", 40)
+            expect(asked).toBe(102)
+            m.Elements.InRange("target", 15)
+            expect(asked).toBe(101)
+            m.Elements.InRange("target", 100)
+            expect(asked).toBe(103)
+        end)
+    end)
+end
+
+@test("group members still go by the game's group range")
+local function groupMember()
+    with(outsider({ UnitPlayerOrPetInParty = function()
+        return true
+    end, UnitInRange = function()
+        return false, true
+    end }), {}, function(m)
+        expect(m.Elements.InRange("party1", 40)).toBe(false)
+    end)
+end
+
+-- Fakes the game where the player is in a group and the unit is (or may be) the player.
+local function grouped(same)
+    return outsider({
+        UnitPlayerOrPetInParty = function()
+            return true
+        end,
+        UnitIsUnit = function()
+            return same
+        end,
+        UnitCanAttack = function()
+            return false
+        end,
+    })
+end
+
+@test("in a group, a target of target that is you isn't faded though the game hides who it is")
+local function targetOfTargetIsYou()
+    withSpells({ 201 }, function()
+        with(grouped(SECRET), {
+            IsSpellInRange = function()
+                return true
+            end,
+        }, function(m)
+            expect(m.Elements.InRange("targettarget", 40)).toBe(true)
+            local f = m.holders.targettarget.button
+            EternityUI.store:Set(NAME, "targettargetIndicators.rangeFade", true)
+            local unit = f.unit
+            f.unit = "targettarget"
+            m.Elements.UpdateRange(f)
+            local alpha = f:GetAlpha()
+            EternityUI.store:Set(NAME, "targettargetIndicators.rangeFade", nil)
+            m.Elements.UpdateRange(f)
+            f.unit = unit
+            expect(alpha).toBe(1)
+        end)
+    end)
+end
+
+@test("in a group, a target of target the game says plainly is you is in range")
+local function targetOfTargetPlainlyYou()
+    with(grouped(true), {}, function(m)
+        expect(m.Elements.InRange("targettarget", 40)).toBe(true)
+    end)
+end
+
+@test("pet, target, target of target and focus aren't faded by a stranger's secret group range")
+local function everySingleFrame()
+    withSpells({ 101 }, function()
+        with(outsider(), {
+            IsSpellInRange = function()
+                return true
+            end,
+        }, function(m)
+            for _, key in ipairs({ "pet", "target", "targettarget", "focus" }) do
+                local f = m.holders[key].button
+                EternityUI.store:Set(NAME, key .. "Indicators.rangeFade", true)
+                local unit = f.unit
+                f.unit = key
+                m.Elements.UpdateRange(f)
+                local alpha = f:GetAlpha()
+                EternityUI.store:Set(NAME, key .. "Indicators.rangeFade", nil)
+                m.Elements.UpdateRange(f)
+                f.unit = unit
+                expect(key .. " " .. alpha).toBe(key .. " 1")
+            end
+        end)
+    end)
+end
+
+@test("with no spell that can tell, the follow distance (about 28 yards) fades a far friendly NPC")
+local function followDistance()
+    local near, fight = false, false
+    withSpells({}, function()
+        with(outsider({
+            UnitCanAttack = function()
+                return false
+            end,
+            CheckInteractDistance = function()
+                return near
+            end,
+            InCombatLockdown = function()
+                return fight
+            end,
+        }), {}, function(m)
+            expect(m.Elements.InRange("target", 40)).toBe(false)
+            near = true
+            expect(m.Elements.InRange("target", 40)).toBe(true)
+            fight = true
+            expect(m.Elements.InRange("target", 40) == nil).toBe(true)
+        end)
+    end)
+end
+
+@test("a spell that can't answer (Throw without a thrown weapon) falls back to the follow distance")
+local function spellWithoutAnswer()
+    withSpells({ 101 }, function()
+        with(outsider({
+            CheckInteractDistance = function()
+                return false
+            end,
+            InCombatLockdown = function()
+                return false
+            end,
+        }), {
+            IsSpellInRange = function()
+                return nil
+            end,
+        }, function(m)
+            expect(m.Elements.InRange("target", 40)).toBe(false)
+        end)
+    end)
+end
+
+@test("the target of target fades by default, by its own distance from you, apart from the target")
+local function targetOfTargetApart()
+    local m = EternityUI:GetModule(NAME)
+    expect(EternityUI.store:Get(NAME, "targettargetIndicators.rangeFade")).toBe(true)
+    withSpells({ 101 }, function()
+        with(outsider(), {
+            IsSpellInRange = function(_, unit)
+                return unit == "target" -- the target close by, its target far away
+            end,
+        }, function()
+            local target, tot = m.holders.target.button, m.holders.targettarget.button
+            local units = { target.unit, tot.unit }
+            target.unit, tot.unit = "target", "targettarget"
+            EternityUI.store:Set(NAME, "targetIndicators.rangeFade", true)
+            m.Elements.UpdateRange(target)
+            m.Elements.UpdateRange(tot)
+            local a, b = target:GetAlpha(), tot:GetAlpha()
+            EternityUI.store:Set(NAME, "targetIndicators.rangeFade", nil)
+            m.Elements.UpdateRange(target)
+            m.Elements.UpdateRange(tot)
+            target.unit, tot.unit = units[1], units[2]
+            expect(a).toBe(1)
+            expect(b < 1).toBe(true)
+        end)
+    end)
+end
