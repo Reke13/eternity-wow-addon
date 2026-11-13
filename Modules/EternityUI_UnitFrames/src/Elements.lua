@@ -338,7 +338,8 @@ function Elements.Layout(f, width, height)
     -- Indicators.
     local icon = math.max(12, math.min(20, math.floor(height * 0.45)))
     f.raidIcon:SetSize(icon, icon)
-    place(f.raidIcon, "CENTER", f, "TOP", 0, 0)
+    -- The raid target icon in the middle of the bars (health and power, beside the portrait).
+    place(f.raidIcon, "CENTER", f, "CENTER", (left - right) / 2, 0)
     f.leaderIcon:SetSize(icon * 0.8, icon * 0.8)
     place(f.leaderIcon, "CENTER", f, "TOPLEFT", left + 6, 0)
     f.combatIcon:SetSize(icon, icon)
@@ -760,18 +761,32 @@ local function showBy(texture, value)
     end
 end
 
+--- Shows raid target `index` (1-8) on a texture holding the icons' sheet. Forever always hands
+--- GetRaidTargetIndex's answer as a secret: it can't be compared, but SetSpriteSheetCell takes it
+--- as it is (Blizzard's SetRaidTargetIconTexture does the same, but it's Blizzard's code).
+--- nil (no target icon) hides it.
+---@param texture table
+---@param index any
+function Elements.SetRaidIcon(texture, index)
+    if secret(index) or index then
+        texture:SetSpriteSheetCell(index, 4, 4)
+        texture:Show()
+    else
+        texture:Hide()
+    end
+end
+
 function Elements.UpdateIndicators(f)
     local unit, key = f.unit, f.uf.key
     local function on(id)
         return U(key, "Indicators", id)
     end
-    local index = on("raidTarget") and GetRaidTargetIndex(unit)
-    if index and not secret(index) and SetRaidTargetIconTexture then
-        SetRaidTargetIconTexture(f.raidIcon, index)
-        f.raidIcon:Show()
-    else
-        f.raidIcon:Hide()
+    -- No "x and index or nil": `or` would test the secret.
+    local index = nil
+    if on("raidTarget") then
+        index = GetRaidTargetIndex(unit)
     end
+    Elements.SetRaidIcon(f.raidIcon, index)
     if on("leader") then
         showBy(f.leaderIcon, UnitIsGroupLeader(unit))
     else

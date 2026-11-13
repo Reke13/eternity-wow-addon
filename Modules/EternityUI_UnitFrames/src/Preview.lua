@@ -274,12 +274,7 @@ local function samplePerson(f, person, index)
     -- Icons.
     f.leaderIcon:SetAlpha(1)
     f.leaderIcon:SetShown(on("leader") and person.leader or false)
-    if on("raidTarget") and person.raid and SetRaidTargetIconTexture then
-        SetRaidTargetIconTexture(f.raidIcon, person.raid)
-        f.raidIcon:Show()
-    else
-        f.raidIcon:Hide()
-    end
+    Elements.SetRaidIcon(f.raidIcon, on("raidTarget") and person.raid or nil)
     if f.uf.group and on("readyCheck") and person.ready then
         local textures = {
             ready = "Interface\\RaidFrame\\ReadyCheck-Ready",
@@ -359,9 +354,8 @@ function Preview.Draw()
                 if U(key, "Indicators", "combat") and f.uf.player then
                     f.combatIcon:Show()
                 end
-                if U(key, "Indicators", "raidTarget") and SetRaidTargetIconTexture then
-                    SetRaidTargetIconTexture(f.raidIcon, 8)
-                    f.raidIcon:Show()
+                if U(key, "Indicators", "raidTarget") then
+                    Elements.SetRaidIcon(f.raidIcon, 8)
                 end
             end
             sampleAuras(f, n)
