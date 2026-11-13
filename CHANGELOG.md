@@ -2,6 +2,14 @@
 
 What changed in each release of the Eternity suite, newest first. Every addon shares the release's version.
 
+## Unreleased
+
+### Added
+- Bags: choose which sort the Sort button uses: Eternity's (the default), which leaves locked items where they are, or Blizzard's, which is instant.
+
+### Changed
+- Bags: with Blizzard's sort the padlock is greyed out and the slots' padlocks are hidden (the locks are kept). Clicking the padlock switches to Eternity's sort and starts locking.
+
 ## 0.8.0 (2026-11-13)
 
 ### Added

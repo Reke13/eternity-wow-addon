@@ -5,8 +5,10 @@
 --     ("Characters" in its footer), and a window built by the same code as the bank shows what
 --     was saved of a bank (this character's from anywhere, another's, or the guild bank). Their
 --     buttons are plain ItemButtons with the same look: nothing in them can be used.
---   * Padlock (footer): while it's on, a click on an item locks its slot (Locks.lua), and Sort
---     then leaves the locked slots alone.
+--   * Sort: Eternity's (Locks.lua), which leaves locked slots alone, or Blizzard's
+--     (windows.sortMode). Padlock (footer): while it's on, a click on an item locks its slot.
+--     Blizzard's sort can't skip a slot, so with it the padlock is greyed out and the slots'
+--     padlocks are hidden (the locks are kept); clicking it switches to Eternity's sort.
 --   * The item buttons are Blizzard's (ContainerFrameItemButtonTemplate): clicks, drag, use,
 --     sell, split and tooltips work exactly as in Blizzard's bags; only their look changes.
 --   * Blizzard decides when bags open and close (vendor, mailbox, bank, keys...): its frames
@@ -80,6 +82,11 @@ local Module = {
 
 local function opt(path)
     return E.store:Get(addonName, path)
+end
+
+-- Whether Sort is Eternity's (it honours the locks) rather than Blizzard's.
+local function ownSort()
+    return opt("windows.sortMode") ~= "blizzard"
 end
 
 local function registerEvents(frame, events)
@@ -302,7 +309,7 @@ local function updateButton(b)
         end
     end
     b.etLevel:SetShown(level and true or false)
-    b.etLock:SetShown(Locks.Is(bag, slot))
+    b.etLock:SetShown(ownSort() and Locks.Is(bag, slot))
 end
 
 -- Grid: one window (bags or bank) -----------------------------------------------------------
@@ -775,7 +782,9 @@ function Grid:UpdateFooter()
     if self.lock then
         -- Only this character's own bags and bank can be locked.
         self.lock:SetShown(not self:IsSaved())
-        if not self.lock:IsShown() then
+        -- Blizzard's sort moves locked items too: the padlock is greyed out until it's Eternity's.
+        self.lock:SetAlpha(ownSort() and 1 or 0.4)
+        if not self.lock:IsShown() or not ownSort() then
             self:SetLockMode(false)
         end
     end
@@ -851,9 +860,13 @@ function Grid:UpdateFooter()
 end
 
 function Grid:Sort()
-    -- Blizzard's sort can't skip a slot: with locked slots, ours (Locks.lua).
-    if Locks.Any(self:Bags()) then
+    -- Eternity's sort (Locks.lua) by default; Blizzard's can't skip a locked slot.
+    if ownSort() then
         Locks.Sort(self)
+        return
+    end
+    if InCombatLockdown() then
+        print("|cff8b5cf6Eternity Bags|r: " .. L.SORT_COMBAT)
         return
     end
     if self.kind == "bank" then
@@ -861,7 +874,13 @@ function Grid:Sort()
             C_Container.SortBank(self.bankType)
         elseif C_Container.SortBankBags then
             C_Container.SortBankBags()
+        else
+            Locks.Sort(self)
         end
+        return
+    end
+    if not C_Container.SortBags then
+        Locks.Sort(self)
         return
     end
     -- Blizzard's direction setting just for this sort; the player's own is put back.
@@ -1168,7 +1187,10 @@ function Grid.New(module, kind)
         self:Sort()
     end)
     self.sort:SetWidth(math.max(70, self.sort.label:GetStringWidth() + 24))
-    hint(self.sort, L.SORT, L.SORT_HINT)
+    Widgets.AttachTooltip(self.sort, function(tip)
+        tip:SetTitle(L.SORT)
+        tip:AddLine(ownSort() and L.SORT_HINT_ETERNITY or L.SORT_HINT, "textMuted")
+    end)
     self.sort:SetShown(not saved)
 
     self.content = CreateFrame("Frame", nil, w.body)
@@ -1276,6 +1298,13 @@ function Grid.New(module, kind)
     end
     if not saved then
         self.lock = Widgets.Button(w.footer, "", "ghost", function()
+            if not ownSort() then
+                -- Locking only makes sense with Eternity's sort: the padlock switches to it.
+                E.store:Set(addonName, "windows.sortMode", "eternity")
+                print("|cff8b5cf6Eternity Bags|r: " .. L.SORT_SWITCHED)
+                self:UpdateFooter()
+                self:Refresh()
+            end
             self:SetLockMode(not self.lockMode)
         end)
         self.lock:SetSize(26, 26)
@@ -1283,7 +1312,10 @@ function Grid.New(module, kind)
         self.lock.icon:SetTexture(LOCK_ICON)
         self.lock.icon:SetSize(16, 16)
         self.lock.icon:SetPoint("CENTER")
-        hint(self.lock, L.LOCK, L.LOCK_HINT)
+        Widgets.AttachTooltip(self.lock, function(tip)
+            tip:SetTitle(L.LOCK)
+            tip:AddLine(ownSort() and L.LOCK_HINT or L.LOCK_OFF_HINT, "textMuted")
+        end)
         if bank then
             self.lock:SetPoint("LEFT", self.others, "RIGHT", 4, 0)
         end
