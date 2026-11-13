@@ -35,6 +35,7 @@ local tabs = {}
 local stacks = {}
 local rows = {} -- in order, for the search
 local selector
+local startupToggle -- account wide, not in the store: refreshed apart
 
 local function setter(path)
     return function(value)
@@ -85,6 +86,19 @@ local function buildGeneral(tab)
     note:SetWidth(240)
     note:SetMaxBytes(80)
     addRow(tab, "general.profileNote", L.PROFILE_NOTE, note)
+    -- Startup metrics (core's Startup.lua): saved for the whole account, measured from the next
+    -- load, so neither is a store option.
+    startupToggle = Widgets.Toggle(tab, function(value)
+        E.Startup.SetEnabled(value)
+    end)
+    addRow(tab, "general.startupMetrics", L.STARTUP_METRICS, startupToggle)
+    controls["general.startupMetrics"] = nil
+    local report = Widgets.Button(tab, L.STARTUP_OPEN, "ghost", function()
+        E.StartupReport.Open()
+    end)
+    report:SetHeight(28)
+    addRow(tab, "general.startupReport", L.STARTUP_ROW, report)
+    controls["general.startupReport"] = nil
 end
 
 local function buildAppearance(tab)
@@ -262,6 +276,9 @@ local function build(frame)
 end
 
 function refresh()
+    if startupToggle and E.Startup then
+        startupToggle:SetValue(E.Startup.IsEnabled())
+    end
     for path, control in pairs(controls) do
         if control.HasFocus and control:HasFocus() then
             control = nil

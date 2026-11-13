@@ -24,12 +24,21 @@ local function without(list, owner)
     return copy
 end
 
-local function dispatch(list, ...)
+local clock = debugprofilestop
+
+-- While the startup metrics record (ns.probe is set), each handler is timed under its owner.
+local function dispatch(list, name, ...)
     if not list then
         return
     end
+    local probe = ns.probe
     for i = 1, #list do
-        local ok, err = pcall(list[i].fn, ...)
+        local entry = list[i]
+        local start = probe and clock and clock()
+        local ok, err = pcall(entry.fn, name, ...)
+        if start then
+            probe(entry.owner, name, clock() - start)
+        end
         if not ok then
             geterrorhandler()(err)
         end

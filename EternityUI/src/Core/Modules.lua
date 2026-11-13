@@ -26,12 +26,23 @@ local Schema = ns.Schema
 local Modules = { list = {}, byName = {} }
 ns.Modules = Modules
 
+local clock = debugprofilestop
+
 local function call(module, hook, ...)
     local fn = module[hook]
     if not fn then
         return true
     end
+    -- While the startup metrics record, each hook is timed, with the memory it allocated.
+    local probe = ns.probe
+    local start, kb
+    if probe and clock then
+        start, kb = clock(), collectgarbage("count")
+    end
     local ok, err = pcall(fn, module, ...)
+    if start then
+        probe(module, hook, clock() - start, collectgarbage("count") - kb)
+    end
     if not ok then
         module.lastError = tostring(err)
         geterrorhandler()(err)
