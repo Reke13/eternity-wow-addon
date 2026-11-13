@@ -42,13 +42,41 @@ local function characterKey()
     return name .. "-" .. realm
 end
 
---- This character's saved state: { shown = bool, collapsed = { [category] = true } }.
-function Core.Char()
+--- The account's saved state: { version, chars, position = { x, y }?, size = { w, h }?,
+--- hidden = { [stat] = true } }.
+--- position is the panel's top left corner in UIParent's units, set by dragging it; size is
+--- its size in its own units, set with its grip.
+function Core.Account()
     local db = _G.EternityUIStatsDB
     if type(db) ~= "table" or db.version ~= 1 then
         db = { version = 1, chars = {} }
         _G.EternityUIStatsDB = db
     end
+    db.chars = type(db.chars) == "table" and db.chars or {}
+    db.hidden = type(db.hidden) == "table" and db.hidden or {}
+    local position = db.position
+    if type(position) ~= "table" or type(position.x) ~= "number" or type(position.y) ~= "number" then
+        db.position = nil
+    end
+    local size = db.size
+    if type(size) ~= "table" or type(size.w) ~= "number" or type(size.h) ~= "number" then
+        db.size = nil
+    end
+    return db
+end
+
+--- Whether the player hid one stat from the panel (the panel's settings).
+function Core.StatHidden(id)
+    return Core.Account().hidden[id] == true
+end
+
+function Core.SetStatHidden(id, hidden)
+    Core.Account().hidden[id] = hidden and true or nil
+end
+
+--- This character's saved state: { shown = bool, collapsed = { [category] = true } }.
+function Core.Char()
+    local db = Core.Account()
     local key = characterKey()
     local char = db.chars[key]
     if type(char) ~= "table" then

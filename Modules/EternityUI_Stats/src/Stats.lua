@@ -14,6 +14,7 @@ local Stats = {
     Values = ns.Values,
     Panel = ns.Panel,
     Character = ns.Character,
+    Settings = ns.Settings,
 }
 
 function Stats:OnEnable()

@@ -1,0 +1,302 @@
+-- The stats panel: the button next to Titles, dragging, the same rows in and out of combat, the
+-- stats the player hides, the accordion and the settings window.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Stats"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function set(path, value)
+    EternityUI.store:Set(NAME, path, value)
+end
+
+local function openCharacter()
+    CharacterFrame:Show()
+    PaperDollFrame:Show()
+    PaperDollSidebarTabs:Show()
+    PaperDollSidebarTab3:Show()
+    local char = module().Core.Char()
+    char.shown = true
+    module().Character:Update()
+end
+
+local function visible()
+    return table.concat(module().Panel.visible, ",")
+end
+
+-- Every value secret and the player in combat, until the returned function undoes it.
+local function secretCombat()
+    local savedSecret, savedCombat = _G.issecretvalue, _G.InCombatLockdown
+    _G.issecretvalue = function(value)
+        return type(value) == "number"
+    end
+    _G.InCombatLockdown = function()
+        return true
+    end
+    return function()
+        _G.issecretvalue, _G.InCombatLockdown = savedSecret, savedCombat
+    end
+end
+
+@test("the button sits to the right of Titles and shows or hides the panel")
+local function button()
+    openCharacter()
+    local Character, Panel = module().Character, module().Panel
+    local target = Character.button
+    expect(target ~= nil).toBe(true)
+    expect(target:IsShown()).toBe(true)
+    local point, relative, relativePoint = target:GetPoint(1)
+    expect(point).toBe("LEFT")
+    local tab = PaperDollSidebarTab4:IsShown() and PaperDollSidebarTab4 or PaperDollSidebarTab3
+    expect(relative == tab).toBe(true)
+    expect(relativePoint).toBe("RIGHT")
+    expect(Panel.frame:IsShown()).toBe(true)
+
+    target:Click("LeftButton")
+    expect(module().Core.Char().shown).toBe(false)
+    expect(Panel.frame:IsShown()).toBe(false)
+    target:Click("LeftButton")
+    expect(Panel.frame:IsShown()).toBe(true)
+end
+
+@test("dragging the title saves the spot and puts the panel there again")
+local function drag()
+    openCharacter()
+    local Panel, Core = module().Panel, module().Core
+    Core.Account().position = { x = 300, y = 600 }
+    module().Character:Update()
+    local savedCursor = _G.GetCursorPosition
+    local scale = UIParent:GetEffectiveScale()
+    local cx, cy = 500 * scale, 500 * scale
+    _G.GetCursorPosition = function()
+        return cx, cy
+    end
+    Panel:StartDrag()
+    cx, cy = 550 * scale, 450 * scale
+    Panel:StopDrag()
+    _G.GetCursorPosition = savedCursor
+
+    local position = EternityUIStatsDB.position
+    expect(math.floor(position.x + 0.5)).toBe(350)
+    expect(math.floor(position.y + 0.5)).toBe(550)
+    local point, relative, relativePoint = Panel.frame:GetPoint(1)
+    expect(point).toBe("TOPLEFT")
+    expect(relative == UIParent).toBe(true)
+    expect(relativePoint).toBe("BOTTOMLEFT")
+
+    -- Back next to the window.
+    Core.Account().position = nil
+    module().Character:Update()
+    local _, anchor = Panel.frame:GetPoint(1)
+    expect(anchor == CharacterFrame).toBe(true)
+end
+
+@test("the panel shows the same rows in combat, when the game hides the values")
+local function sameRows()
+    openCharacter()
+    local Panel = module().Panel
+    set("categories.hideZero", true)
+    Panel:Refresh(true)
+    local before = visible()
+    expect(#Panel.visible > 0).toBe(true)
+
+    local undo = secretCombat()
+    local savedHealth = _G.UnitHealthMax
+    _G.UnitHealthMax = function()
+        error("hidden")
+    end
+    Panel:Refresh()
+    local during = visible()
+    local health = Panel.results.health
+    _G.UnitHealthMax = savedHealth
+    undo()
+
+    expect(during).toBe(before)
+    expect(health ~= false and health.secret == true).toBe(true)
+    Panel:Refresh()
+    expect(visible()).toBe(before)
+    set("categories.hideZero", false)
+end
+
+@test("a hidden value keeps the text it had out of combat")
+local function sameText()
+    openCharacter()
+    local Panel = module().Panel
+    Panel:Refresh(true)
+    local row = Panel.rows.health
+    local before = row.value:GetText()
+    local undo = secretCombat()
+    Panel:Refresh()
+    local during = row.value:GetText()
+    undo()
+    expect(during).toBe(before)
+end
+
+@test("raw readers give the full format with ratings")
+local function rawFormat()
+    local S = module().Values.S
+    set("values.ratings", "both")
+    local format = S.RawRated(function()
+        return 12.5
+    end, 9)()
+    expect(format).toBe("%.2f%% (%s)")
+    set("values.ratings", "percent")
+    expect((S.RawRated(function()
+        return 12.5
+    end, 9)())).toBe("%.2f%%")
+end
+
+@test("stats hidden in the settings leave the panel")
+local function hiddenStat()
+    openCharacter()
+    local Panel, Core = module().Panel, module().Core
+    Panel:Refresh(true)
+    expect(visible():find("health", 1, true) ~= nil).toBe(true)
+    Core.SetStatHidden("health", true)
+    Panel:Refresh(true)
+    expect(visible():find("health", 1, true)).toBe(nil)
+    Core.SetStatHidden("health", false)
+    Panel:Refresh(true)
+    expect(visible():find("health", 1, true) ~= nil).toBe(true)
+end
+
+@test("with the accordion, opening a section folds the others")
+local function accordion()
+    openCharacter()
+    local Panel, Core = module().Panel, module().Core
+    set("categories.accordion", true)
+    Panel:CollapseAll(true)
+    Panel:ToggleSection("general")
+    local collapsed = Core.Char().collapsed
+    expect(collapsed.general).toBe(nil)
+    expect(collapsed.attributes).toBe(true)
+    Panel:ToggleSection("attributes")
+    expect(collapsed.general).toBe(true)
+    expect(collapsed.attributes).toBe(nil)
+    set("categories.accordion", false)
+    Panel:CollapseAll(false)
+    expect(collapsed.general).toBe(nil)
+end
+
+@test("the settings open as a modal over the panel, unfold a category and hide a stat")
+local function settings()
+    openCharacter()
+    local Settings, Core, Panel = module().Settings, module().Core, module().Panel
+    Settings:Show()
+    expect(Settings:IsShown()).toBe(true)
+    -- The dimmed layer covers the panel and sits above its rows.
+    expect(Settings.overlay:IsMouseEnabled()).toBe(true)
+    expect(Settings.overlay:GetFrameLevel() > Panel.grip:GetFrameLevel()).toBe(true)
+    local general = Settings.rows.general
+    expect(general:IsShown()).toBe(true)
+    general:Click()
+    local healthRow = Settings.rows["stat:health"]
+    expect(healthRow ~= nil and healthRow:IsShown()).toBe(true)
+    healthRow:Click()
+    expect(Core.StatHidden("health")).toBe(true)
+    healthRow.check:Click()
+    expect(Core.StatHidden("health")).toBe(false)
+
+    -- The category check is the module's option.
+    general.check:Click()
+    expect(EternityUI.store:Get(NAME, "categories.general")).toBe(false)
+    general.check:Click()
+    expect(EternityUI.store:Get(NAME, "categories.general")).toBe(true)
+
+    -- All off and all on, for one category.
+    general.off:Click()
+    expect(Core.StatHidden("health")).toBe(true)
+    expect(Core.StatHidden("power")).toBe(true)
+    general.on:Click()
+    expect(Core.StatHidden("health")).toBe(false)
+
+    -- A click on the dimmed layer closes it.
+    Settings.overlay:GetScript("OnMouseDown")(Settings.overlay, "LeftButton")
+    expect(Settings:IsShown()).toBe(false)
+end
+
+@test("everything off and on again from the stats heading")
+local function everything()
+    openCharacter()
+    local Settings, Core, Panel = module().Settings, module().Core, module().Panel
+    Settings:Show()
+    local heading = Settings.rows["@stats"]
+    heading.off:Click()
+    expect(#Panel.visible).toBe(0)
+    heading.on:Click()
+    expect(Core.StatHidden("health")).toBe(false)
+    expect(#Panel.visible > 0).toBe(true)
+    Settings:Hide()
+end
+
+@test("defense has total avoidance")
+local function totalAvoidance()
+    local stat = module().Values.byId.totalAvoidance
+    expect(stat ~= nil and stat.cat == "defense").toBe(true)
+    local result = module().Values.Read(stat)
+    expect(result ~= nil and type(result.text) == "string").toBe(true)
+    -- "total / with block".
+    expect(result.text:match("^%-?[%d.,]+%% / %-?[%d.,]+%%$") ~= nil).toBe(true)
+end
+
+-- Distinct left edges of the visible rows: the number of columns in use.
+local function columnsUsed()
+    local Panel = module().Panel
+    local seen, count = {}, 0
+    for _, id in ipairs(Panel.visible) do
+        local _, _, _, x = Panel.rows[id]:GetPoint(1)
+        if not seen[x] then
+            seen[x] = true
+            count = count + 1
+        end
+    end
+    return count
+end
+
+@test("the rows fill two columns by default")
+local function twoColumns()
+    openCharacter()
+    module().Core.Account().size = nil
+    module().Panel:Refresh(true)
+    expect(EternityUI.store:Get(NAME, "layout.columns")).toBe(2)
+    expect(columnsUsed()).toBe(2)
+end
+
+@test("the grip resizes the panel: columns fit the width and the rows scroll")
+local function resize()
+    openCharacter()
+    local Panel, Core = module().Panel, module().Core
+    Core.Account().size = nil
+    Panel:Refresh(true)
+    local savedCursor = _G.GetCursorPosition
+    local scale = UIParent:GetEffectiveScale()
+    local cx, cy = 400 * scale, 400 * scale
+    _G.GetCursorPosition = function()
+        return cx, cy
+    end
+    local startWidth = Panel.width
+    Panel:StartResize()
+    -- Much wider (three columns at least) and short: the rows overflow.
+    cx, cy = (400 + 240) * scale / Panel.frame:GetScale(), 4000 * scale
+    Panel:StopResize(true)
+    _G.GetCursorPosition = savedCursor
+
+    local size = EternityUIStatsDB.size
+    expect(size ~= nil).toBe(true)
+    expect(size.w > startWidth).toBe(true)
+    expect(size.h).toBe(120)
+    expect(columnsUsed() >= 3).toBe(true)
+    expect(Panel.contentHeight > Panel.viewHeight).toBe(true)
+    Panel:ScrollTo(50)
+    expect(Panel.offset).toBe(50)
+    Panel:ScrollTo(100000)
+    expect(Panel.offset).toBe(Panel.contentHeight - Panel.viewHeight)
+
+    -- Automatic size again.
+    Panel:SetSize(nil)
+    expect(EternityUIStatsDB.size).toBe(nil)
+    expect(Panel.contentHeight <= Panel.viewHeight).toBe(true)
+    expect(Panel.offset).toBe(0)
+end

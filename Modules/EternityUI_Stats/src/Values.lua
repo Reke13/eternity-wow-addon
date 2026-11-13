@@ -28,7 +28,8 @@ local SECRET, MISSING = {}, {}
 ---@field icon string? texture path
 ---@field atlas string? client atlas (drawn by the emulator too)
 ---@field get fun(S: table): EternityStatResult|nil nil = doesn't apply to this character
----@field raw (fun(S: table): string, ...)? format and the game's values while secret
+---@field raw (fun(S: table): string?, ...)? format and the game's values while secret; nil when
+---the stat's full text can't be drawn from secret values
 ---@field applies (fun(): boolean)? false hides the stat (an option, for example)
 
 ---@class EternityUIStatsValues
@@ -177,6 +178,40 @@ function S.RatingLine(lines, index)
     return lines
 end
 
+-- Raw readers: a format and the game's values for SetFormattedText, drawn while the values are
+-- secret. They give the same text as the plain readers whenever that needs no math or comparison
+-- on the values, so a stat looks the same in and out of combat; a raw reader that can't returns
+-- nil and the panel shows the last value it knew.
+
+--- Format and value that read like S.Int, for a value that may be secret: the game's own number
+--- formatters when they take it, a plain number otherwise.
+function S.RawInt(value)
+    local formatter = Core.Opt("values.largeNumbers") == "short" and AbbreviateNumbers or BreakUpLargeNumbers
+    if type(formatter) == "function" then
+        local ok, text = pcall(formatter, value)
+        if ok and type(text) == "string" then
+            return "%s", text
+        end
+    end
+    return "%.0f", value
+end
+
+--- A raw reader for a percentage with its combat rating, shown as values.ratings asks.
+function S.RawRated(read, index)
+    return function()
+        local mode = Core.Opt("values.ratings")
+        local pct = "%." .. (Core.Opt("values.decimals") or 2) .. "f%%"
+        if not index or mode == "percent" or type(GetCombatRating) ~= "function" then
+            return pct, (read())
+        end
+        local format, rating = S.RawInt(GetCombatRating(index))
+        if mode == "rating" then
+            return format, rating
+        end
+        return pct .. " (" .. format .. ")", (read()), rating
+    end
+end
+
 --- "buff", "debuff" or nil from the positive and negative modifiers.
 function S.Mood(pos, neg)
     if S.Number(neg) < 0 then
@@ -314,7 +349,7 @@ add({
         return { text = S.Int(value), zero = value == 0 }
     end,
     raw = function()
-        return "%.0f", UnitHealthMax("player")
+        return S.RawInt(UnitHealthMax("player"))
     end,
 })
 
@@ -332,7 +367,7 @@ add({
         return { text = S.Int(value), zero = value == 0 }
     end,
     raw = function()
-        return "%.0f", UnitPowerMax("player")
+        return S.RawInt(UnitPowerMax("player"))
     end,
 })
 
@@ -400,7 +435,11 @@ for _, attribute in ipairs(ATTRIBUTES) do
             return S.Modded(effective, pos, neg)
         end,
         raw = function()
-            return "%.0f", select(2, UnitStat("player", index))
+            -- "55 (+10 -3)" needs the modifiers compared with zero: not while they're secret.
+            if Core.Opt("values.showMods") then
+                return nil
+            end
+            return S.RawInt((select(2, UnitStat("player", index))))
         end,
     })
 end
@@ -519,9 +558,9 @@ add({
     get = function()
         return percent(S.Call(GetCritChance), CR.CRIT_MELEE)
     end,
-    raw = function()
-        return "%." .. (Core.Opt("values.decimals") or 2) .. "f%%", GetCritChance()
-    end,
+    raw = S.RawRated(function()
+        return GetCritChance()
+    end, CR.CRIT_MELEE),
 })
 
 add({
@@ -534,9 +573,9 @@ add({
     get = function()
         return percent(S.Call(GetMeleeHaste), CR.HASTE_MELEE)
     end,
-    raw = function()
-        return "%." .. (Core.Opt("values.decimals") or 2) .. "f%%", GetMeleeHaste()
-    end,
+    raw = S.RawRated(function()
+        return GetMeleeHaste()
+    end, CR.HASTE_MELEE),
 })
 
 add({
@@ -558,6 +597,9 @@ add({
     get = function()
         return percent(S.Call(GetArmorPenetration), CR.ARMOR_PENETRATION)
     end,
+    raw = S.RawRated(function()
+        return GetArmorPenetration()
+    end, CR.ARMOR_PENETRATION),
 })
 
 add({
@@ -642,9 +684,9 @@ add({
     get = function()
         return percent(S.Call(GetRangedCritChance), CR.CRIT_RANGED)
     end,
-    raw = function()
-        return "%." .. (Core.Opt("values.decimals") or 2) .. "f%%", GetRangedCritChance()
-    end,
+    raw = S.RawRated(function()
+        return GetRangedCritChance()
+    end, CR.CRIT_RANGED),
 })
 
 add({
@@ -710,7 +752,7 @@ for _, school in ipairs(SCHOOLS) do
             return { text = S.Int(value), zero = value == 0 }
         end,
         raw = function()
-            return "%.0f", GetSpellBonusDamage(index)
+            return S.RawInt(GetSpellBonusDamage(index))
         end,
     })
 end
@@ -724,7 +766,7 @@ add({
         return { text = S.Int(value), zero = value == 0 }
     end,
     raw = function()
-        return "%.0f", GetSpellBonusHealing()
+        return S.RawInt(GetSpellBonusHealing())
     end,
 })
 
@@ -764,9 +806,7 @@ add({
     get = function()
         return percent(S.Call(spellCrit), CR.CRIT_SPELL)
     end,
-    raw = function()
-        return "%." .. (Core.Opt("values.decimals") or 2) .. "f%%", spellCrit()
-    end,
+    raw = S.RawRated(spellCrit, CR.CRIT_SPELL),
 })
 
 add({
@@ -779,9 +819,9 @@ add({
     get = function()
         return percent(S.Call(UnitSpellHaste, "player"), CR.HASTE_SPELL)
     end,
-    raw = function()
-        return "%." .. (Core.Opt("values.decimals") or 2) .. "f%%", UnitSpellHaste("player")
-    end,
+    raw = S.RawRated(function()
+        return UnitSpellHaste("player")
+    end, CR.HASTE_SPELL),
 })
 
 add({
@@ -791,6 +831,9 @@ add({
     get = function()
         local value = S.Number(S.Call(GetSpellPenetration))
         return { text = S.Int(value), zero = value == 0 }
+    end,
+    raw = function()
+        return S.RawInt(GetSpellPenetration())
     end,
 })
 
@@ -835,7 +878,7 @@ add({
         }
     end,
     raw = function()
-        return "%.0f", select(2, UnitArmor("player"))
+        return S.RawInt((select(2, UnitArmor("player"))))
     end,
 })
 
@@ -863,10 +906,10 @@ local function chance(fn, index)
     end
 end
 
-local function rawChance(fn)
-    return function()
-        return "%." .. (Core.Opt("values.decimals") or 2) .. "f%%", fn()
-    end
+local function rawChance(fn, index)
+    return S.RawRated(function()
+        return fn()
+    end, index)
 end
 
 add({
@@ -874,21 +917,55 @@ add({
     cat = "defense",
     icon = ICON .. "Spell_Nature_Invisibilty",
     get = chance(GetDodgeChance, CR.DODGE),
-    raw = rawChance(GetDodgeChance),
+    raw = rawChance(GetDodgeChance, CR.DODGE),
 })
 add({
     id = "parry",
     cat = "defense",
     icon = ICON .. "Ability_Parry",
     get = chance(GetParryChance, CR.PARRY),
-    raw = rawChance(GetParryChance),
+    raw = rawChance(GetParryChance, CR.PARRY),
 })
 add({
     id = "block",
     cat = "defense",
     icon = ICON .. "Ability_Defend",
     get = chance(GetBlockChance, CR.BLOCK),
-    raw = rawChance(GetBlockChance),
+    raw = rawChance(GetBlockChance, CR.BLOCK),
+})
+
+-- Total avoidance: the chance a melee attack from a mob of your level misses, is dodged or is
+-- parried, shown without and with block. Miss is 5% plus 0.04% per defense point above the cap.
+-- A sum of values: no raw reader, it shows its last value while they're secret.
+add({
+    id = "totalAvoidance",
+    cat = "defense",
+    icon = ICON .. "Ability_Rogue_Feint",
+    get = function()
+        local base, modifier = S.Maybe(UnitDefenseSkill, "player")
+        local miss = 5
+        if base ~= nil then
+            local defense = S.Number(base) + S.Number(modifier)
+            miss = math.max(0, 5 + (defense - level() * 5) * 0.04)
+        end
+        local dodge = S.Number(S.Call(GetDodgeChance))
+        local parry = S.Number(S.Maybe(GetParryChance))
+        local block = S.Number(S.Maybe(GetBlockChance))
+        local total = miss + dodge + parry
+        -- "without block / with block".
+        return {
+            text = ("%s / %s"):format(S.Pct(total), S.Pct(total + block)),
+            zero = total == 0 and block == 0,
+            lines = {
+                { L.TIP_MISS, S.Pct(miss) },
+                { L.dodge, S.Pct(dodge) },
+                { L.parry, S.Pct(parry) },
+                { L.block, S.Pct(block) },
+                { L.TIP_WITHOUT_BLOCK, S.Pct(total) },
+                { L.TIP_WITH_BLOCK, S.Pct(total + block) },
+            },
+        }
+    end,
 })
 
 add({
@@ -900,6 +977,9 @@ add({
         local value = S.Number(S.Call(GetShieldBlock))
         return { text = S.Int(value), zero = value == 0 or shield == false }
     end,
+    raw = function()
+        return S.RawInt(GetShieldBlock())
+    end,
 })
 
 add({
@@ -909,6 +989,9 @@ add({
     get = function()
         local rating = S.Number(S.Call(GetCombatRating, CR.RESILIENCE))
         return { text = S.Int(rating), zero = rating == 0 }
+    end,
+    raw = function()
+        return S.RawInt(GetCombatRating(CR.RESILIENCE))
     end,
 })
 
@@ -948,7 +1031,7 @@ for _, resistance in ipairs(RESISTANCES) do
             }
         end,
         raw = function()
-            return "%.0f", select(3, UnitResistance("player", class))
+            return S.RawInt((select(3, UnitResistance("player", class))))
         end,
     })
 end
@@ -963,6 +1046,9 @@ add({
         local effect = S.Number((S.Call(GetMasteryEffect)))
         return percent(effect, CR.MASTERY)
     end,
+    raw = S.RawRated(function()
+        return GetMasteryEffect()
+    end, CR.MASTERY),
 })
 
 add({
@@ -986,11 +1072,19 @@ add({
     cat = "enhancements",
     icon = ICON .. "Spell_Shadow_LifeDrain02",
     get = chance(GetLifesteal, CR.LIFESTEAL),
+    raw = rawChance(GetLifesteal, CR.LIFESTEAL),
 })
 add({
     id = "avoidance",
     cat = "enhancements",
     icon = ICON .. "Spell_Nature_Invisibilty",
     get = chance(GetAvoidance, CR.AVOIDANCE),
+    raw = rawChance(GetAvoidance, CR.AVOIDANCE),
 })
-add({ id = "bonusSpeed", cat = "enhancements", icon = ICON .. "Ability_Rogue_Sprint", get = chance(GetSpeed, CR.SPEED) })
+add({
+    id = "bonusSpeed",
+    cat = "enhancements",
+    icon = ICON .. "Ability_Rogue_Sprint",
+    get = chance(GetSpeed, CR.SPEED),
+    raw = rawChance(GetSpeed, CR.SPEED),
+})
