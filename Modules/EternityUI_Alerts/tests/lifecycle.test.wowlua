@@ -166,3 +166,27 @@ local function stops()
     expect(EternityUI.Mover.elements[NAME] == nil).toBe(true)
     EternityUI.store:SetModuleEnabled(NAME, true)
 end
+
+@test("the rules tab and the buff form explain themselves in an i, not as text")
+local function infos()
+    local module = EternityUI:GetModule(NAME)
+    expect(#module.tabs[1].description > 0).toBe(true)
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 500)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    local Editor, Rules = module.Editor, module.Rules
+    local view = Editor.Build(child, function() end)
+    local buff = Rules.Add("buff")
+    buff.combat = "out"
+    Editor.Select(buff)
+    local form = view.form
+    expect(form.spellsInfo:IsVisible()).toBe(true)
+    -- What a buff rule can't know in combat, only when it shows in combat.
+    expect(form.combatInfo:IsShown()).toBe(false)
+    buff.combat = "any"
+    Editor.Select(buff)
+    expect(form.combatInfo:IsShown()).toBe(true)
+    Editor.Delete(buff)
+    EternityUI.store:Reset(NAME)
+end

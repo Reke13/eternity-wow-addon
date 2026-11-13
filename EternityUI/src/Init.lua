@@ -22,9 +22,15 @@
 ---@field Diagnostics EternityDiagnostics
 ---@field db table? the SavedVariables table, set at ADDON_LOADED
 ---@field store EternityUIStore? set at PLAYER_LOGIN
+---@field Startup EternityStartup
+---@field firstFile number? debugprofilestop() when the first file ran
+---@field probe fun(owner: any, label: string, ms: number, kb: number?)? set while startup is measured
 
 ---@type string, EternityUINamespace
 local addonName, ns = ...
+
+-- When Eternity's first file ran, for the startup metrics (Core/Startup.lua).
+ns.firstFile = debugprofilestop and debugprofilestop() or nil
 
 ---@class EternityUI
 EternityUI = {

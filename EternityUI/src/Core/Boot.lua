@@ -18,6 +18,8 @@ end)
 
 Events.On("PLAYER_LOGIN", Boot, function()
     Events.Off("PLAYER_LOGIN", Boot)
+    -- Boot's handler runs before the metrics' own one: mark the event here, before the work.
+    ns.Startup.Mark("PLAYER_LOGIN")
     ns.Schema.Register(ns.CoreOptions)
     ns.store = ns.Store.New(ns.db, ns.Secret.Plain(UnitGUID("player")), function(module, path, value)
         ns.Modules.OnStoreChanged(module, path, value)
@@ -29,8 +31,11 @@ Events.On("PLAYER_LOGIN", Boot, function()
     EternityUI.store = ns.store
     ns.store:Sanitize("EternityUI")
     ns.Theme.Reload()
+    ns.Startup.Mark("STORE_READY")
     ns.Modules.Start()
+    ns.Startup.Mark("MODULES_STARTED")
     Events.Send(EternityUI.READY)
+    ns.Startup.Mark("READY_SENT")
     if ns.store:Get("EternityUI", "appearance.pixelPerfect") then
         ns.Pixel.ApplyInterfaceScale(true)
     end

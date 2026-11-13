@@ -284,6 +284,22 @@
       ]
     },
     {
+      "id": "copy",
+      "label": { "enUS": "Copy chat", "esES": "Copiar el chat" },
+      "options": [
+        {
+          "id": "button",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Copy button on each chat window", "esES": "Botón de copiar en cada ventana del chat" },
+          "description": {
+            "enUS": "Opens the window's text in a box to copy it (Ctrl+A, Ctrl+C), without colors or icons. /etchat copy also does. Protected lines show as (protected).",
+            "esES": "Abre el texto de la ventana en una caja para copiarlo (Ctrl+A, Ctrl+C), sin colores ni iconos. /etchat copy también lo hace. Las líneas protegidas salen como (protegido)."
+          }
+        }
+      ]
+    },
+    {
       "id": "text",
       "tab": "appearance",
       "label": { "enUS": "Text", "esES": "Texto" },

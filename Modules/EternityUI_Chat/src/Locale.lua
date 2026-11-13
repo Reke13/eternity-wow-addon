@@ -9,6 +9,7 @@
 ---@field History EternityUIChatHistory saved conversations (History.lua)
 ---@field Skin EternityUIChatSkin look of Blizzard's chat and the modes (Skin.lua)
 ---@field Messenger EternityUIChatMessenger messenger window (Messenger.lua)
+---@field Copy EternityUIChatCopy copy window and the chat windows' copy buttons (Copy.lua)
 ---@field running boolean? between the module's OnEnable and OnDisable
 ---@field secret fun(value: any): boolean
 ---@field DB fun(): table
@@ -46,6 +47,13 @@ local strings = {
         LAUNCHER_HINT = "Click: messages · Right-click: options",
         UNREAD = "%d unread",
         OFFLINE = "Offline",
+        COPY = "Copy chat",
+        COPY_TITLE = "Copy chat: %s",
+        COPY_HINT = "Click the text, then Ctrl+A and Ctrl+C to copy it. Protected lines can't be read.",
+        COPY_BUTTON_HINT = "Opens this window's text to copy it. /etchat copy also does.",
+        COPY_EMPTY = "This window has no messages.",
+        PROTECTED = "(protected)",
+        CHAT = "Chat",
     },
     esES = {
         MESSENGER = "Mensajes",
@@ -74,6 +82,13 @@ local strings = {
         LAUNCHER_HINT = "Clic: mensajes · Clic derecho: opciones",
         UNREAD = "%d sin leer",
         OFFLINE = "Desconectado",
+        COPY = "Copiar el chat",
+        COPY_TITLE = "Copiar el chat: %s",
+        COPY_HINT = "Haz clic en el texto y luego Ctrl+A y Ctrl+C para copiarlo. Las líneas protegidas no se pueden leer.",
+        COPY_BUTTON_HINT = "Abre el texto de esta ventana para copiarlo. /etchat copy también lo hace.",
+        COPY_EMPTY = "Esta ventana no tiene mensajes.",
+        PROTECTED = "(protegido)",
+        CHAT = "Chat",
     },
 }
 ns.L = EternityUI.NewLocale(strings.enUS, strings.esES)

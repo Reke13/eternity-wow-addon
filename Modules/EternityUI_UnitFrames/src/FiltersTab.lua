@@ -292,7 +292,7 @@ function Tab.Refresh()
     local has = filter ~= nil
     v.picker.label:SetText(has and L.FILTER_PICK:format(filter.name) or L.NO_FILTERS_SHORT)
     v.picker:SetWidth(math.max(160, v.picker.label:GetStringWidth() + 28))
-    for _, part in ipairs({ v.rename, v.renameButton, v.delete, v.applyLabel, v.intro, v.input, v.add, v.fromMe, v.fromTarget, v.status, v.example, v.list }) do
+    for _, part in ipairs({ v.rename, v.renameButton, v.delete, v.applyLabel, v.input, v.add, v.fromMe, v.fromTarget, v.status, v.example, v.list }) do
         part:SetShown(has)
     end
     v.empty:SetShown(not has)
@@ -320,11 +320,6 @@ function Tab.Refresh()
         x = x + check:GetWidth()
     end
     local top = y + CHECK + GAP
-
-    v.intro:ClearAllPoints()
-    v.intro:SetPoint("TOPLEFT", 0, -top)
-    v.intro:SetPoint("TOPRIGHT", 0, -top)
-    top = top + v.intro:GetStringHeight() + GAP
 
     v.input:ClearAllPoints()
     v.input:SetPoint("TOPLEFT", 0, -top)
@@ -435,10 +430,6 @@ function Tab.Build(parent, setHeight)
     for _, def in ipairs(ns.UNITS) do
         Tab.checks[#Tab.checks + 1] = newCheck(v, def)
     end
-
-    v.intro = Widgets.Text(v, 13, "muted")
-    v.intro:SetJustifyH("LEFT")
-    v.intro:SetText(L.FILTER_INTRO)
 
     v.input = Widgets.Input(v, Tab.AddText, L.SPELL_ID)
     hookLinks()

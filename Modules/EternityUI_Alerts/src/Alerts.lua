@@ -42,7 +42,7 @@ local COMBAT_TICK = 1
 local Module = {
     schema = ns.OptionsSchema,
     state = {},
-    tabs = { { key = "rules", text = L.TAB, build = Editor.Build } },
+    tabs = { { key = "rules", text = L.TAB, build = Editor.Build, description = L.RULES_HINT } },
     actions = {
         {
             text = L.TEST,

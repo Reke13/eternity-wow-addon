@@ -1,0 +1,167 @@
+-- The history's look: names in their class color, items in their quality color with their own
+-- tooltip, a tooltip for each letter of the list, and the copy mode.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Mail"
+local COPPER_BAR, EPIC_ITEM = 2840, 19019
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function classes()
+    return module().Classes
+end
+
+local function letter(extra)
+    local entry = {
+        kind = "received", time = time(), realm = "R", char = "Reke One", charClass = "MAGE",
+        other = "Thrall", subject = "Bars", money = 52000, cod = 0,
+        items = {
+            { id = COPPER_BAR, count = 20, name = "Copper Bar", quality = 1 },
+            { id = EPIC_ITEM, count = 1, name = "Thunderfury", quality = 5 },
+        },
+    }
+    for key, value in pairs(extra or {}) do
+        entry[key] = value
+    end
+    return entry
+end
+
+@test("a name's class is learned and found, by whole name or first name")
+local function learn()
+    classes().Learn("Thrall", "SHAMAN")
+    classes().Learn("Mule Bank-Some Realm", "PRIEST")
+    expect(classes().Find("Thrall")).toBe("SHAMAN")
+    expect(classes().Find("thrall-Other")).toBe("SHAMAN")
+    expect(classes().Find("Mule Bank")).toBe("PRIEST")
+    expect(classes().Find("Mule")).toBe("PRIEST")
+    expect(classes().Find("Nobody")).toBe(nil)
+    -- This character knows itself.
+    local _, me = module().History.Me()
+    expect(classes().Find(me) ~= nil).toBe(true)
+end
+
+@test("names show in their class color, unknown ones as they are")
+local function colors()
+    classes().Learn("Thrall", "SHAMAN")
+    local colored = classes().Color("Thrall")
+    expect(colored:find("^|c%x%x%x%x%x%x%x%xThrall|r$") ~= nil).toBe(true)
+    expect(classes().Color("Nobody")).toBe("Nobody")
+    local title = module().List.RowTexts(letter())
+    expect(title:find("|c", 1, true) ~= nil).toBe(true)
+end
+
+@test("a received letter keeps the sender's class when it's known")
+local function saved()
+    local history = module().History
+    history.Clear()
+    classes().Learn("Jaina", "MAGE")
+    local globals = {
+        GetInboxNumItems = function()
+            return 1, 1
+        end,
+        GetInboxHeaderInfo = function()
+            return nil, nil, "Jaina", "Hi", 0, 0, 30, 0, false, false
+        end,
+        GetInboxItem = function() end,
+    }
+    local saved = {}
+    for key, value in pairs(globals) do
+        saved[key] = _G[key]
+        _G[key] = value
+    end
+    module():OnEvent("MAIL_SHOW")
+    for key in pairs(globals) do
+        _G[key] = saved[key]
+    end
+    module():OnEvent("MAIL_CLOSED")
+    expect(EternityUIMailDB.mails[1].otherClass).toBe("MAGE")
+    expect(EternityUIMailDB.mails[1].charClass ~= nil).toBe(true)
+    history.Clear()
+end
+
+@test("items show in their quality color")
+local function quality()
+    local list = module().List
+    local epic = list.ItemText({ id = EPIC_ITEM, count = 1, name = "Thunderfury", quality = 4 })
+    expect(epic:find("^|c%x+Thunderfury|r$") ~= nil).toBe(true)
+end
+
+-- The tab built in an area of its own, with one letter chosen.
+local function build(entry)
+    local history = module().History
+    history.Clear()
+    history.Add(entry)
+    local area = CreateFrame("Frame", nil, UIParent)
+    area:SetSize(900, 600)
+    area:SetPoint("CENTER")
+    local parent = CreateFrame("Frame", nil, area)
+    parent:SetAllPoints()
+    local list = module().List
+    local view = list.Build(parent, function() end)
+    view:Show()
+    list.Refresh()
+    return view, area
+end
+
+@test("the chosen letter shows a row per item, with the item's tooltip")
+local function itemRows()
+    local list = module().List
+    local view, area = build(letter())
+    expect(view.heading:IsShown()).toBe(true)
+    local first, second = list.itemRows[1], list.itemRows[2]
+    expect(first:IsShown() and second:IsShown()).toBe(true)
+    expect(first.text:GetText():find("20 × ", 1, true) == 1).toBe(true)
+    expect(second.item.id).toBe(EPIC_ITEM)
+    first:GetScript("OnEnter")(first)
+    expect(GameTooltip:IsShown()).toBe(true)
+    expect(GameTooltip:GetOwner()).toBe(first)
+    first:GetScript("OnLeave")(first)
+    expect(GameTooltip:IsShown()).toBe(false)
+    area:Hide()
+    module().History.Clear()
+end
+
+@test("a letter without items hides the item rows")
+local function noItems()
+    local list = module().List
+    local view, area = build(letter({ items = {} }))
+    expect(view.itemsLabel:IsShown()).toBe(false)
+    for _, row in ipairs(list.itemRows) do
+        expect(row:IsShown()).toBe(false)
+    end
+    area:Hide()
+    module().History.Clear()
+end
+
+@test("hovering a letter of the list shows it in a tooltip")
+local function rowTooltip()
+    local list = module().List
+    local _, area = build(letter())
+    local row = list.rows[1]
+    expect(row.entry ~= nil).toBe(true)
+    row:GetScript("OnEnter")(row)
+    expect(GameTooltip:IsShown()).toBe(true)
+    expect(GameTooltip:NumLines() >= 5).toBe(true)
+    row:GetScript("OnLeave")(row)
+    area:Hide()
+    module().History.Clear()
+end
+
+@test("Copy shows the letter as plain text, and again goes back")
+local function copy()
+    local list = module().List
+    local view, area = build(letter())
+    view.copy:Click()
+    expect(view.detail:IsShown()).toBe(true)
+    expect(view.heading:IsShown()).toBe(false)
+    expect(view.detailText:find("Thrall", 1, true) ~= nil).toBe(true)
+    expect(view.detailText:find("|c", 1, true)).toBe(nil)
+    expect(list.itemRows[1]:IsShown()).toBe(false)
+    view.copy:Click()
+    expect(view.detail:IsShown()).toBe(false)
+    expect(view.heading:IsShown()).toBe(true)
+    area:Hide()
+    module().History.Clear()
+end

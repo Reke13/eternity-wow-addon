@@ -1,0 +1,241 @@
+-- The combat and PvP icons: on every frame (raid off by default), from answers the game may give
+-- as secrets, placed and sized by the frame's options.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+-- A value that plays a secret: nothing may compare it.
+local SECRET = {}
+
+-- Runs `body` with some globals replaced, restoring them afterwards.
+local function with(globals, body)
+    local saved = {}
+    for name, value in pairs(globals) do
+        saved[name] = _G[name]
+        _G[name] = value
+    end
+    local m = EternityUI:GetModule(NAME)
+    local ok, err = pcall(body, m)
+    for name in pairs(globals) do
+        _G[name] = saved[name]
+    end
+    if not ok then
+        error(err)
+    end
+end
+
+-- The game's answers about a unit: in combat or not, flagged, free-for-all, its faction.
+local function game(combat, pvp, ffa, faction)
+    return {
+        issecretvalue = function(value)
+            return value == SECRET
+        end,
+        UnitAffectingCombat = function()
+            return combat
+        end,
+        UnitIsPVP = function()
+            return pvp
+        end,
+        UnitIsPVPFreeForAll = function()
+            return ffa
+        end,
+        UnitFactionGroup = function()
+            return faction
+        end,
+    }
+end
+
+@test("the combat and PvP icons are on by default on every frame but the raid's")
+local function defaults()
+    local opt = EternityUI:GetModule(NAME).Style.Opt
+    for _, key in ipairs({ "player", "pet", "target", "targettarget", "focus", "party", "grouppets" }) do
+        expect(opt(key .. "Indicators.combat")).toBe(true)
+        expect(opt(key .. "Indicators.pvp")).toBe(true)
+    end
+    expect(opt("raidIndicators.combat")).toBe(false)
+    expect(opt("raidIndicators.pvp")).toBe(false)
+end
+
+@test("the combat icon follows the unit of any frame, not only yours")
+local function combatOnTarget()
+    with(game(true, false, false, "Horde"), function(m)
+        local f = m.holders.target.button
+        m.Elements.UpdateStatus(f)
+        expect(f.combatIcon:IsShown()).toBe(true)
+        expect(f.combatIcon:GetAlpha()).toBe(1)
+    end)
+    with(game(false, false, false, "Horde"), function(m)
+        local f = m.holders.target.button
+        m.Elements.UpdateStatus(f)
+        expect(f.combatIcon:IsShown()).toBe(false)
+    end)
+end
+
+@test("a secret combat answer still shows the icon, by its alpha")
+local function secretCombat()
+    with(game(SECRET, false, false, "Horde"), function(m)
+        local f = m.holders.focus.button
+        local alphaFrom
+        local original = f.combatIcon.SetAlphaFromBoolean
+        f.combatIcon.SetAlphaFromBoolean = function(_, value)
+            alphaFrom = value
+        end
+        m.Elements.UpdateStatus(f)
+        f.combatIcon.SetAlphaFromBoolean = original
+        expect(f.combatIcon:IsShown()).toBe(true)
+        expect(alphaFrom == SECRET).toBe(true)
+    end)
+end
+
+@test("flagged for PvP: the faction's icon; free-for-all: the other one")
+local function pvpIcons()
+    with(game(false, true, false, "Alliance"), function(m)
+        local f = m.holders.target.button
+        m.Elements.UpdateStatus(f)
+        expect(f.pvpHolder:IsShown()).toBe(true)
+        expect(f.pvpHolder:GetAlpha()).toBe(1)
+        expect(f.pvpIcon:IsShown()).toBe(true)
+        expect(f.ffaIcon:IsShown()).toBe(false)
+    end)
+    with(game(false, true, true, "Alliance"), function(m)
+        local f = m.holders.target.button
+        m.Elements.UpdateStatus(f)
+        expect(f.pvpHolder:GetAlpha()).toBe(0)
+        expect(f.ffaIcon:IsShown()).toBe(true)
+    end)
+    with(game(false, false, false, "Alliance"), function(m)
+        local f = m.holders.target.button
+        m.Elements.UpdateStatus(f)
+        expect(f.pvpIcon:IsShown()).toBe(false)
+        expect(f.ffaIcon:IsShown()).toBe(false)
+    end)
+end
+
+@test("secret PvP answers set alphas instead of being compared")
+local function secretPvp()
+    with(game(false, SECRET, SECRET, "Horde"), function(m)
+        local f = m.holders.target.button
+        local calls = {}
+        local function spy(region, name)
+            local original = region.SetAlphaFromBoolean
+            region.SetAlphaFromBoolean = function(_, value, a, b)
+                calls[name] = { value, a, b }
+            end
+            return function()
+                region.SetAlphaFromBoolean = original
+            end
+        end
+        local undo1, undo2, undo3 = spy(f.pvpIcon, "faction"), spy(f.ffaIcon, "ffa"), spy(f.pvpHolder, "holder")
+        m.Elements.UpdateStatus(f)
+        undo1()
+        undo2()
+        undo3()
+        expect(calls.faction and calls.faction[1] == SECRET).toBe(true)
+        expect(calls.ffa and calls.ffa[1] == SECRET).toBe(true)
+        -- The faction's icon fades out in free-for-all.
+        expect(calls.holder and calls.holder[2]).toBe(0)
+        expect(calls.holder and calls.holder[3]).toBe(1)
+    end)
+end
+
+@test("turned off, the icons stay hidden")
+local function off()
+    with(game(true, true, true, "Horde"), function(m)
+        EternityUI.store:Set(NAME, "targetIndicators.combat", false)
+        EternityUI.store:Set(NAME, "targetIndicators.pvp", false)
+        local f = m.holders.target.button
+        m.Elements.UpdateStatus(f)
+        local combat, holder, ffa = f.combatIcon:IsShown(), f.pvpHolder:IsShown(), f.ffaIcon:IsShown()
+        EternityUI.store:Set(NAME, "targetIndicators.combat", nil)
+        EternityUI.store:Set(NAME, "targetIndicators.pvp", nil)
+        expect(combat).toBe(false)
+        expect(holder).toBe(false)
+        expect(ffa).toBe(false)
+    end)
+end
+
+@test("the icons go where their position option says, at their size")
+local function placed()
+    local m = EternityUI:GetModule(NAME)
+    local f = m.holders.focus.button
+    local point, relative, relativePoint = f.pvpHolder:GetPoint(1)
+    expect(point).toBe("CENTER")
+    expect(relative == f).toBe(true)
+    expect(relativePoint).toBe("TOPRIGHT")
+    expect(select(3, f.combatIcon:GetPoint(1))).toBe("BOTTOMLEFT")
+    local before = f.combatIcon:GetWidth()
+    EternityUI.store:Set(NAME, "focusIndicators.combatAnchor", "right")
+    EternityUI.store:Set(NAME, "focusIndicators.combatSize", 200)
+    m.Elements.Layout(f, f:GetWidth(), f:GetHeight())
+    local moved = select(3, f.combatIcon:GetPoint(1))
+    local after = f.combatIcon:GetWidth()
+    EternityUI.store:Set(NAME, "focusIndicators.combatAnchor", nil)
+    EternityUI.store:Set(NAME, "focusIndicators.combatSize", nil)
+    m.Elements.Layout(f, f:GetWidth(), f:GetHeight())
+    expect(moved).toBe("RIGHT")
+    expect(math.abs(after - before * 2) < 0.01).toBe(true)
+end
+
+@test("the combat icon uses the client's atlas when it has one, the old file otherwise")
+local function combatTexture()
+    local m = EternityUI:GetModule(NAME)
+    local texture = m.holders.target.button.combatIcon
+    local saved = C_Texture.GetAtlasInfo
+    local atlas, file
+    texture.SetAtlas = function(_, name)
+        atlas = name
+    end
+    texture.SetTexture = function(_, name)
+        file = name
+    end
+    ---@type any
+    local found = function()
+        return { width = 24, height = 24 }
+    end
+    C_Texture.GetAtlasInfo = found
+    m.Elements.SetCombatTexture(texture)
+    local withAtlas = atlas
+    atlas = nil
+    C_Texture.GetAtlasInfo = function()
+        return nil
+    end
+    m.Elements.SetCombatTexture(texture)
+    C_Texture.GetAtlasInfo = saved
+    texture.SetAtlas, texture.SetTexture = nil, nil
+    expect(withAtlas).toBe(m.Elements.COMBAT_ATLAS)
+    expect(atlas).toBe(nil)
+    expect(file).toBe("Interface\\CharacterFrame\\UI-StateIcon")
+end
+
+@test("resting uses the client's animated atlas, played only while shown")
+local function restTexture()
+    local m = EternityUI:GetModule(NAME)
+    local f = m.holders.player.button
+    local saved = C_Texture.GetAtlasInfo
+    local texture = f.restIcon
+    local atlas
+    texture.SetAtlas = function(_, name)
+        atlas = name
+    end
+    ---@type any
+    local found = function()
+        return { width = 30, height = 30, leftTexCoord = 0, rightTexCoord = 1, topTexCoord = 0, bottomTexCoord = 1 }
+    end
+    C_Texture.GetAtlasInfo = found
+    local anim = m.Elements.SetRestTexture(texture)
+    C_Texture.GetAtlasInfo = saved
+    texture.SetAtlas = nil
+    expect(atlas).toBe(m.Elements.REST_ATLAS)
+    if anim then
+        local savedAnim = f.restAnim
+        f.restAnim = anim
+        m.Elements.ShowRest(f, true)
+        local playing = anim:IsPlaying()
+        m.Elements.ShowRest(f, false)
+        local stopped = not anim:IsPlaying()
+        f.restAnim = savedAnim
+        m.Elements.UpdateIndicators(f)
+        expect(playing).toBe(true)
+        expect(stopped).toBe(true)
+    end
+end

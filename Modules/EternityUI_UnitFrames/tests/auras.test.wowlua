@@ -77,8 +77,16 @@ local function containers()
         return
     end
     expect(f.auraContainer ~= nil).toBe(true)
-    local child = m.holders.party.header:GetAttribute("child1")
+    m.Groups.FinishBuilding()
+    -- A group button gets them once it shows someone: making them for all 85 was slow.
+    local child = m.holders.raid.header:GetAttribute("child2")
+    local unit = child.unit
+    if not unit then
+        expect(child.auraContainer).toBe(nil)
+    end
+    m.Frame.SetUnit(child, "player")
     expect(child.auraContainer ~= nil).toBe(true)
+    m.Frame.SetUnit(child, unit)
 end
 
 @test("buffs and debuffs go where each option says, and stack when they share a place")

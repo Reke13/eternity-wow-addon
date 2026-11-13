@@ -1,0 +1,198 @@
+-- Startup metrics: off by default, and when on, a load measured into a saved, readable report.
+import test, beforeEach, expect from "wowlua:test"
+
+local ns = EternityUI.Internal.ns
+local Startup = ns.Startup
+
+@beforeEach
+local function fresh()
+    Startup.Finish()
+    EternityUIDB.startup = nil
+end
+
+-- Runs a whole measured load on a made-up clock: three addons, a slow module, two hitches.
+local function measuredLoad()
+    local base = Startup.clock()
+    Startup.Begin(base - 100)
+    Startup.AddOnLoaded("FastAddon")
+    Startup.AddOnLoaded("SlowAddon")
+    local module = { name = "SlowModule" }
+    ns.probe(module, "OnEnable", 42, 300)
+    ns.probe(module, "BAG_UPDATE", 3)
+    ns.probe(module, "BAG_UPDATE", 9)
+    Startup.Mark("MODULES_STARTED")
+    Startup.OnFrame(base) -- the first frame
+    Startup.OnFrame(base + 16)
+    ns.probe(module, "Refresh", 70)
+    Startup.OnFrame(base + 136) -- 120 ms: a hitch, with Eternity's refresh in it
+    Startup.OnFrame(base + 152)
+    Startup.OnFrame(base + 212) -- 60 ms: a hitch with no Eternity work
+    return Startup.Finish()
+end
+
+@test("the metrics are off by default and record nothing")
+local function offByDefault()
+    expect(Startup.IsEnabled()).toBe(false)
+    expect(Startup.IsRecording()).toBe(false)
+    expect(ns.probe).toBe(nil)
+    expect(#Startup.Reports()).toBe(0)
+end
+
+@test("the switch is saved for the account")
+local function switch()
+    Startup.SetEnabled(true)
+    expect(Startup.IsEnabled()).toBe(true)
+    expect(EternityUIDB.startup.enabled).toBe(true)
+    Startup.SetEnabled(false)
+    expect(Startup.IsEnabled()).toBe(false)
+end
+
+@test("a measured load is saved as a report")
+local function report()
+    measuredLoad()
+    expect(Startup.IsRecording()).toBe(false)
+    expect(ns.probe).toBe(nil)
+    local saved = Startup.Reports()
+    expect(#saved).toBe(1)
+    local r = saved[1]
+    expect(#r.addonsLoaded).toBe(2)
+    expect(r.addonsLoaded[1].name).toBe("FastAddon")
+    expect(r.frames.count).toBe(4)
+    expect(r.frames.over50).toBe(2)
+    expect(r.frames.over100).toBe(1)
+    expect(#r.hitches).toBe(2)
+    expect(r.hitches[1].ms).toBe(120)
+    expect(r.hitches[1].eternity).toBe(70)
+    expect(r.hitches[1].spans[1].label).toBe("Refresh")
+    expect(r.hitches[2].eternity).toBe(0)
+end
+
+@test("the measurement ends by itself after the window")
+local function windowEnds()
+    local base = Startup.clock()
+    Startup.Begin(base)
+    Startup.OnFrame(base)
+    Startup.OnFrame(base + 16)
+    expect(Startup.IsRecording()).toBe(true)
+    Startup.OnFrame(base + Startup.WINDOW * 1000)
+    expect(Startup.IsRecording()).toBe(false)
+    expect(#Startup.Reports()).toBe(1)
+end
+
+@test("Eternity's work is summed by owner and label, slowest first")
+local function work()
+    measuredLoad()
+    local r = Startup.Reports()[1]
+    expect(r.work[1].owner).toBe("SlowModule")
+    expect(r.work[1].label).toBe("Refresh")
+    local bags
+    for _, entry in ipairs(r.work) do
+        if entry.label == "BAG_UPDATE" then
+            bags = entry
+        end
+    end
+    expect(bags.count).toBe(2)
+    expect(bags.total).toBe(12)
+    expect(bags.worst).toBe(9)
+end
+
+@test("the report reads as text with every section")
+local function text()
+    measuredLoad()
+    local body = Startup.Text(Startup.Reports()[1])
+    expect(body:find("SlowAddon", 1, true) ~= nil).toBe(true)
+    expect(body:find("SlowModule · OnEnable", 1, true) ~= nil).toBe(true)
+    expect(body:find("120.0 ms", 1, true) ~= nil).toBe(true)
+    expect(#Startup.Reports()[1].lines > 10).toBe(true)
+end
+
+@test("only the newest reports are kept")
+local function keep()
+    for _ = 1, Startup.KEEP + 2 do
+        measuredLoad()
+    end
+    expect(#Startup.Reports()).toBe(Startup.KEEP)
+    Startup.Clear()
+    expect(#Startup.Reports()).toBe(0)
+end
+
+@test("event handlers and module hooks are timed while recording")
+local function probes()
+    Startup.Begin()
+    local owner = { name = "ProbeTest" }
+    ns.Events.Listen("TEST_STARTUP_MESSAGE", owner, function() end)
+    ns.Events.Send("TEST_STARTUP_MESSAGE")
+    ns.Events.Release(owner)
+    EternityUI:RegisterModule("StartupProbeTest", {
+        OnEnable = function() end,
+    })
+    local r = Startup.Finish()
+    local seen = {}
+    for _, entry in ipairs(r.work) do
+        seen[entry.owner .. "/" .. entry.label] = entry.count
+    end
+    expect(seen["ProbeTest/TEST_STARTUP_MESSAGE"]).toBe(1)
+    expect(seen["StartupProbeTest/OnEnable"]).toBe(1)
+end
+
+@test("work measured inside other measured work counts once in the frame")
+local function nested()
+    local base = Startup.clock()
+    Startup.Begin(base)
+    Startup.OnFrame(base)
+    Startup.Measure("Outer", "all", function()
+        Startup.Measure("Outer", "part", function() end)
+    end)
+    Startup.OnFrame(base + 200) -- a hitch: Eternity's share is the outer work alone
+    local seen = {}
+    local r = Startup.Finish()
+    for _, entry in ipairs(r.work) do
+        seen[entry.label] = entry.total
+    end
+    expect(seen.all ~= nil and seen.part ~= nil).toBe(true)
+    expect(r.hitches[1].eternity).toBe(seen.all)
+end
+
+@test("Measure runs the work and returns its results, recording or not")
+local function measure()
+    expect(Startup.Measure("x", "y", function(a, b)
+        return a + b, nil, "z"
+    end, 1, 2)).toBe(3)
+    Startup.Begin()
+    local _, second, third = Startup.Measure("MeasureTest", "Scan", function()
+        return 1, nil, "z"
+    end)
+    expect(second).toBe(nil)
+    expect(third).toBe("z")
+    local r = Startup.Finish()
+    expect(r.work[1].owner).toBe("MeasureTest")
+end
+
+@test("the report window shows the newest report")
+local function window()
+    measuredLoad()
+    ns.StartupReport.Open()
+    local frame = ns.StartupReport.Frame()
+    expect(frame:IsShown()).toBe(true)
+    expect(frame.box:GetText():find("SlowAddon", 1, true) ~= nil).toBe(true)
+    frame:Hide()
+end
+
+@test("the window explains how to get a report when there is none")
+local function emptyWindow()
+    ns.StartupReport.Open()
+    local frame = ns.StartupReport.Frame()
+    expect(frame.box:GetText()).toBe(ns.L.STARTUP_EMPTY:format(Startup.WINDOW))
+    frame:Hide()
+end
+
+@test("the report window looks like the options window: no shadow, the options' scale")
+local function windowLook()
+    ns.StartupReport.Open()
+    local frame = ns.StartupReport.Frame()
+    expect(frame.shadow:IsShown()).toBe(false)
+    ns.store:Set("EternityUI", "general.optionsScale", 1.2)
+    expect(math.abs(frame:GetScale() - 1.2) < 0.001).toBe(true)
+    ns.store:Set("EternityUI", "general.optionsScale", 1)
+    frame:Hide()
+end

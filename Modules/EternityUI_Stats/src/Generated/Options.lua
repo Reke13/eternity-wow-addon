@@ -59,6 +59,19 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "movable",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Drag to move",
+                        esES = "Mover arrastrando",
+                    },
+                    description = {
+                        enUS = "Drag the panel by its title to place it anywhere; it stays there for every character. Its settings put it back next to the window.",
+                        esES = "Arrastra el panel por su título para colocarlo donde quieras; se queda ahí para todos los personajes. Sus ajustes lo devuelven junto a la ventana.",
+                    },
+                },
+                {
                     id = "showWith",
                     type = "select",
                     default = "paperdoll",
@@ -88,12 +101,12 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = true,
                     label = {
-                        enUS = "Button on the character window",
-                        esES = "Botón en la ventana del personaje",
+                        enUS = "Button next to Titles",
+                        esES = "Botón junto a Títulos",
                     },
                     description = {
-                        enUS = "Shows or hides the panel, remembered per character.",
-                        esES = "Muestra u oculta el panel; se recuerda por personaje.",
+                        enUS = "A tab to the right of the character window's Titles: a click shows or hides the panel (remembered per character), a right-click opens its settings.",
+                        esES = "Una pestaña a la derecha de Títulos en la ventana del personaje: el clic muestra u oculta el panel (se recuerda por personaje) y el clic derecho abre sus ajustes.",
                     },
                 },
                 {
@@ -215,7 +228,7 @@ ns.OptionsSchema = {
                 {
                     id = "hideZero",
                     type = "toggle",
-                    default = true,
+                    default = false,
                     label = {
                         enUS = "Hide stats at zero",
                         esES = "Ocultar estadísticas a cero",
@@ -236,6 +249,19 @@ ns.OptionsSchema = {
                     description = {
                         enUS = "Click a header to fold its section; remembered per character.",
                         esES = "Haz clic en una cabecera para plegar su sección; se recuerda por personaje.",
+                    },
+                },
+                {
+                    id = "accordion",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "One section open at a time",
+                        esES = "Una sola sección abierta",
+                    },
+                    description = {
+                        enUS = "Opening a section folds the others, like an accordion.",
+                        esES = "Al abrir una sección se pliegan las demás, como un acordeón.",
                     },
                 },
             },
@@ -379,15 +405,15 @@ ns.OptionsSchema = {
                         esES = "Valores ocultos",
                     },
                     description = {
-                        enUS = "When the game hides your stats: as it gives them where possible, or the last known value in grey.",
-                        esES = "Cuando el juego oculta tus estadísticas: tal como las da cuando se pueda, o el último valor conocido en gris.",
+                        enUS = "In combat the game hides some stats; the panel keeps the same rows and formats either way.",
+                        esES = "En combate el juego oculta algunas estadísticas; el panel mantiene las mismas filas y formatos igualmente.",
                     },
                     values = {
                         {
                             value = "raw",
                             label = {
-                                enUS = "As the game gives them",
-                                esES = "Tal como las da el juego",
+                                enUS = "Live where possible, else the last known",
+                                esES = "En directo si se puede; si no, el último conocido",
                             },
                         },
                         {
@@ -397,6 +423,15 @@ ns.OptionsSchema = {
                                 esES = "Último valor conocido",
                             },
                         },
+                    },
+                },
+                {
+                    id = "greySecret",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Grey out hidden values",
+                        esES = "Atenuar los valores ocultos",
                     },
                 },
             },
@@ -606,13 +641,17 @@ ns.OptionsSchema = {
                 {
                     id = "columns",
                     type = "range",
-                    default = 1,
+                    default = 2,
                     min = 1,
                     max = 4,
                     step = 1,
                     label = {
                         enUS = "Columns",
                         esES = "Columnas",
+                    },
+                    description = {
+                        enUS = "Until you resize the panel from its corner; then the columns fit its width.",
+                        esES = "Hasta que redimensiones el panel desde su esquina; entonces las columnas se ajustan a su ancho.",
                     },
                 },
                 {

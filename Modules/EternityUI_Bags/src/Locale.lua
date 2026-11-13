@@ -6,6 +6,7 @@
 ---@field L table<string, string> texts in the client's language
 ---@field Inventory EternityUIBagsInventory what every character carries (Inventory.lua)
 ---@field Locks EternityUIBagsLocks locked slots and the sort around them (Locks.lua)
+---@field Supplies EternityUIBagsSupplies supply crates: their material and who has it (Supplies.lua)
 
 ---@type string, EternityUIBagsNamespace
 local _, ns = ...
@@ -27,6 +28,7 @@ local strings = {
         FREE = "%d / %d free",
         IN_BAGS = "bags",
         IN_BANK = "bank",
+        IN_MAIL = "mail",
         EQUIPPED = "equipped",
         TOTAL = "Total",
         CHARACTERS = "Characters",
@@ -66,6 +68,9 @@ local strings = {
         NO_GUILD = "This character has no guild saved.",
         NO_SAVED_GUILD = "Not saved yet: open the guild bank once.",
         SHIFT_LINK = "Shift-click to link it",
+        SUPPLY_TITLE = "Supply crate: what you have",
+        SUPPLY_ENOUGH = "(enough for %d)",
+        ITEM_N = "Item %d",
     },
     esES = {
         BAGS = "Bolsas",
@@ -83,6 +88,7 @@ local strings = {
         FREE = "%d / %d libres",
         IN_BAGS = "bolsas",
         IN_BANK = "banco",
+        IN_MAIL = "correo",
         EQUIPPED = "equipado",
         TOTAL = "Total",
         CHARACTERS = "Personajes",
@@ -122,6 +128,9 @@ local strings = {
         NO_GUILD = "Este personaje no tiene hermandad guardada.",
         NO_SAVED_GUILD = "Aún sin guardar: abre el banco de la hermandad una vez.",
         SHIFT_LINK = "Mayús-clic para enlazarlo",
+        SUPPLY_TITLE = "Cajón de suministros: lo que tienes",
+        SUPPLY_ENOUGH = "(da para %d)",
+        ITEM_N = "Objeto %d",
     },
 }
 ns.L = EternityUI.NewLocale(strings.enUS, strings.esES)

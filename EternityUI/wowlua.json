@@ -21,6 +21,7 @@
     "load-order": [
       "src/Init.lua",
       "src/Core/Events.lua",
+      "src/Core/Startup.lua",
       "src/Core/Secret.lua",
       "src/Core/Combat.lua",
       "src/Core/Hider.lua",
@@ -40,7 +41,9 @@
       "src/UI/Shape.lua",
       "src/UI/Widgets.lua",
       "src/UI/Tooltip.lua",
+      "src/UI/Info.lua",
       "src/UI/Window.lua",
+      "src/UI/StartupReport.lua",
       "src/UI/Integration.lua",
       "src/Main.lua"
     ]

@@ -59,6 +59,17 @@ local commands = {
     help = function()
         ns.Print(L.HELP)
     end,
+    startup = function()
+        ns.StartupReport.Toggle()
+    end,
+    ["startup on"] = function()
+        ns.Startup.SetEnabled(true)
+        ns.Print(L.STARTUP_ON)
+    end,
+    ["startup off"] = function()
+        ns.Startup.SetEnabled(false)
+        ns.Print(L.STARTUP_OFF)
+    end,
 }
 
 SLASH_ETERNITYUI1 = "/et"

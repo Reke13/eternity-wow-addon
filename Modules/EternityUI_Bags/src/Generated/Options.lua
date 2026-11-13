@@ -47,6 +47,45 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "bagsWithBank",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Open the bags with the bank",
+                        esES = "Abrir las bolsas con el banco",
+                    },
+                    description = {
+                        enUS = "The personal, warband and guild bank. Only with Eternity's bags.",
+                        esES = "El banco personal, el de banda y el de hermandad. Solo con las bolsas de Eternity.",
+                    },
+                },
+                {
+                    id = "bankWithBags",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Close the bank with the bags key",
+                        esES = "Cerrar el banco con la tecla de bolsas",
+                    },
+                    description = {
+                        enUS = "At the bank, B closes the bags and the bank together.",
+                        esES = "En el banco, B cierra las bolsas y el banco a la vez.",
+                    },
+                },
+                {
+                    id = "keepBagsAway",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Keep the bags open when walking away",
+                        esES = "Dejar las bolsas abiertas al alejarte",
+                    },
+                    description = {
+                        enUS = "If you walk away from the bank, the bags it opened stay open. Closing the bank yourself (Esc, B, its close button) always closes them.",
+                        esES = "Si te alejas del banco, las bolsas que abrió siguen abiertas. Cerrar tú el banco (Esc, B, su botón de cerrar) siempre las cierra.",
+                    },
+                },
+                {
                     id = "layout",
                     type = "select",
                     default = "single",
@@ -222,6 +261,19 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "mail",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Remember the mail",
+                        esES = "Recordar el correo",
+                    },
+                    description = {
+                        enUS = "What waits in each character's mailbox (updated when you open it), counted in the tooltips and the supply crates. What you mail to your own characters counts for them as soon as it's sent.",
+                        esES = "Lo que espera en el buzón de cada personaje (se actualiza al abrirlo), contado en los tooltips y en los cajones de suministros. Lo que envías a tus propios personajes cuenta para ellos en cuanto sale.",
+                    },
+                },
+                {
                     id = "guild",
                     type = "toggle",
                     default = true,
@@ -359,8 +411,21 @@ ns.OptionsSchema = {
                     type = "toggle",
                     default = true,
                     label = {
-                        enUS = "Where: bags, bank, equipped",
-                        esES = "Dónde: bolsas, banco, equipado",
+                        enUS = "Where: bags, bank, mail, equipped",
+                        esES = "Dónde: bolsas, banco, correo, equipado",
+                    },
+                },
+                {
+                    id = "icons",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Icons instead of place names",
+                        esES = "Iconos en vez del nombre del sitio",
+                    },
+                    description = {
+                        enUS = "Where each count is (bags, bank, mail, equipped) as a small icon instead of a word.",
+                        esES = "Dónde está cada cantidad (bolsas, banco, correo, equipado) con un icono pequeño en vez de una palabra.",
                     },
                 },
                 {
@@ -392,6 +457,28 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Include the warband bank",
                         esES = "Incluir el banco de la banda guerrera",
+                    },
+                },
+            },
+        },
+        {
+            id = "supplies",
+            label = {
+                enUS = "Supply crates",
+                esES = "Cajones de suministros",
+            },
+            options = {
+                {
+                    id = "enabled",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Materials of each crate and who has them",
+                        esES = "Materiales de cada cajón y quién los tiene",
+                    },
+                    description = {
+                        enUS = "In the tooltip of the Waylaid Supplies crates: the material and how many it needs, how many you have and on which characters (bags, bank, mail and warband bank, as last saved).",
+                        esES = "En el tooltip de los cajones de suministros extraviados: el material y cuántos pide, cuántos tienes y en qué personajes (bolsas, banco, correo y banco de la banda guerrera, según lo último guardado).",
                     },
                 },
             },

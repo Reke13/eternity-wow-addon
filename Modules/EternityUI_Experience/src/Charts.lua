@@ -151,9 +151,10 @@ end
 
 -- Cards --------------------------------------------------------------------------------------------
 
-local CARD_HEIGHT = PADDING * 2 + 44 + 20 + CHART_HEIGHT + LABELS_HEIGHT
+local CARD_HEIGHT = PADDING * 2 + 24 + 20 + CHART_HEIGHT + LABELS_HEIGHT
 
---- Card with a title, a hint, a line for the legend and a chart (or "no data").
+--- Card with a title (its hint in the "i" beside it), a line for the legend and a chart (or "no
+--- data").
 local function chartCard(parent, title, hint)
     local card = CreateFrame("Frame", nil, parent)
     card:SetHeight(CARD_HEIGHT)
@@ -166,11 +167,10 @@ local function chartCard(parent, title, hint)
     card.title = Widgets.Text(card, 16, "text")
     card.title:SetPoint("TOPLEFT", PADDING, -PADDING)
     card.title:SetText(title)
-    card.hint = Widgets.Text(card, 13, "muted")
-    card.hint:SetPoint("TOPLEFT", card.title, "BOTTOMLEFT", 0, -4)
-    card.hint:SetText(hint)
+    card.info = Widgets.Info(card, title, hint)
+    card.info:SetPoint("LEFT", card.title, "RIGHT", 8, 0)
     card.legend = Widgets.Text(card, 13, "text")
-    card.legend:SetPoint("TOPLEFT", card.hint, "BOTTOMLEFT", 0, -6)
+    card.legend:SetPoint("TOPLEFT", card.title, "BOTTOMLEFT", 0, -6)
     card.empty = Widgets.Text(card, 14, "muted")
     card.empty:SetPoint("CENTER", 0, -24)
     card.empty:SetText(L.NO_DATA)

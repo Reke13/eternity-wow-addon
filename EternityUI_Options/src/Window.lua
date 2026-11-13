@@ -11,6 +11,8 @@ local Widgets = E.Widgets
 
 local WIDTH, HEIGHT = 1100, 700
 local SIDEBAR = 232
+-- Where the body starts at least: below the close button.
+local TOP = 60
 
 local Window = { pages = {} }
 ns.Window = Window
@@ -32,17 +34,34 @@ function Window.Ensure(page)
     end
 end
 
---- The title and note above the body. A long note wraps inside the window; the body starts below it.
+--- The title above the body. A page's note (its description) goes in the "i" beside the title,
+--- with sections ({ title, text }, like the open tab's description) under it; status is a short
+--- line shown under the title (the search's count). The body starts below them.
 ---@param title string
----@param note string
-function Window.SetHeader(title, note)
+---@param note string?
+---@param status string?
+---@param sections table[]?
+function Window.SetHeader(title, note, status, sections)
     local chrome = Window.chrome
     chrome.title:SetText(title)
-    chrome.note:SetText(note)
-    local top = 20 + chrome.title:GetStringHeight() + 5 + chrome.note:GetStringHeight() + 14
+    chrome.info:Set(title, note, sections)
+    chrome.note:SetText(status or "")
+    chrome.note:SetShown(status ~= nil and status ~= "")
+    local top = 20 + chrome.title:GetStringHeight() + 14
+    if chrome.note:IsShown() then
+        top = top + 5 + chrome.note:GetStringHeight()
+    end
     chrome.body:ClearAllPoints()
-    chrome.body:SetPoint("TOPLEFT", SIDEBAR + 26, -math.max(84, math.ceil(top)))
+    chrome.body:SetPoint("TOPLEFT", SIDEBAR + 26, -math.max(TOP, math.ceil(top)))
     chrome.body:SetPoint("BOTTOMRIGHT", -26, 22)
+end
+
+--- Rewrites the current page's header, for a page whose sections changed (another tab opened).
+function Window.RefreshHeader()
+    local page = Window.current
+    if page and Window.chrome and not ns.Search.active then
+        Window.SetHeader(page.title, page.note, nil, page.Sections and page.Sections())
+    end
 end
 
 --- Shows a page, building it the first time.
@@ -57,8 +76,8 @@ function Window.Show(page)
         other.nav:SetActive(other == page)
     end
     Window.RevealNav(page)
-    Window.SetHeader(page.title, page.note)
     Window.current = page
+    Window.RefreshHeader()
     Window.Refresh()
 end
 
@@ -221,9 +240,11 @@ local function buildHeader(frame)
     local chrome = Window.chrome
     chrome.title = Widgets.Text(frame, 25, "text")
     chrome.title:SetPoint("TOPLEFT", SIDEBAR + 26, -20)
+    chrome.info = Widgets.Info(frame)
+    chrome.info:SetPoint("LEFT", chrome.title, "RIGHT", 8, 0)
     chrome.note = Widgets.Text(frame, 14, "muted")
     chrome.note:SetPoint("TOPLEFT", chrome.title, "BOTTOMLEFT", 0, -5)
-    -- Up to the close button: a longer note wraps instead of running out of the window.
+    -- Up to the close button: a longer line wraps instead of running out of the window.
     chrome.note:SetWidth(WIDTH - SIDEBAR - 26 - 70)
     chrome.note:SetJustifyH("LEFT")
     chrome.note:SetWordWrap(true)
@@ -235,7 +256,7 @@ local function buildHeader(frame)
     close:SetPoint("TOPRIGHT", -18, -18)
 
     chrome.body = CreateFrame("Frame", nil, frame)
-    chrome.body:SetPoint("TOPLEFT", SIDEBAR + 26, -84)
+    chrome.body:SetPoint("TOPLEFT", SIDEBAR + 26, -TOP)
     chrome.body:SetPoint("BOTTOMRIGHT", -26, 22)
 end
 

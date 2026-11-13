@@ -152,8 +152,13 @@ local function tab()
     expect(m.SpellsTab.rows[2].spellID).toBe(7405)
     expect(view.status:GetText():find("abc", 1, true) ~= nil).toBe(true)
     expect(height() > 100).toBe(true)
+    -- What the list is for is in the "i" beside the picker, not as text, and follows the frame.
+    expect(view.intro == nil).toBe(true)
+    local targetText = view.info.text
+    expect(view.info:IsShown()).toBe(true)
     -- The character's list is another one.
     m.SpellsTab.Pick("player")
+    expect(view.info.text ~= targetText).toBe(true)
     expect(m.SpellsTab.rows[1]:IsShown()).toBe(false)
     m.SpellsTab.AddText("1243")
     expect(#player:List()).toBe(1)

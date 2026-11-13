@@ -1,0 +1,97 @@
+-- Remember the name when sending, and the History button by the mailbox.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Mail"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function loadMail()
+    if not SendMailFrame_Reset and C_AddOns and C_AddOns.LoadAddOn then
+        C_AddOns.LoadAddOn("Blizzard_MailFrame")
+    end
+end
+
+@test("the recipient stays after sending, and is forgotten when the mailbox closes")
+local function keep()
+    loadMail()
+    local recipient = module().Recipient
+    expect(EternityUI.store:Get(NAME, "send.keepRecipient")).toBe(true)
+    recipient.OnEvent("MAIL_SHOW")
+    expect(SendMailNameEditBox ~= nil and SendMailFrame_Reset ~= nil).toBe(true)
+    pcall(SendMail, "Zokk", "Hola", "")
+    expect(recipient.last).toBe("Zokk")
+    SendMailFrame_Reset()
+    expect(SendMailNameEditBox:GetText()).toBe("Zokk")
+    recipient.OnEvent("MAIL_CLOSED")
+    SendMailFrame_Reset()
+    expect(SendMailNameEditBox:GetText()).toBe("")
+end
+
+@test("with the option off, the form empties as usual")
+local function off()
+    loadMail()
+    local recipient = module().Recipient
+    EternityUI.store:Set(NAME, "send.keepRecipient", false)
+    recipient.OnEvent("MAIL_SHOW")
+    pcall(SendMail, "Zokk", "Hola", "")
+    expect(recipient.last).toBe(nil)
+    SendMailFrame_Reset()
+    expect(SendMailNameEditBox:GetText()).toBe("")
+    EternityUI.store:Set(NAME, "send.keepRecipient", true)
+end
+
+@test("the History button shows by the open mailbox and goes with it")
+local function button()
+    loadMail()
+    local m = module()
+    MailFrame:Show()
+    m:OnEvent("MAIL_SHOW")
+    expect(m.button ~= nil and m.button:IsShown()).toBe(true)
+    EternityUI.store:Set(NAME, "history.button", false)
+    expect(m.button:IsShown()).toBe(false)
+    EternityUI.store:Set(NAME, "history.button", true)
+    expect(m.button:IsShown()).toBe(true)
+    MailFrame:Hide()
+    m:OnEvent("MAIL_CLOSED")
+    expect(m.button:IsShown()).toBe(false)
+end
+
+@test("closing the mailbox hides the button even if MAIL_CLOSED doesn't come")
+local function noEvent()
+    loadMail()
+    local m = module()
+    MailFrame:Show()
+    m:OnEvent("MAIL_SHOW")
+    expect(m.button:IsShown()).toBe(true)
+    -- Small and next to the mailbox's close button.
+    expect(math.floor(m.button:GetWidth() + 0.5)).toBe(20)
+    local _, anchor = m.button:GetPoint(1)
+    expect(anchor == (MailFrame.CloseButton or _G["MailFrameCloseButton"])).toBe(true)
+    -- Drawn above the mailbox, which raises itself in its strata.
+    expect(m.button:GetFrameStrata() ~= MailFrame:GetFrameStrata()).toBe(true)
+    m.Recipient.last = "Zokk"
+    MailFrame:Hide()
+    expect(m.button:IsShown()).toBe(false)
+    expect(m.Recipient.last).toBe(nil)
+    expect(m.History.mailOpen).toBe(false)
+    -- Opened again, it comes back.
+    MailFrame:Show()
+    expect(m.button:IsShown()).toBe(true)
+    MailFrame:Hide()
+end
+
+@test("the module stops and starts again, and the button goes when it's off")
+local function cycle()
+    local m = module()
+    MailFrame:Show()
+    m:OnEvent("MAIL_SHOW")
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(m.active).toBe(false)
+    expect(m.button == nil or not m.button:IsShown()).toBe(true)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    expect(m.active).toBe(true)
+    MailFrame:Hide()
+    m:OnEvent("MAIL_CLOSED")
+end

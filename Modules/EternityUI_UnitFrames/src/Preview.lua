@@ -190,6 +190,30 @@ local function sampleAuras(f, seed)
     end
 end
 
+-- The combat and PvP icons as a fight would show them, if their options are on: PvP with
+-- `faction` ("Horde", "Alliance" or "FFA"; nil: none).
+local function sampleStatus(f, combat, faction)
+    local key = f.uf.key
+    f.combatIcon:SetAlpha(1)
+    f.combatIcon:SetShown(combat and U(key, "Indicators", "combat") and true or false)
+    local pvp = faction and U(key, "Indicators", "pvp")
+    f.pvpHolder:SetAlpha(1)
+    f.pvpHolder:SetShown(pvp and true or false)
+    f.pvpIcon:SetAlpha(1)
+    f.ffaIcon:SetAlpha(1)
+    f.pvpIcon:SetShown(pvp and faction ~= "FFA" or false)
+    f.ffaIcon:SetShown(pvp and faction == "FFA" or false)
+    if pvp and faction ~= "FFA" then
+        f.pvpIcon:SetTexture(Elements.PVP_ICONS[faction])
+    end
+end
+
+-- Your faction, for the sample PvP icons (Alliance when the game won't say).
+local function sampleFaction()
+    local faction = Style.Plain(UnitFactionGroup("player"), nil)
+    return (faction == "Horde" or faction == "Alliance") and faction or "Alliance"
+end
+
 -- A made-up person on a preview frame: name, class color, health, power and the icons.
 local function samplePerson(f, person, index)
     local key = f.uf.key
@@ -266,7 +290,9 @@ local function samplePerson(f, person, index)
     -- Portrait: the class icon (a made-up person has no model).
     local coords = CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[person.class]
     if f.portrait:IsShown() and coords then
-        f.portrait.model:Hide()
+        if f.portrait.model then
+            f.portrait.model:Hide()
+        end
         f.portrait.texture:Show()
         f.portrait.texture:SetTexture("Interface\\TargetingFrame\\UI-Classes-Circles")
         f.portrait.texture:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
@@ -274,12 +300,7 @@ local function samplePerson(f, person, index)
     -- Icons.
     f.leaderIcon:SetAlpha(1)
     f.leaderIcon:SetShown(on("leader") and person.leader or false)
-    if on("raidTarget") and person.raid and SetRaidTargetIconTexture then
-        SetRaidTargetIconTexture(f.raidIcon, person.raid)
-        f.raidIcon:Show()
-    else
-        f.raidIcon:Hide()
-    end
+    Elements.SetRaidIcon(f.raidIcon, on("raidTarget") and person.raid or nil)
     if f.uf.group and on("readyCheck") and person.ready then
         local textures = {
             ready = "Interface\\RaidFrame\\ReadyCheck-Ready",
@@ -292,6 +313,8 @@ local function samplePerson(f, person, index)
         f.readyIcon:Hide()
     end
     f.targeted.border:SetAlpha((f.uf.group and on("targetHighlight") and person.target) and 1 or 0)
+    local alive = not person.dead and not person.offline
+    sampleStatus(f, alive and index % 2 == 1, alive and index % 3 == 1 and sampleFaction() or nil)
     local rangeAlpha = on("rangeAlpha")
     f:SetAlpha((rangeAlpha and index == 3) and rangeAlpha or 1)
 end
@@ -356,12 +379,9 @@ function Preview.Draw()
                 samplePerson(f, list[(n % #list) + 1], n + 1)
             else
                 -- The real unit, with the icons a fight would show.
-                if U(key, "Indicators", "combat") and f.uf.player then
-                    f.combatIcon:Show()
-                end
-                if U(key, "Indicators", "raidTarget") and SetRaidTargetIconTexture then
-                    SetRaidTargetIconTexture(f.raidIcon, 8)
-                    f.raidIcon:Show()
+                sampleStatus(f, true, sampleFaction())
+                if U(key, "Indicators", "raidTarget") then
+                    Elements.SetRaidIcon(f.raidIcon, 8)
                 end
             end
             sampleAuras(f, n)

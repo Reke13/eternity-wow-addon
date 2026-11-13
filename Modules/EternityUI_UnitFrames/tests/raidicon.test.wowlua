@@ -1,0 +1,53 @@
+-- Raid target icons. Forever hands GetRaidTargetIndex's answer as a secret: the icon must still
+-- show (the secret goes straight to the texture), and hide when there's none.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+@test("the raid target icon shows even when the game gives its index as a secret")
+local function secretRaidIcon()
+    local m = EternityUI:GetModule(NAME)
+    local f = m.holders.player.button
+    local getIndex, isSecret = GetRaidTargetIndex, issecretvalue
+    local index = nil
+    ---@type any
+    local fakeIndex = function()
+        return index
+    end
+    GetRaidTargetIndex = fakeIndex
+    -- The index 3 plays the secret: nothing may compare it.
+    ---@type any
+    local fakeSecret = function(value)
+        return value == 3
+    end
+    issecretvalue = fakeSecret
+    index = 3
+    m.Elements.UpdateIndicators(f)
+    local shownSecret = f.raidIcon:IsShown()
+    index = nil
+    m.Elements.UpdateIndicators(f)
+    local shownNone = f.raidIcon:IsShown()
+    index = 8
+    m.Elements.UpdateIndicators(f)
+    local shownPlain = f.raidIcon:IsShown()
+    GetRaidTargetIndex, issecretvalue = getIndex, isSecret
+    m.Elements.UpdateIndicators(f)
+    expect(shownSecret).toBe(true)
+    expect(shownNone).toBe(false)
+    expect(shownPlain).toBe(true)
+end
+
+@test("the raid target icon sits in the middle of the health and power bars")
+local function raidIconCentered()
+    local f = EternityUI:GetModule(NAME).holders.player.button
+    local point, relative, relativePoint, _, y = f.raidIcon:GetPoint(1)
+    expect(point).toBe("CENTER")
+    expect(relative == f).toBe(true)
+    expect(relativePoint).toBe("CENTER")
+    expect(y).toBe(0)
+    local x1, x2 = f.health:GetLeft(), f.health:GetRight()
+    local cx = f.raidIcon:GetCenter()
+    if x1 and x2 and cx then
+        expect(math.abs(cx - (x1 + x2) / 2) < 1).toBe(true)
+    end
+end

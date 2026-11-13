@@ -73,25 +73,6 @@ local function entriesOf(group)
     return entries
 end
 
--- Lines of at most `width` characters, broken between words (the suite's tooltip doesn't wrap).
-local function wrap(text, width)
-    local lines, line = {}, ""
-    for word in text:gmatch("%S+") do
-        if line ~= "" and #line + 1 + #word > width then
-            lines[#lines + 1] = line
-            line = word
-        else
-            line = line == "" and word or (line .. " " .. word)
-        end
-    end
-    if line ~= "" then
-        lines[#lines + 1] = line
-    end
-    return lines
-end
-
-local DESCRIPTION_WIDTH = 60
-
 -- One list of sections in a scroll area. A section is { label, entries }.
 local function newList(parent, page, sections)
     local scroll = Widgets.Scroll(parent)
@@ -113,22 +94,13 @@ local function newList(parent, page, sections)
             if option.requiresReload then
                 label = label .. " (/reload)"
             end
-            local description = option.description and E.Localize(option.description)
-            if description and description ~= "" then
-                label = label .. "  |cff8a8a99(?)|r"
-            end
             local row = Widgets.Row(child, label, control)
             row:SetHeight(ROW)
-            -- The option's description, wrapped, while the mouse is over its row.
+            -- The option's description, in the "i" beside its label.
+            local description = option.description and E.Localize(option.description)
             if description and description ~= "" then
-                local title = E.Localize(option.label)
-                row:EnableMouse(true)
-                Widgets.AttachTooltip(row, function(tip)
-                    tip:SetTitle(title)
-                    for _, line in ipairs(wrap(description, DESCRIPTION_WIDTH)) do
-                        tip:AddLine(line, "textMuted")
-                    end
-                end, "CURSOR")
+                row.info = Widgets.Info(row, E.Localize(option.label), description)
+                row.info:SetPoint("LEFT", row.label, "RIGHT", 6, 0)
             end
             table.insert(list.items, { row = row, control = control, option = option, path = path })
         end
@@ -357,6 +329,9 @@ local function build(page, frame)
         end
         page.selector:SetValue(key)
         page.Refresh()
+        if ns.Window.current == page then
+            ns.Window.RefreshHeader()
+        end
     end
 
     page.selector = Widgets.Segmented(frame, choices, page.ShowTab)
@@ -463,6 +438,19 @@ function ModulePage.AddAll()
                 for _, view in ipairs(page.views) do
                     if view:IsVisible() then
                         view:Refresh()
+                    end
+                end
+            end
+            -- The open tab's description (a tab that draws itself may have one, or a function
+            -- that returns it), under the module's own in the "i" beside the title.
+            function page.Sections()
+                for _, tab in ipairs(module.tabs or {}) do
+                    if tab.key == page.current and tab.description then
+                        local text = tab.description
+                        if type(text) == "function" then
+                            text = text()
+                        end
+                        return { { tab.text, text } }
                     end
                 end
             end

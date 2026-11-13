@@ -2083,12 +2083,213 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "pvp",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["playerIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["playerIndicators.pvp"] = true,
+                    },
+                },
+                {
                     id = "combat",
                     type = "toggle",
                     default = true,
                     label = {
                         enUS = "Combat icon",
                         esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["playerIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["playerIndicators.combat"] = true,
                     },
                 },
                 {
@@ -2126,15 +2327,6 @@ ns.OptionsSchema = {
                     },
                     visibleWhen = {
                         ["playerIndicators.combatFade"] = true,
-                    },
-                },
-                {
-                    id = "pvp",
-                    type = "toggle",
-                    default = false,
-                    label = {
-                        enUS = "PvP icon",
-                        esES = "Icono JcJ",
                     },
                 },
             },
@@ -3462,6 +3654,216 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "pvp",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["petIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["petIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["petIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["petIndicators.combat"] = true,
+                    },
+                },
+                {
                     id = "rangeFade",
                     type = "toggle",
                     default = true,
@@ -3470,8 +3872,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -3501,8 +3903,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["petIndicators.rangeFade"] = true,
@@ -4835,10 +5237,211 @@ ns.OptionsSchema = {
                 {
                     id = "pvp",
                     type = "toggle",
-                    default = false,
+                    default = true,
                     label = {
                         enUS = "PvP icon",
                         esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["targetIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["targetIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["targetIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["targetIndicators.combat"] = true,
                     },
                 },
                 {
@@ -4850,8 +5453,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -4881,8 +5484,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["targetIndicators.rangeFade"] = true,
@@ -6177,16 +6780,226 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "pvp",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["targettargetIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["targettargetIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["targettargetIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["targettargetIndicators.combat"] = true,
+                    },
+                },
+                {
                     id = "rangeFade",
                     type = "toggle",
-                    default = false,
+                    default = true,
                     label = {
                         enUS = "Fade out of range",
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -6216,8 +7029,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["targettargetIndicators.rangeFade"] = true,
@@ -7550,10 +8363,211 @@ ns.OptionsSchema = {
                 {
                     id = "pvp",
                     type = "toggle",
-                    default = false,
+                    default = true,
                     label = {
                         enUS = "PvP icon",
                         esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["focusIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["focusIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["focusIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["focusIndicators.combat"] = true,
                     },
                 },
                 {
@@ -7565,8 +8579,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -7596,8 +8610,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["focusIndicators.rangeFade"] = true,
@@ -8929,10 +9943,211 @@ ns.OptionsSchema = {
                 {
                     id = "pvp",
                     type = "toggle",
-                    default = false,
+                    default = true,
                     label = {
                         enUS = "PvP icon",
                         esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["partyIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["partyIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["partyIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["partyIndicators.combat"] = true,
                     },
                 },
                 {
@@ -8962,8 +10177,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -8993,8 +10208,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["partyIndicators.rangeFade"] = true,
@@ -10386,6 +11601,216 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "pvp",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["raidIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["raidIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["raidIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["raidIndicators.combat"] = true,
+                    },
+                },
+                {
                     id = "readyCheck",
                     type = "toggle",
                     default = true,
@@ -10412,8 +11837,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -10443,8 +11868,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["raidIndicators.rangeFade"] = true,
@@ -11822,6 +13247,216 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "pvp",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["grouppetsIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["grouppetsIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["grouppetsIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["grouppetsIndicators.combat"] = true,
+                    },
+                },
+                {
                     id = "readyCheck",
                     type = "toggle",
                     default = true,
@@ -11848,8 +13483,8 @@ ns.OptionsSchema = {
                         esES = "Atenuar fuera de alcance",
                     },
                     description = {
-                        enUS = "Group members by the game's group range; others by the range of one of your class's spells (an attack on enemies, a heal or buff on friends).",
-                        esES = "Los del grupo por el alcance de grupo del juego; los demás por el alcance de un hechizo de tu clase (un ataque contra enemigos, una cura o bufo con aliados).",
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
                     },
                 },
                 {
@@ -11879,8 +13514,8 @@ ns.OptionsSchema = {
                         esES = "Distancia (metros)",
                     },
                     description = {
-                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, and for anyone else, the reach of a spell is used.",
-                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro, y con cualquier otro, se usa el alcance de un hechizo.",
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
                     },
                     visibleWhen = {
                         ["grouppetsIndicators.rangeFade"] = true,

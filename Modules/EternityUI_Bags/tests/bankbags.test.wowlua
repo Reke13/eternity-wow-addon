@@ -1,0 +1,113 @@
+-- The bags open with the bank (personal, warband or guild) and close with it, unless the
+-- player walks away; at the bank, B closes the bags and the bank together.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Bags"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function bagsShown()
+    local m = module()
+    return m.bags ~= nil and m.bags.frame:IsShown()
+end
+
+--- Runs `fn` with CloseBank replaced by a counter, and returns how many times it ran.
+local function countCloses(fn)
+    local m = module()
+    local original = m.CloseBank
+    local closes = 0
+    m.CloseBank = function()
+        closes = closes + 1
+    end
+    fn()
+    m.CloseBank = original
+    return closes
+end
+
+@test("the guild bank opens the bags, and walking away leaves them open")
+local function guildWalkAway()
+    local m = module()
+    CloseAllBags()
+    m:OnEvent("GUILDBANKFRAME_OPENED")
+    expect(bagsShown()).toBe(true)
+    m.userClosedAt = nil
+    m:OnEvent("GUILDBANKFRAME_CLOSED")
+    expect(bagsShown()).toBe(true)
+    -- B then closes them, with no Blizzard bag left open behind.
+    ToggleAllBags()
+    expect(bagsShown()).toBe(false)
+    expect(m:AnyBlizzardBagOpen()).toBe(false)
+end
+
+@test("B at the bank closes the bags and the bank")
+local function bClosesBoth()
+    local m = module()
+    m:OnEvent("BANKFRAME_OPENED")
+    expect(bagsShown()).toBe(true)
+    local closes = countCloses(function()
+        ToggleAllBags()
+    end)
+    expect(bagsShown()).toBe(false)
+    expect(m:AnyBlizzardBagOpen()).toBe(false)
+    expect(closes).toBe(1)
+    m:OnEvent("BANKFRAME_CLOSED")
+    expect(bagsShown()).toBe(false)
+end
+
+@test("with the option off, B closes only the bags")
+local function bOnlyBags()
+    local m, store = module(), EternityUI.store
+    store:Set(NAME, "windows.bankWithBags", false)
+    m:OnEvent("GUILDBANKFRAME_OPENED")
+    local closes = countCloses(function()
+        ToggleAllBags()
+    end)
+    expect(bagsShown()).toBe(false)
+    expect(closes).toBe(0)
+    m:OnEvent("GUILDBANKFRAME_CLOSED")
+    store:Set(NAME, "windows.bankWithBags", true)
+end
+
+@test("closing the bank yourself (Esc) closes the bags")
+local function escCloses()
+    local m = module()
+    m:OnEvent("GUILDBANKFRAME_OPENED")
+    expect(bagsShown()).toBe(true)
+    CloseAllWindows()
+    m:OnEvent("GUILDBANKFRAME_CLOSED")
+    expect(bagsShown()).toBe(false)
+end
+
+@test("without keeping them, walking away closes the bags")
+local function walkAwayCloses()
+    local m, store = module(), EternityUI.store
+    store:Set(NAME, "windows.keepBagsAway", false)
+    m:OnEvent("GUILDBANKFRAME_OPENED")
+    m.userClosedAt = nil
+    m:OnEvent("GUILDBANKFRAME_CLOSED")
+    expect(bagsShown()).toBe(false)
+    store:Set(NAME, "windows.keepBagsAway", true)
+end
+
+@test("with the option off, the bank doesn't open the bags")
+local function optionOff()
+    local m, store = module(), EternityUI.store
+    store:Set(NAME, "windows.bagsWithBank", false)
+    m:OnEvent("GUILDBANKFRAME_OPENED")
+    expect(bagsShown()).toBe(false)
+    m:OnEvent("GUILDBANKFRAME_CLOSED")
+    store:Set(NAME, "windows.bagsWithBank", true)
+end
+
+@test("closing the bags window with its button forgets the bank's hold")
+local function closeButton()
+    local m = module()
+    m:OnEvent("GUILDBANKFRAME_OPENED")
+    m.bags.frame:Hide()
+    expect(m.bankBags).toBe(false)
+    m:SyncBags()
+    expect(bagsShown()).toBe(false)
+    m:OnEvent("GUILDBANKFRAME_CLOSED")
+end

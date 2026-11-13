@@ -27,6 +27,7 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_Experience` | Experience bar |
 | `EternityUI_InfoBar` | Information bar |
 | `EternityUI_Loot` | Loot window that can open at the mouse, searchable loot history (`/etloot`) and a Mover spot for group rolls |
+| `EternityUI_Mail` | History of the letters every character sends and receives, from a button by the mailbox (`/etmail`), and the recipient kept after sending |
 | `EternityUI_Map` | World map |
 | `EternityUI_Minimap` | Minimap and button collector |
 | `EternityUI_Objectives` | Quest tracker |

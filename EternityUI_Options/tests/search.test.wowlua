@@ -77,3 +77,19 @@ local function opens()
     expect(window().current.key).toBe("look")
     window().Toggle()
 end
+
+@test("the startup metrics are found in General and the page refreshes with them on")
+local function startup()
+    local results = window().Search.Find("startup")
+    local paths = {}
+    for _, entry in ipairs(results) do
+        paths[#paths + 1] = entry.path or ""
+    end
+    expect(table.concat(paths, ","):find("general.startupMetrics", 1, true) ~= nil).toBe(true)
+    EternityUI.Startup.SetEnabled(true)
+    EternityUI:ToggleOptions()
+    window().Refresh()
+    expect(EternityUI.Startup.IsEnabled()).toBe(true)
+    EternityUI.Startup.SetEnabled(false)
+    window().Toggle()
+end

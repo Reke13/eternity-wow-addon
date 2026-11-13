@@ -27,6 +27,7 @@
       "src/Core.lua",
       "src/Values.lua",
       "src/Panel.lua",
+      "src/Settings.lua",
       "src/Character.lua",
       "src/Stats.lua"
     ]
