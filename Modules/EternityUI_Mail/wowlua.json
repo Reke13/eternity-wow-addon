@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-mail",
+    "version": "0.7.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Mail",
+    "title": "Eternity Mail",
+    "notes": "Eternity module: a history of the mail every character sends and receives, opened from a button by the mailbox (/etmail), and the recipient kept after sending.",
+    "saved-variables": ["EternityUIMailDB"]
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/History.lua",
+      "src/Classes.lua",
+      "src/List.lua",
+      "src/Recipient.lua",
+      "src/Mail.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "EternityUIMailDB",
+      "MailFrame",
+      "SendMailNameEditBox",
+      "SendMailSubjectEditBox"
+    ]
+  }
+}

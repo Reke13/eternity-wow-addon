@@ -1,0 +1,245 @@
+-- The mail history: letters sent and received are saved once each, and the History tab filters
+-- and describes them.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Mail"
+local COPPER_BAR, LINEN = 2840, 2589
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function history()
+    return module().History
+end
+
+-- Replaces some globals for the length of `fn`.
+local function with(globals, fn)
+    local saved = {}
+    for key, value in pairs(globals) do
+        saved[key] = _G[key]
+        _G[key] = value
+    end
+    local ok, err = pcall(fn)
+    for key in pairs(globals) do
+        _G[key] = saved[key]
+    end
+    if not ok then
+        error(err, 0)
+    end
+end
+
+-- A mailbox: { sender, subject, money, cod, daysLeft, returned, items = { { name, id, count } } }.
+local function mailbox(letters)
+    return {
+        GetInboxNumItems = function()
+            return #letters, #letters
+        end,
+        GetInboxHeaderInfo = function(index)
+            local l = letters[index]
+            return nil, nil, l.sender, l.subject, l.money or 0, l.cod or 0, l.daysLeft or 30, #(l.items or {}), false, l.returned
+        end,
+        GetInboxItem = function(index, slot)
+            local item = letters[index].items and letters[index].items[slot]
+            if item then
+                return item[1], item[2], 1, item[3], 1
+            end
+        end,
+    }
+end
+
+local function open(letters)
+    with(mailbox(letters), function()
+        module():OnEvent("MAIL_SHOW")
+    end)
+end
+
+local function close()
+    module():OnEvent("MAIL_CLOSED")
+end
+
+@test("the module starts with its history")
+local function starts()
+    expect(module().active).toBe(true)
+    expect(type(EternityUIMailDB.mails)).toBe("table")
+end
+
+@test("the letters in the mailbox are saved once, however often it's read")
+local function received()
+    history().Clear()
+    local letters = {
+        { sender = "Thrall", subject = "Bars", money = 52000, items = { { "Copper Bar", COPPER_BAR, 20 } } },
+        { sender = "Jaina", subject = "", items = {} },
+    }
+    open(letters)
+    with(mailbox(letters), function()
+        module():OnEvent("MAIL_INBOX_UPDATE")
+    end)
+    close()
+    open(letters)
+    close()
+    local mails = EternityUIMailDB.mails
+    expect(#mails).toBe(2)
+    expect(mails[1].kind).toBe("received")
+    expect(mails[1].other).toBe("Thrall")
+    expect(mails[1].money).toBe(52000)
+    expect(mails[1].items[1].id).toBe(COPPER_BAR)
+    expect(mails[1].items[1].count).toBe(20)
+end
+
+@test("taking the items out keeps what the letter brought")
+local function taken()
+    history().Clear()
+    local letter = { sender = "Thrall", subject = "Bars", money = 100, items = { { "Copper Bar", COPPER_BAR, 20 } } }
+    open({ letter })
+    letter.items = {}
+    letter.money = 0
+    with(mailbox({ letter }), function()
+        module():OnEvent("MAIL_INBOX_UPDATE")
+    end)
+    close()
+    local mails = EternityUIMailDB.mails
+    expect(#mails).toBe(1)
+    expect(mails[1].items[1].count).toBe(20)
+    expect(mails[1].money).toBe(100)
+end
+
+@test("two letters alike but far apart in time are two letters")
+local function twoAlike()
+    history().Clear()
+    open({ { sender = "Thrall", subject = "Hi", daysLeft = 30 }, { sender = "Thrall", subject = "Hi", daysLeft = 20 } })
+    close()
+    expect(#EternityUIMailDB.mails).toBe(2)
+end
+
+local function sendForm()
+    return {
+        GetSendMailItem = function(slot)
+            if slot == 1 then
+                return "Copper Bar", COPPER_BAR, 1, 20, 1
+            elseif slot == 2 then
+                return "Linen Cloth", LINEN, 1, 5, 1
+            end
+        end,
+        GetSendMailMoney = function()
+            return 30000
+        end,
+        GetSendMailCOD = function()
+            return 0
+        end,
+    }
+end
+
+@test("a sent letter is saved when it goes out, and not when it fails")
+local function sent()
+    history().Clear()
+    with(sendForm(), function()
+        history().OnSendMail("Mule", "For you")
+    end)
+    expect(#EternityUIMailDB.mails).toBe(0)
+    module():OnEvent("MAIL_SEND_SUCCESS")
+    local mails = EternityUIMailDB.mails
+    expect(#mails).toBe(1)
+    expect(mails[1].kind).toBe("sent")
+    expect(mails[1].other).toBe("Mule")
+    expect(mails[1].subject).toBe("For you")
+    expect(mails[1].money).toBe(30000)
+    expect(#mails[1].items).toBe(2)
+    with(sendForm(), function()
+        history().OnSendMail("Mule", "Again")
+    end)
+    module():OnEvent("MAIL_FAILED")
+    module():OnEvent("MAIL_SEND_SUCCESS")
+    expect(#EternityUIMailDB.mails).toBe(1)
+end
+
+@test("the option stops the saving")
+local function off()
+    history().Clear()
+    EternityUI.store:Set(NAME, "history.record", false)
+    with(sendForm(), function()
+        history().OnSendMail("Mule", "Off")
+    end)
+    module():OnEvent("MAIL_SEND_SUCCESS")
+    open({ { sender = "Thrall", subject = "Off" } })
+    close()
+    expect(#EternityUIMailDB.mails).toBe(0)
+    EternityUI.store:Set(NAME, "history.record", true)
+end
+
+@test("the history keeps the newest letters up to the limit")
+local function limit()
+    history().Clear()
+    EternityUI.store:Set(NAME, "history.limit", 50)
+    for i = 1, 60 do
+        history().Add({ kind = "sent", time = i, realm = "R", char = "C", other = "X" .. i, subject = "", money = 0, cod = 0, items = {} })
+    end
+    local mails = EternityUIMailDB.mails
+    expect(#mails).toBe(50)
+    expect(mails[1].other).toBe("X11")
+    EternityUI.store:Set(NAME, "history.limit", 500)
+    history().Clear()
+end
+
+@test("the list filters by kind, character and text, newest first")
+local function filter()
+    local list = module().List
+    local realm, char = history().Me()
+    local mails = {
+        { kind = "sent", time = 1, realm = realm, char = char, other = "Mule", subject = "Bars", money = 0, cod = 0, items = { { id = COPPER_BAR, count = 20, name = "Copper Bar" } } },
+        { kind = "received", time = 2, realm = realm, char = "Other", other = "Thrall", subject = "Hi", money = 0, cod = 0, items = {} },
+    }
+    local all = list.Filter(mails, { text = "", kind = "all", chars = "all" })
+    expect(#all).toBe(2)
+    expect(all[1].other).toBe("Thrall")
+    expect(#list.Filter(mails, { text = "", kind = "sent", chars = "all" })).toBe(1)
+    expect(#list.Filter(mails, { text = "", kind = "all", chars = "current" })).toBe(1)
+    local byItem = list.Filter(mails, { text = "copper", kind = "all", chars = "all" })
+    expect(#byItem).toBe(1)
+    expect(byItem[1].other).toBe("Mule")
+end
+
+@test("a letter is described with who, gold and items")
+local function describe()
+    local L = module().L
+    local entry = {
+        kind = "received", time = 0, realm = "R", char = "Reke", other = "Thrall", subject = "",
+        money = 123456, cod = 0, items = { { id = COPPER_BAR, count = 20, name = "Copper Bar" } },
+    }
+    local text = module().List.Describe(entry)
+    expect(text:find(L.RECEIVED_TITLE:format("Thrall"), 1, true) ~= nil).toBe(true)
+    expect(text:find(L.NO_SUBJECT, 1, true) ~= nil).toBe(true)
+    expect(text:find("12" .. L.GOLD .. " 34" .. L.SILVER .. " 56" .. L.COPPER, 1, true) ~= nil).toBe(true)
+    expect(text:find("20 × Copper Bar", 1, true) ~= nil).toBe(true)
+    local title, detail = module().List.RowTexts(entry)
+    expect(title:find("Thrall", 1, true) ~= nil).toBe(true)
+    expect(detail:find(L.N_ITEMS:format(20), 1, true) ~= nil).toBe(true)
+end
+
+@test("the History tab shows the letters and picks the newest")
+local function tab()
+    history().Clear()
+    history().Add({ kind = "sent", time = time(), realm = "R", char = "C", other = "Mule", subject = "Old", money = 0, cod = 0, items = {} })
+    history().Add({ kind = "sent", time = time(), realm = "R", char = "C", other = "Mule", subject = "Tab", money = 0, cod = 0, items = {} })
+    -- The options' area: the tab takes its height.
+    local area = CreateFrame("Frame", nil, UIParent)
+    area:SetSize(900, 600)
+    area:SetPoint("CENTER")
+    local parent = CreateFrame("Frame", nil, area)
+    parent:SetAllPoints()
+    local list = module().List
+    local view = list.Build(parent, function() end)
+    view:Show()
+    list.Refresh()
+    expect(list.IsShown()).toBe(true)
+    expect(#list.view).toBe(2)
+    expect(list.selected.subject).toBe("Tab")
+    expect(view.heading:GetText():find("Mule", 1, true) ~= nil).toBe(true)
+    area:Hide()
+    history().Clear()
+end
+
+@test("/etmail is registered")
+local function slash()
+    expect(_G["SLASH_ETERNITYMAIL1"]).toBe("/etmail")
+end
