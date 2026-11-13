@@ -1,0 +1,25 @@
+-- Using an item from the bags fires bag events while the mouse is still on it. The refresh that
+-- follows must not run Blizzard's tooltip update from our code: run tainted, the client forbids
+-- it ("EternityUI_Bags was forbidden to call UNKNOWN()"). GameTooltip refreshes it by itself.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Bags"
+
+@test("a refresh leaves the hovered item's tooltip to GameTooltip")
+local function hoveredTooltip()
+    OpenAllBags()
+    local grid = EternityUI:GetModule(NAME).bags
+    local b = grid.buttons[0][1]
+    expect(b ~= nil).toBe(true)
+    local calls = 0
+    local original = b.UpdateTooltip
+    b.UpdateTooltip = function()
+        calls = calls + 1
+    end
+    GameTooltip:SetOwner(b, "ANCHOR_NONE")
+    grid:Refresh()
+    expect(calls).toBe(0)
+    GameTooltip:Hide()
+    b.UpdateTooltip = original
+    CloseAllBags()
+end

@@ -2,6 +2,11 @@
 
 What changed in each release of the Eternity suite, newest first. Every addon shares the release's version.
 
+## Unreleased
+
+### Fixed
+- Bags: using an item from the bags (Hearthstone, a sleeping bag...) with the mouse still on it no longer shows "EternityUI_Bags was forbidden to call UNKNOWN()".
+
 ## 0.7.0 (2026-11-11)
 
 ### Added

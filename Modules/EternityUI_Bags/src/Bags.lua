@@ -216,7 +216,11 @@ local function styleButton(b, size)
 end
 
 --- What Blizzard's ContainerFrameMixin:UpdateItems does for one button, plus our look.
-local function updateButton(b, tooltipOwner)
+--- Its tooltip refresh (CheckUpdateTooltip) is left out on purpose: run from here, on the bag
+--- events that using an item fires while the mouse is still on it, Blizzard's UpdateTooltip runs
+--- tainted and the client forbids it ("EternityUI_Bags was forbidden to call UNKNOWN()").
+--- GameTooltip's own OnUpdate refreshes the owner's tooltip securely a moment later.
+local function updateButton(b)
     local bag, slot = b:GetBagID(), b:GetID()
     local info = C_Container.GetContainerItemInfo(bag, slot)
     local texture = info and info.iconFileID
@@ -243,9 +247,6 @@ local function updateButton(b, tooltipOwner)
     b:UpdateCooldown(texture)
     if b.SetReadable then
         b:SetReadable(info and info.isReadable)
-    end
-    if b.CheckUpdateTooltip then
-        b:CheckUpdateTooltip(tooltipOwner)
     end
     b:SetMatchesSearch(not (info and info.isFiltered))
 
@@ -684,11 +685,10 @@ function Grid:Refresh()
         self:Layout()
         return
     end
-    local owner = GameTooltip:GetOwner()
     for _, list in pairs(self.buttons) do
         for _, b in pairs(list) do
             if b:IsShown() then
-                updateButton(b, owner)
+                updateButton(b)
             end
         end
     end
