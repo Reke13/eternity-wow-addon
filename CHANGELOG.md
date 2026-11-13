@@ -4,7 +4,21 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 
 ## Unreleased
 
+### Added
+- Mail: a new addon with the history of the mail every character sends and receives (`/etmail` or the button by the mailbox), with class-coloured names and item rows, and "Remember the name when sending".
+- Bags: the bags open with the personal, warband and guild bank, with options to close both with the bags key and to keep the bags open when walking away.
+- Bags: the tooltip of a supply crate lists each material it takes, how many you have and on which characters.
+- Bags: what waits in each character's mailbox, and what you mail to your own characters, counts in the item tooltips and the supply crates.
+- Bags: the item tooltip shows where each count is (bags, bank, mail, equipped) as a small icon, with an option to keep the words.
+
+### Changed
+- Automation: "Keep the recipient after sending" moves to the new Mail addon.
+- Unit frames: the target of target fades out of range by default, by its own distance from you.
+
 ### Fixed
+- Unit frames: a target close by is no longer faded when the game hides its group range; out of range goes by a class spell or the follow distance.
+- Unit frames: the raid target icon shows when the game gives its index as a secret, centred on the health and power bars.
+- Unit frames: a unit without power hides the power bar and gives its room to health.
 - Bags: using an item from the bags (Hearthstone, a sleeping bag...) with the mouse still on it no longer shows "EternityUI_Bags was forbidden to call UNKNOWN()".
 
 ## 0.7.0 (2026-11-11)
