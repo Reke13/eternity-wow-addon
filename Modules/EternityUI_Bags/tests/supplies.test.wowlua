@@ -1,0 +1,216 @@
+-- Supply crates: their tooltip says what they're filled with, how many you have and who has it.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Bags"
+local SOD_CRATE = 210771 -- Waylaid Supplies: Copper Bars (20 Copper Bars), from the table
+local FOREVER_CRATE = 248703 -- Waylaid Crate: Apprentice Ingots, its list read from the tooltip
+local COPPER_BAR, TIN_BAR, BRONZE_BAR = 2840, 3576, 2841
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function L()
+    return module().L
+end
+
+-- A tooltip that keeps its lines: { left, right }.
+local function fakeTip()
+    local tip = { lines = {} }
+    function tip:AddLine(text)
+        self.lines[#self.lines + 1] = { text }
+    end
+    function tip:AddDoubleLine(left, right)
+        self.lines[#self.lines + 1] = { left, right }
+    end
+    return tip
+end
+
+local function find(tip, left)
+    for _, line in ipairs(tip.lines) do
+        if type(line[1]) == "string" and line[1]:find(left, 1, true) then
+            return line
+        end
+    end
+    return nil
+end
+
+-- The Forever crate's tooltip data, as the client writes it in Spanish.
+local function crateData()
+    return {
+        id = FOREVER_CRATE,
+        lines = {
+            { leftText = "Cajón saqueado: lingotes de aprendiz" },
+            { leftText = "Usar: Llena el cajón con cualquier conjunto de objetos de la siguiente lista:" },
+            { leftText = "- 20 de barra de cobre" },
+            { leftText = "- 20 de barra de estaño" },
+            { leftText = "- 10 de barra de bronce" },
+            { leftText = "Necesitas ser de nivel 10" },
+        },
+    }
+end
+
+-- Two other characters and the warband bank with copper bars; the bars' names remembered.
+local function seed()
+    local inventory = module().inventory
+    local db = inventory:Bind()
+    local realm = inventory.Me()
+    db.realms[realm] = db.realms[realm] or {}
+    db.realms[realm]["Smith"] = {
+        class = "WARRIOR",
+        bags = { [COPPER_BAR] = 12, [BRONZE_BAR] = 4 },
+        bank = { [COPPER_BAR] = 8 },
+        equipped = {},
+    }
+    db.realms[realm]["Miner"] = { class = "ROGUE", bags = {}, bank = { [COPPER_BAR] = 5 }, equipped = {} }
+    db.warband.items = { [COPPER_BAR] = 3 }
+    db.items[COPPER_BAR] = { name = "Barra de cobre" }
+    db.items[TIN_BAR] = { name = "Barra de estaño" }
+    db.items[BRONZE_BAR] = { name = "Barra de bronce" }
+    return realm
+end
+
+local function unseed(realm)
+    local db = module().inventory:Bind()
+    db.realms[realm]["Smith"] = nil
+    db.realms[realm]["Miner"] = nil
+    db.warband.items = {}
+end
+
+@test("a line of the crate's list gives the count and the item's name")
+local function parse()
+    local supplies = module().supplies
+    local count, name = supplies.ParseLine("- 20 de barra de cobre")
+    expect(count).toBe(20)
+    expect(name).toBe("barra de cobre")
+    count, name = supplies.ParseLine("- 10 Bronze Bar")
+    expect(count).toBe(10)
+    expect(name).toBe("Bronze Bar")
+    expect(supplies.ParseLine("Necesitas ser de nivel 10")).toBe(nil)
+end
+
+@test("a Season of Discovery crate knows its material from the table")
+local function fixed()
+    local needs = module().supplies.Needs(SOD_CRATE)
+    expect(#needs).toBe(1)
+    expect(needs[1].id).toBe(COPPER_BAR)
+    expect(needs[1].count).toBe(20)
+    expect(module().supplies.Needs(6948)).toBe(nil)
+end
+
+@test("a Forever crate reads its choices from the tooltip and finds the items by name")
+local function fromTooltip()
+    local realm = seed()
+    local needs = module().supplies.Needs(FOREVER_CRATE, nil, crateData())
+    expect(#needs).toBe(3)
+    expect(needs[1].id).toBe(COPPER_BAR)
+    expect(needs[1].count).toBe(20)
+    expect(needs[2].id).toBe(TIN_BAR)
+    expect(needs[3].id).toBe(BRONZE_BAR)
+    expect(needs[3].count).toBe(10)
+    unseed(realm)
+end
+
+@test("the crate's tooltip lists each material, what you have against what it needs and who has it")
+local function lines()
+    local realm = seed()
+    local tip = fakeTip()
+    module().inventory:OnTooltipItem(tip, crateData())
+    expect(find(tip, L().SUPPLY_TITLE) ~= nil).toBe(true)
+    -- 12 + 8 + 5 + 3 = 28 copper bars: one crate's worth.
+    local copper = find(tip, "20 × ")
+    expect(copper ~= nil).toBe(true)
+    expect(copper[2]:find("28 / 20", 1, true) == 1).toBe(true)
+    expect(copper[2]:find(L().SUPPLY_ENOUGH:format(1), 1, true) ~= nil).toBe(true)
+    local smith = find(tip, "Smith")
+    expect(smith ~= nil).toBe(true)
+    expect(find(tip, "Miner") ~= nil).toBe(true)
+    expect(find(tip, L().WARBAND) ~= nil).toBe(true)
+    local bronze = find(tip, "10 × ")
+    expect(bronze[2]:find("4 / 10", 1, true) == 1).toBe(true)
+    unseed(realm)
+end
+
+@test("a material nobody has shows 0 and its name from the tooltip")
+local function unknown()
+    local data = crateData()
+    data.lines[3] = { leftText = "- 5 de mineral imaginario" }
+    local tip = fakeTip()
+    module().inventory:OnTooltipItem(tip, data)
+    local line = find(tip, "mineral imaginario")
+    expect(line ~= nil).toBe(true)
+    expect(line[2]).toBe("0 / 5")
+end
+
+@test("the list also reads when it comes in one line, with line breaks and colors")
+local function oneLine()
+    local realm = seed()
+    local db = module().inventory:Bind()
+    db.items[3820] = { name = "Alga estranguladora" }
+    db.realms[realm]["Smith"].bank[3820] = 3
+    local text = "Usar: Llena el cajón con cualquier conjunto de objetos de la siguiente lista:\n"
+        .. "|cffffffff- 10 de alga estranguladora|r\n|cffffffff- 10 de hierba cardenal|r"
+    local data = { id = 248686, lines = { { leftText = "Cajón saqueado: hierbas de oficial" }, { leftText = text } } }
+    local needs = module().supplies.Needs(248686, nil, data)
+    expect(#needs).toBe(2)
+    expect(needs[1].id).toBe(3820)
+    expect(needs[1].count).toBe(10)
+    expect(needs[2].name).toBe("hierba cardenal")
+    local tip = fakeTip()
+    module().inventory:OnTooltipItem(tip, data)
+    local line = find(tip, "10 × ")
+    expect(line[2]).toBe("3 / 10")
+    expect(find(tip, "Smith") ~= nil).toBe(true)
+    unseed(realm)
+end
+
+@test("without tooltip data, the list is read from the lines the tooltip shows")
+local function shown()
+    local realm = seed()
+    GameTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+    GameTooltip:AddLine("Cajón saqueado: lingotes de aprendiz")
+    GameTooltip:AddLine("Usar: Llena el cajón con cualquier conjunto de objetos de la siguiente lista:")
+    GameTooltip:AddLine("- 20 de barra de cobre", 1, 1, 1)
+    local count = GameTooltip:NumLines()
+    module().inventory:OnTooltipItem(GameTooltip, { id = FOREVER_CRATE })
+    expect(GameTooltip:NumLines() > count).toBe(true)
+    local found = false
+    for i = count + 1, GameTooltip:NumLines() do
+        local text = _G["GameTooltipTextLeft" .. i]:GetText()
+        if text == L().SUPPLY_TITLE then
+            found = true
+        end
+    end
+    expect(found).toBe(true)
+    GameTooltip:Hide()
+    unseed(realm)
+end
+
+@test("this character counts even when the tooltip leaves it out")
+local function current()
+    local inventory = module().inventory
+    local store = EternityUI.store
+    local char = inventory:Current()
+    local before = char.bags
+    char.bags = { [COPPER_BAR] = 7 }
+    store:Set(NAME, "tooltip.current", false)
+    local tip = fakeTip()
+    inventory:OnTooltipItem(tip, { id = SOD_CRATE })
+    local line = find(tip, "20 × ")
+    expect(line[2]:find("7 / 20", 1, true) == 1).toBe(true)
+    store:Set(NAME, "tooltip.current", true)
+    char.bags = before
+end
+
+@test("the option turns the crate lines off; other items never get them")
+local function option()
+    local store = EternityUI.store
+    local tip = fakeTip()
+    module().inventory:OnTooltipItem(tip, { id = 6948, lines = { { leftText = "Hearthstone" } } })
+    expect(find(tip, L().SUPPLY_TITLE)).toBe(nil)
+    store:Set(NAME, "supplies.enabled", false)
+    tip = fakeTip()
+    module().inventory:OnTooltipItem(tip, crateData())
+    expect(find(tip, L().SUPPLY_TITLE)).toBe(nil)
+    store:Set(NAME, "supplies.enabled", true)
+end

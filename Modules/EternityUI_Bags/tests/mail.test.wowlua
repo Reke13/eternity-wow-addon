@@ -1,0 +1,200 @@
+-- The mail: what waits in the mailbox counts as the character's, and what you mail to your own
+-- characters counts for them as soon as it's sent.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Bags"
+local COPPER_BAR, LINEN = 2840, 2589
+
+local function inventory()
+    return EternityUI:GetModule(NAME).inventory
+end
+
+-- Replaces some globals for the length of `fn`.
+local function with(globals, fn)
+    local saved = {}
+    for key, value in pairs(globals) do
+        saved[key] = _G[key]
+        _G[key] = value
+    end
+    local ok, err = pcall(fn)
+    for key in pairs(globals) do
+        _G[key] = saved[key]
+    end
+    if not ok then
+        error(err, 0)
+    end
+end
+
+-- A mailbox with two mails: 12 copper bars in two stacks, and 5 linen.
+local INBOX = {
+    { { "Copper Bar", COPPER_BAR, 1, 10, 1 }, { "Copper Bar", COPPER_BAR, 1, 2, 1 } },
+    { { "Linen Cloth", LINEN, 1, 5, 1 } },
+}
+
+local function mailbox()
+    return {
+        GetInboxNumItems = function()
+            return #INBOX, #INBOX
+        end,
+        GetInboxItem = function(index, slot)
+            local item = INBOX[index] and INBOX[index][slot]
+            if item then
+                return unpack(item)
+            end
+        end,
+    }
+end
+
+@test("the mailbox is read when it's open and counts in the tooltip's owners")
+local function scan()
+    local inv = inventory()
+    local char = inv:Current()
+    local before = char.mail
+    with(mailbox(), function()
+        inv.mailOpen = true
+        inv:OnEvent("MAIL_INBOX_UPDATE")
+        inv.mailOpen = false
+    end)
+    expect(char.mail[COPPER_BAR]).toBe(12)
+    expect(char.mail[LINEN]).toBe(5)
+    local owners = inv:Owners(LINEN, { current = true })
+    local mine
+    for _, owner in ipairs(owners) do
+        if owner.current then
+            mine = owner
+        end
+    end
+    expect(mine ~= nil).toBe(true)
+    expect(mine.mail).toBe(5)
+    -- In words, or with the place's icon.
+    EternityUI.store:Set(NAME, "tooltip.icons", false)
+    expect(inv.Breakdown(mine):find(EternityUI:GetModule(NAME).L.IN_MAIL, 1, true) ~= nil).toBe(true)
+    EternityUI.store:Set(NAME, "tooltip.icons", true)
+    expect(inv.Breakdown(mine):find(inv.PlaceIcon("mail"), 1, true) ~= nil).toBe(true)
+    char.mail = before
+end
+
+@test("a closed mailbox isn't read, and the option leaves the mail out")
+local function closed()
+    local inv = inventory()
+    local char = inv:Current()
+    char.mail = { [LINEN] = 3 }
+    with(mailbox(), function()
+        inv:OnEvent("MAIL_INBOX_UPDATE")
+    end)
+    expect(char.mail[LINEN]).toBe(3)
+    EternityUI.store:Set(NAME, "inventory.mail", false)
+    for _, owner in ipairs((inv:Owners(LINEN, { current = true }))) do
+        expect(owner.mail).toBe(0)
+    end
+    EternityUI.store:Set(NAME, "inventory.mail", true)
+    char.mail = nil
+end
+
+-- A second character of this realm, with a surname as Forever's names have.
+local function seedAlt()
+    local inv = inventory()
+    local realm = inv.Me()
+    local db = inv:Bind()
+    db.realms[realm]["Mule Bank"] = { class = "PRIEST", bags = {}, bank = {}, equipped = {} }
+    return db.realms[realm]["Mule Bank"], realm
+end
+
+local function sendForm()
+    return {
+        GetSendMailItem = function(slot)
+            if slot == 1 then
+                return "Copper Bar", COPPER_BAR, 1, 20, 1
+            elseif slot == 3 then
+                return "Linen Cloth", LINEN, 1, 4, 1
+            end
+        end,
+    }
+end
+
+@test("what you mail to one of your characters counts in its mail once it's sent")
+local function sent()
+    local inv = inventory()
+    local alt, realm = seedAlt()
+    with(sendForm(), function()
+        inv:OnSendMail("mule")
+    end)
+    expect(alt.mail).toBe(nil)
+    inv:OnEvent("MAIL_SEND_SUCCESS")
+    expect(alt.mail[COPPER_BAR]).toBe(20)
+    expect(alt.mail[LINEN]).toBe(4)
+    -- A second mail adds up.
+    with(sendForm(), function()
+        inv:OnSendMail("Mule Bank-" .. realm)
+    end)
+    inv:OnEvent("MAIL_SEND_SUCCESS")
+    expect(alt.mail[COPPER_BAR]).toBe(40)
+    inv:Bind().realms[realm]["Mule Bank"] = nil
+end
+
+@test("a failed mail, or one to someone else, counts for nobody")
+local function notSent()
+    local inv = inventory()
+    local alt, realm = seedAlt()
+    with(sendForm(), function()
+        inv:OnSendMail("Mule")
+    end)
+    inv:OnEvent("MAIL_FAILED")
+    inv:OnEvent("MAIL_SEND_SUCCESS")
+    expect(alt.mail).toBe(nil)
+    with(sendForm(), function()
+        inv:OnSendMail("Stranger")
+    end)
+    expect(inv.sending).toBe(nil)
+    -- Two characters with the same first name: no way to tell which.
+    inv:Bind().realms[realm]["Mule Other"] = { bags = {}, bank = {}, equipped = {} }
+    with(sendForm(), function()
+        inv:OnSendMail("Mule")
+    end)
+    expect(inv.sending).toBe(nil)
+    inv:Bind().realms[realm]["Mule Bank"] = nil
+    inv:Bind().realms[realm]["Mule Other"] = nil
+end
+
+@test("the crate counts what waits in the mail")
+local function crate()
+    local inv = inventory()
+    local alt, realm = seedAlt()
+    alt.mail = { [COPPER_BAR] = 25 }
+    local tip = { lines = {} }
+    function tip:AddLine(text)
+        self.lines[#self.lines + 1] = { text }
+    end
+    function tip:AddDoubleLine(left, right)
+        self.lines[#self.lines + 1] = { left, right }
+    end
+    inv:OnTooltipItem(tip, { id = 210771 })
+    local found
+    for _, line in ipairs(tip.lines) do
+        if type(line[1]) == "string" and line[1]:find("Mule Bank", 1, true) then
+            found = line
+        end
+    end
+    expect(found ~= nil).toBe(true)
+    expect(found[2]:find("25", 1, true) == 1).toBe(true)
+    inv:Bind().realms[realm]["Mule Bank"] = nil
+end
+
+@test("each place has its icon: one place is the total and its icon, several each count and its icon")
+local function icons()
+    local inv = inventory()
+    for _, place in ipairs({ "bags", "bank", "mail", "equipped" }) do
+        local icon = inv.PlaceIcon(place)
+        expect(icon:find("^|[AT]") ~= nil).toBe(true)
+    end
+    expect(inv.PlaceIcon("bags") ~= inv.PlaceIcon("bank")).toBe(true)
+    local one = { bags = 0, bank = 9, mail = 0, equipped = 0, total = 9 }
+    expect(inv.Breakdown(one)).toBe("9 " .. inv.PlaceIcon("bank"))
+    local several = { bags = 3, bank = 9, mail = 2, equipped = 0, total = 14 }
+    expect(inv.Breakdown(several)).toBe(
+        "3 " .. inv.PlaceIcon("bags") .. "  9 " .. inv.PlaceIcon("bank") .. "  2 " .. inv.PlaceIcon("mail")
+    )
+    EternityUI.store:Set(NAME, "tooltip.icons", false)
+    expect(inv.Breakdown(several):find("^14 %(")).toBe(1)
+    EternityUI.store:Set(NAME, "tooltip.icons", true)
+end

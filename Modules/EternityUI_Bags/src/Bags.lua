@@ -74,6 +74,8 @@ local Module = {
     inventory = Inventory, -- for the tests
     locks = Locks,
     viewer = ns.Viewer,
+    supplies = ns.Supplies,
+    L = L,
 }
 
 local function opt(path)
