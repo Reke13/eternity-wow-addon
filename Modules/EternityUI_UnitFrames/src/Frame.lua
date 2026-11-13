@@ -3,8 +3,8 @@
 --     unit's menu), so it works in combat. Its size, place and whether it's shown are protected:
 --     they change only out of combat (the module queues them). What's drawn inside isn't.
 --   * One event frame serves every unit button: unit events go to the buttons showing that unit.
---     Units without events of their own (target of target) and the range fade are refreshed on
---     a short timer.
+--     Units without events of their own (target of target), the range fade and the combat and
+--     PvP icons are refreshed on a short timer.
 --   * While the Mover is open the single frames show you, so they can be placed.
 
 ---@type string, EternityUIUnitFramesNamespace
@@ -26,7 +26,7 @@ local UNIT_EVENTS = {
     UNIT_HEAL_PREDICTION = "heals",
     UNIT_ABSORB_AMOUNT_CHANGED = "heals",
     UNIT_CONNECTION = "health",
-    UNIT_FLAGS = "health",
+    UNIT_FLAGS = "flags", -- dead, combat, PvP
     UNIT_NAME_UPDATE = "health",
     UNIT_LEVEL = "health",
     UNIT_FACTION = "indicators",
@@ -70,6 +70,9 @@ local function run(f, what)
     end
     if what == "health" then
         Elements.UpdateHealth(f)
+    elseif what == "flags" then
+        Elements.UpdateHealth(f)
+        Elements.UpdateStatus(f)
     elseif what == "heals" then
         Elements.UpdateHeals(f)
     elseif what == "power" then
@@ -140,6 +143,7 @@ events:SetScript("OnEvent", function(_, event, unit, ...)
         each(Elements.UpdateIndicators)
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" or event == "PLAYER_UPDATE_RESTING" then
         eachUnit("player", Elements.UpdateIndicators)
+        each(Elements.UpdateStatus)
         each(Elements.UpdateFade)
     elseif event == "READY_CHECK" or event == "READY_CHECK_CONFIRM" then
         each(function(f)
@@ -176,6 +180,7 @@ events:SetScript("OnUpdate", function(_, delta)
             else
                 -- Someone else behind the token, or back in view: fresh auras.
                 Elements.UpdateAuras(f)
+                Elements.UpdateStatus(f)
             end
             Elements.UpdateRange(f)
         end

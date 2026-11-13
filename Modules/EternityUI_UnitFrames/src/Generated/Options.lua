@@ -2083,12 +2083,213 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "pvp",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["playerIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["playerIndicators.pvp"] = true,
+                    },
+                },
+                {
                     id = "combat",
                     type = "toggle",
                     default = true,
                     label = {
                         enUS = "Combat icon",
                         esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["playerIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["playerIndicators.combat"] = true,
                     },
                 },
                 {
@@ -2126,15 +2327,6 @@ ns.OptionsSchema = {
                     },
                     visibleWhen = {
                         ["playerIndicators.combatFade"] = true,
-                    },
-                },
-                {
-                    id = "pvp",
-                    type = "toggle",
-                    default = false,
-                    label = {
-                        enUS = "PvP icon",
-                        esES = "Icono JcJ",
                     },
                 },
             },
@@ -3459,6 +3651,216 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Highlight on mouseover",
                         esES = "Resaltar al pasar el ratón",
+                    },
+                },
+                {
+                    id = "pvp",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["petIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["petIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["petIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["petIndicators.combat"] = true,
                     },
                 },
                 {
@@ -4835,10 +5237,211 @@ ns.OptionsSchema = {
                 {
                     id = "pvp",
                     type = "toggle",
-                    default = false,
+                    default = true,
                     label = {
                         enUS = "PvP icon",
                         esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["targetIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["targetIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["targetIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["targetIndicators.combat"] = true,
                     },
                 },
                 {
@@ -6174,6 +6777,216 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Highlight on mouseover",
                         esES = "Resaltar al pasar el ratón",
+                    },
+                },
+                {
+                    id = "pvp",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["targettargetIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["targettargetIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["targettargetIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["targettargetIndicators.combat"] = true,
                     },
                 },
                 {
@@ -7550,10 +8363,211 @@ ns.OptionsSchema = {
                 {
                     id = "pvp",
                     type = "toggle",
-                    default = false,
+                    default = true,
                     label = {
                         enUS = "PvP icon",
                         esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["focusIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["focusIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["focusIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["focusIndicators.combat"] = true,
                     },
                 },
                 {
@@ -8929,10 +9943,211 @@ ns.OptionsSchema = {
                 {
                     id = "pvp",
                     type = "toggle",
-                    default = false,
+                    default = true,
                     label = {
                         enUS = "PvP icon",
                         esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["partyIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["partyIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["partyIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["partyIndicators.combat"] = true,
                     },
                 },
                 {
@@ -10386,6 +11601,216 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "pvp",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["raidIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["raidIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["raidIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["raidIndicators.combat"] = true,
+                    },
+                },
+                {
                     id = "readyCheck",
                     type = "toggle",
                     default = true,
@@ -11819,6 +13244,216 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Highlight on mouseover",
                         esES = "Resaltar al pasar el ratón",
+                    },
+                },
+                {
+                    id = "pvp",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["grouppetsIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["grouppetsIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["grouppetsIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["grouppetsIndicators.combat"] = true,
                     },
                 },
                 {

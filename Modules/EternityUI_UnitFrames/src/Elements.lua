@@ -19,6 +19,11 @@ local PORTRAIT_GAP = 0
 local AURA_GAP = 2
 local CLASS_ICONS = "Interface\\TargetingFrame\\UI-Classes-Circles"
 local RAID_ICONS = "Interface\\TargetingFrame\\UI-RaidTargetingIcons"
+local PVP_ICONS = {
+    Horde = "Interface\\TargetingFrame\\UI-PVP-Horde",
+    Alliance = "Interface\\TargetingFrame\\UI-PVP-Alliance",
+    FFA = "Interface\\TargetingFrame\\UI-PVP-FFA",
+}
 local READY = {
     ready = "Interface\\RaidFrame\\ReadyCheck-Ready",
     notready = "Interface\\RaidFrame\\ReadyCheck-NotReady",
@@ -28,6 +33,7 @@ local READY = {
 ---@class EternityUIUnitFramesElements
 local Elements = {}
 ns.Elements = Elements
+Elements.PVP_ICONS = PVP_ICONS
 
 local function try(fn, ...)
     if not fn then
@@ -63,6 +69,77 @@ local function fullHides()
         end
     end
     return missingCurve or nil
+end
+
+-- The player frame's crossed swords: an atlas in this client (the old UI-StateIcon file isn't
+-- there, so a texture of it stays blank); the file only where the atlas is missing.
+local COMBAT_ATLAS = "UI-HUD-UnitFrame-Player-CombatIcon"
+Elements.COMBAT_ATLAS = COMBAT_ATLAS
+
+---@param texture table
+function Elements.SetCombatTexture(texture)
+    local info = C_Texture and C_Texture.GetAtlasInfo and try(C_Texture.GetAtlasInfo, COMBAT_ATLAS)
+    if info then
+        texture:SetAtlas(COMBAT_ATLAS)
+    else
+        texture:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
+        texture:SetTexCoord(0.5, 1, 0, 0.49)
+    end
+end
+
+-- Resting: the player frame's "Zzz", an atlas of 42 frames (7 rows of 6) played in 1.5 seconds,
+-- as Blizzard's does. Without the atlas, the old file.
+local REST_ATLAS = "UI-HUD-UnitFrame-Player-Rest-Flipbook"
+local REST_ROWS, REST_COLUMNS, REST_FRAMES = 7, 6, 42
+Elements.REST_ATLAS = REST_ATLAS
+
+--- Puts the resting picture on a texture; returns its animation (nil: a still picture).
+---@param texture table
+---@return table?
+function Elements.SetRestTexture(texture)
+    local info = C_Texture and C_Texture.GetAtlasInfo and try(C_Texture.GetAtlasInfo, REST_ATLAS)
+    if not info then
+        texture:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
+        texture:SetTexCoord(0, 0.5, 0, 0.421875)
+        return nil
+    end
+    texture:SetAtlas(REST_ATLAS)
+    local ok, group = pcall(function()
+        local g = texture:CreateAnimationGroup()
+        g:SetLooping("REPEAT")
+        local flip = g:CreateAnimation("FlipBook")
+        flip:SetDuration(1.5)
+        flip:SetFlipBookRows(REST_ROWS)
+        flip:SetFlipBookColumns(REST_COLUMNS)
+        flip:SetFlipBookFrames(REST_FRAMES)
+        flip:SetFlipBookFrameWidth(0)
+        flip:SetFlipBookFrameHeight(0)
+        return g
+    end)
+    if ok and group then
+        return group
+    end
+    -- No flipbook: the first frame, still.
+    local l, r = info.leftTexCoord or 0, info.rightTexCoord or 1
+    local t, b = info.topTexCoord or 0, info.bottomTexCoord or 1
+    texture:SetTexCoord(l, l + (r - l) / REST_COLUMNS, t, t + (b - t) / REST_ROWS)
+    return nil
+end
+
+--- Shows or hides the resting picture, playing its animation only while shown.
+---@param f table
+---@param shown boolean
+function Elements.ShowRest(f, shown)
+    f.restIcon:SetShown(shown)
+    local anim = f.restAnim
+    if not anim then
+        return
+    end
+    if shown and not anim:IsPlaying() then
+        anim:Play()
+    elseif not shown and anim:IsPlaying() then
+        anim:Stop()
+    end
 end
 
 -- Frame ---------------------------------------------------------------------------------------
@@ -120,12 +197,19 @@ function Elements.Create(f)
     f.leaderIcon = top:CreateTexture(nil, "OVERLAY", nil, 2)
     f.leaderIcon:SetTexture("Interface\\GroupFrame\\UI-Group-LeaderIcon")
     f.combatIcon = top:CreateTexture(nil, "OVERLAY", nil, 2)
-    f.combatIcon:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
-    f.combatIcon:SetTexCoord(0.5, 1, 0, 0.49)
+    Elements.SetCombatTexture(f.combatIcon)
     f.restIcon = top:CreateTexture(nil, "OVERLAY", nil, 2)
-    f.restIcon:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
-    f.restIcon:SetTexCoord(0, 0.5, 0, 0.421875)
-    f.pvpIcon = top:CreateTexture(nil, "OVERLAY", nil, 2)
+    f.restAnim = Elements.SetRestTexture(f.restIcon)
+    -- PvP: the faction's icon in a holder of its own, faded out in free-for-all PvP (then the
+    -- free-for-all icon shows instead), so two answers that may be secret never need comparing.
+    f.pvpHolder = CreateFrame("Frame", nil, top)
+    f.pvpIcon = f.pvpHolder:CreateTexture(nil, "OVERLAY", nil, 2)
+    f.pvpIcon:SetAllPoints()
+    f.pvpIcon:SetTexCoord(0, 0.65, 0, 0.65)
+    f.ffaIcon = top:CreateTexture(nil, "OVERLAY", nil, 2)
+    f.ffaIcon:SetAllPoints(f.pvpHolder)
+    f.ffaIcon:SetTexture(PVP_ICONS.FFA)
+    f.ffaIcon:SetTexCoord(0, 0.65, 0, 0.65)
     f.readyIcon = top:CreateTexture(nil, "OVERLAY", nil, 3)
 
     f.hover = f.overlay:CreateTexture(nil, "OVERLAY", nil, -1)
@@ -234,6 +318,32 @@ function Elements.PlaceText(f, fs, bar, v, h, inner)
     end
     fs:SetJustifyH(h == "left" and "LEFT" or (h == "right" and "RIGHT" or "CENTER"))
     fs:SetWidth(math.max(20, (inner or 100) * (h == "center" and 1 or 0.62)))
+end
+
+-- Icon positions (the options' values): the frame's point the icon's center sits on.
+local ICON_POINTS = {
+    topleft = "TOPLEFT", top = "TOP", topright = "TOPRIGHT",
+    left = "LEFT", center = "CENTER", right = "RIGHT",
+    bottomleft = "BOTTOMLEFT", bottom = "BOTTOM", bottomright = "BOTTOMRIGHT",
+}
+
+--- Centers an icon on one of the frame's corners, sides or middle: over the bars, beside the
+--- portrait (left and right are the room it takes on each side), a little inside the edge.
+---@param region table
+---@param f table
+---@param anchor string? an ICON_POINTS key (an unknown one: the center)
+---@param left number
+---@param right number
+function Elements.PlaceIcon(region, f, anchor, left, right)
+    local point = ICON_POINTS[anchor] or "CENTER"
+    local x = (left - right) / 2
+    if point:find("LEFT") then
+        x = left + 4
+    elseif point:find("RIGHT") then
+        x = -right - 4
+    end
+    local y = point:find("^TOP") and -2 or (point:find("^BOTTOM") and 2 or 0)
+    place(region, "CENTER", f, point, x, y)
 end
 
 --- Whether the Resources module is installed and running (it shows your power on its own).
@@ -355,12 +465,14 @@ function Elements.Layout(f, width, height)
     place(f.raidIcon, "CENTER", f, "CENTER", (left - right) / 2, 0)
     f.leaderIcon:SetSize(icon * 0.8, icon * 0.8)
     place(f.leaderIcon, "CENTER", f, "TOPLEFT", left + 6, 0)
-    f.combatIcon:SetSize(icon, icon)
-    place(f.combatIcon, "CENTER", f, "BOTTOMLEFT", left + 4, 2)
+    local combatSize = icon * (U(key, "Indicators", "combatSize") or 100) / 100
+    f.combatIcon:SetSize(combatSize, combatSize)
+    Elements.PlaceIcon(f.combatIcon, f, U(key, "Indicators", "combatAnchor"), left, right)
     f.restIcon:SetSize(icon, icon)
     place(f.restIcon, "CENTER", f, "TOPLEFT", left + 4 + icon, 0)
-    f.pvpIcon:SetSize(icon * 1.4, icon * 1.4)
-    place(f.pvpIcon, "CENTER", f, "TOPRIGHT", -right - 4, -2)
+    local pvpSize = icon * 1.4 * (U(key, "Indicators", "pvpSize") or 100) / 100
+    f.pvpHolder:SetSize(pvpSize, pvpSize)
+    Elements.PlaceIcon(f.pvpHolder, f, U(key, "Indicators", "pvpAnchor"), left, right)
     f.readyIcon:SetSize(icon * 1.2, icon * 1.2)
     place(f.readyIcon, "CENTER", f.health, "CENTER", 0, 0)
     f.hover:ClearAllPoints()
@@ -800,6 +912,48 @@ function Elements.SetRaidIcon(texture, index)
     end
 end
 
+--- The PvP icon: the faction's while the unit is flagged, the free-for-all one in free-for-all
+--- PvP. The game's answers may be secret: they only set alphas.
+---@param f table
+function Elements.UpdatePvp(f)
+    if not U(f.uf.key, "Indicators", "pvp") then
+        f.pvpHolder:Hide()
+        f.ffaIcon:Hide()
+        return
+    end
+    local unit = f.unit
+    f.pvpHolder:Show()
+    local faction = Plain(try(UnitFactionGroup, unit), nil)
+    if faction == "Horde" or faction == "Alliance" then
+        f.pvpIcon:SetTexture(PVP_ICONS[faction])
+        showBy(f.pvpIcon, try(UnitIsPVP, unit))
+    else
+        f.pvpIcon:Hide()
+    end
+    local ffa = try(UnitIsPVPFreeForAll, unit)
+    showBy(f.ffaIcon, ffa)
+    if secret(ffa) then
+        f.pvpHolder:SetAlphaFromBoolean(ffa, 0, 1)
+    else
+        f.pvpHolder:SetAlpha(ffa and 0 or 1)
+    end
+end
+
+--- The combat and PvP icons, from the unit as it is now (also on the frames' timer: units
+--- like the target of target, or an NPC that starts a fight, don't always send events).
+---@param f table
+function Elements.UpdateStatus(f)
+    if not f.unit then
+        return
+    end
+    if U(f.uf.key, "Indicators", "combat") then
+        showBy(f.combatIcon, try(UnitAffectingCombat, f.unit))
+    else
+        f.combatIcon:Hide()
+    end
+    Elements.UpdatePvp(f)
+end
+
 function Elements.UpdateIndicators(f)
     local unit, key = f.unit, f.uf.key
     local function on(id)
@@ -817,20 +971,11 @@ function Elements.UpdateIndicators(f)
         f.leaderIcon:Hide()
     end
     if f.uf.player then
-        f.combatIcon:SetShown(on("combat") and UnitAffectingCombat("player") == true)
-        f.restIcon:SetShown(on("resting") and IsResting() and not UnitAffectingCombat("player"))
+        Elements.ShowRest(f, (on("resting") and IsResting() and Plain(UnitAffectingCombat("player"), false) ~= true) and true or false)
     else
-        f.combatIcon:Hide()
-        f.restIcon:Hide()
+        Elements.ShowRest(f, false)
     end
-    local faction = Plain(UnitFactionGroup(unit), nil)
-    if f.uf.pvp ~= false and on("pvp") and (faction == "Horde" or faction == "Alliance") then
-        f.pvpIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-" .. faction)
-        f.pvpIcon:SetTexCoord(0, 0.65, 0, 0.65)
-        showBy(f.pvpIcon, UnitIsPVP(unit))
-    else
-        f.pvpIcon:Hide()
-    end
+    Elements.UpdateStatus(f)
     Elements.UpdateReady(f)
     Elements.UpdateTargeted(f)
 end
