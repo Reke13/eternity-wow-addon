@@ -2,7 +2,7 @@
 
 What changed in each release of the Eternity suite, newest first. Every addon shares the release's version.
 
-## Unreleased
+## 0.8.0 (2026-11-13)
 
 ### Added
 - Mail: a new addon with the history of the mail every character sends and receives (`/etmail` or the button by the mailbox), with class-coloured names and item rows, and "Remember the name when sending".

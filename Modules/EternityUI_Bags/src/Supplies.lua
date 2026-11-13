@@ -157,7 +157,7 @@ end
 
 -- The item in the client's cache with that name, or nil.
 local function cachedItem(name)
-    local getInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+    local getInfo = (C_Item and C_Item.GetItemInfo) or _G.GetItemInfo
     if not getInfo then
         return nil
     end

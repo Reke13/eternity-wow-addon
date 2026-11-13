@@ -70,8 +70,8 @@ end
 ---@param copper integer
 ---@return string
 function List.Coins(copper)
-    if GetCoinTextureString then
-        local ok, coins = pcall(GetCoinTextureString, math.floor(copper or 0))
+    if _G.GetCoinTextureString then
+        local ok, coins = pcall(_G.GetCoinTextureString, math.floor(copper or 0))
         if ok and type(coins) == "string" then
             return coins
         end
@@ -332,7 +332,7 @@ local function newItemRow(parent)
         if not (self.item and IsModifiedClick and IsModifiedClick("CHATLINK")) then
             return
         end
-        local getInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+        local getInfo = (C_Item and C_Item.GetItemInfo) or _G.GetItemInfo
         local _, link = getInfo(self.item.id)
         if link and ChatEdit_InsertLink then
             ChatEdit_InsertLink(link)
