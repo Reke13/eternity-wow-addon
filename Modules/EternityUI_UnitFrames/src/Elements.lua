@@ -176,8 +176,8 @@ function Elements.Create(f)
     f.portrait = CreateFrame("Frame", nil, f)
     f.portrait.texture = f.portrait:CreateTexture(nil, "ARTWORK")
     f.portrait.texture:SetAllPoints()
-    f.portrait.model = CreateFrame("PlayerModel", nil, f.portrait)
-    f.portrait.model:SetAllPoints()
+    -- The 3D model is made the first time it's shown (Elements.Model): one per group and raid
+    -- button made logging in slow, and most portraits are icons or switched off.
 
     -- Cast bar under the frame, with the spell icon on its left.
     local cast = Style.Bar(f)
@@ -730,6 +730,18 @@ end
 
 -- Portrait ------------------------------------------------------------------------------------
 
+--- The portrait's 3D model, made the first time it's needed.
+---@param f table
+---@return table
+function Elements.Model(f)
+    local p = f.portrait
+    if not p.model then
+        p.model = CreateFrame("PlayerModel", nil, p)
+        p.model:SetAllPoints()
+    end
+    return p.model
+end
+
 function Elements.UpdatePortrait(f)
     local p = f.portrait
     if not p:IsShown() then
@@ -741,14 +753,17 @@ function Elements.UpdatePortrait(f)
     local coords = CLASS_ICON_TCOORDS and type(class) == "string" and not secret(class) and CLASS_ICON_TCOORDS[class]
     if kind == "model" then
         p.texture:Hide()
-        p.model:Show()
-        p.model:ClearModel()
-        p.model:SetUnit(unit)
-        p.model:SetPortraitZoom(1)
-        p.model:SetCamDistanceScale(1)
+        local model = Elements.Model(f)
+        model:Show()
+        model:ClearModel()
+        model:SetUnit(unit)
+        model:SetPortraitZoom(1)
+        model:SetCamDistanceScale(1)
         return
     end
-    p.model:Hide()
+    if p.model then
+        p.model:Hide()
+    end
     p.texture:Show()
     if kind == "class" and coords and Plain(UnitIsPlayer(unit), false) then
         p.texture:SetTexture(CLASS_ICONS)
@@ -866,7 +881,7 @@ end
 ---@param f table
 ---@param force boolean? refresh anyway
 function Elements.UpdateAuras(f, force)
-    if not f.auraContainers or not f.unit then
+    if not AuraBox.Ensure(f) or not f.unit then
         return
     end
     local guid, visible = UnitGUID(f.unit), UnitIsVisible(f.unit)

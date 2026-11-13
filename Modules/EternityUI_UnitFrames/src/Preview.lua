@@ -290,7 +290,9 @@ local function samplePerson(f, person, index)
     -- Portrait: the class icon (a made-up person has no model).
     local coords = CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[person.class]
     if f.portrait:IsShown() and coords then
-        f.portrait.model:Hide()
+        if f.portrait.model then
+            f.portrait.model:Hide()
+        end
         f.portrait.texture:Show()
         f.portrait.texture:SetTexture("Interface\\TargetingFrame\\UI-Classes-Circles")
         f.portrait.texture:SetTexCoord(coords[1], coords[2], coords[3], coords[4])

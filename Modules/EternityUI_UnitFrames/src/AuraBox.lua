@@ -345,6 +345,38 @@ function AuraBox.Create(f)
     return true
 end
 
+local waiting = {} -- buttons that showed someone in combat: their containers come after it
+local afterCombat
+
+--- Makes a group button's aura containers the first time it shows someone, out of combat (in
+--- combat, as soon as it ends). True when the frame has them.
+---@param f table
+---@return boolean
+function AuraBox.Ensure(f)
+    if f.auraContainers or not f.aurasWaiting or not f.unit then
+        return f.auraContainers ~= nil
+    end
+    if InCombatLockdown() then
+        waiting[f] = true
+        if not afterCombat then
+            afterCombat = CreateFrame("Frame")
+            afterCombat:SetScript("OnEvent", function()
+                for button in pairs(waiting) do
+                    waiting[button] = nil
+                    if button.unit then
+                        ns.Elements.UpdateAuras(button, true)
+                    end
+                end
+            end)
+            afterCombat:RegisterEvent("PLAYER_REGEN_ENABLED")
+        end
+        return false
+    end
+    f.aurasWaiting = nil
+    AuraBox.Layout(f, f.auraWidth or f:GetWidth())
+    return f.auraContainers ~= nil
+end
+
 -- How many rows of icons a kind can take at most (to stack the other kind after it).
 local function rows(f, kind, groups, perRow)
     local count = 0
@@ -361,6 +393,12 @@ end
 ---@param f table
 ---@param width number the frame's width
 function AuraBox.Layout(f, width)
+    -- A group or raid button gets its containers (costly: most of the time making each of the 85
+    -- buttons) once someone is shown in it (AuraBox.Ensure).
+    if f.uf.group and not f.auraContainers and not f.unit and not f.previewOnly then
+        f.aurasWaiting, f.auraWidth = true, width
+        return
+    end
     if not AuraBox.Create(f) then
         return
     end

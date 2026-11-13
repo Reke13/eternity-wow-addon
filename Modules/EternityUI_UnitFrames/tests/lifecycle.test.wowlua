@@ -78,9 +78,12 @@ local function cycle()
     expect(module().holders.player.button:IsShown()).toBe(true)
 end
 
-@test("the group and raid headers make their buttons up front, styled")
+@test("the group and raid headers make their buttons a few per frame, styled")
 local function headers()
     local m = module()
+    -- Frames may have passed since login: whatever is left is made now.
+    m.Groups.FinishBuilding()
+    expect(m.Groups.Pending()).toBe(0)
     for key, count in pairs({ party = 5, raid = 40, grouppets = 40 }) do
         local header = m.holders[key].header
         local first = header:GetAttribute("child1")
@@ -179,4 +182,23 @@ local function rangeYards()
     if not ok then
         error(err)
     end
+end
+
+@test("a portrait's 3D model is only made when it's needed")
+local function lazyModel()
+    local m = module()
+    m.Groups.FinishBuilding()
+    local f = m.holders.raid.header:GetAttribute("child1")
+    expect(f.portrait.model).toBe(nil)
+    local model = m.Elements.Model(f)
+    expect(model ~= nil).toBe(true)
+    expect(m.Elements.Model(f)).toBe(model)
+end
+
+@test("the buttons in use come first: your group always, the raid only in a raid")
+local function inUse()
+    local Groups = module().Groups
+    expect(Groups.InUse("party")).toBe(true)
+    expect(Groups.InUse("raid")).toBe(IsInRaid() and true or false)
+    expect(Groups.InUse("grouppets")).toBe(IsInGroup() and true or false)
 end
