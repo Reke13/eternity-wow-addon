@@ -15,6 +15,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 ### Changed
 - Automation: "Keep the recipient after sending" moves to the new Mail addon.
 - Unit frames: the target of target fades out of range by default, by its own distance from you.
+- Options: descriptions no longer show as text. A small "i" beside the title of each page, option, tab and chart shows them in a tooltip.
 
 ### Fixed
 - Unit frames: a target close by is no longer faded when the game hides its group range; out of range goes by a class spell or the follow distance.
