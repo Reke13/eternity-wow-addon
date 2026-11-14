@@ -1003,7 +1003,7 @@ function Grid:Register()
         x = bank and 24 or -24,
         y = bank and -120 or 96,
         openOptions = function()
-            E:OpenOptions(addonName)
+            E:OpenOptions(addonName, "general")
         end,
     })
 end
@@ -1017,29 +1017,64 @@ function Grid:ClearSearch()
     end
 end
 
-function Grid:OpenMenu(owner)
-    local entries = {
-        {
-            text = L.OPTIONS,
-            onClick = function()
-                E:OpenOptions(addonName, "general")
-            end,
-        },
-    }
-    local others = Inventory:Others()
-    if #others == 0 then
-        entries[#entries + 1] = { text = L.NO_CHARACTERS, onClick = function() end }
+-- Options page: Characters tab ---------------------------------------------------------------
+
+local CHARACTER_ROW = 40
+
+--- The Characters tab of the options: every remembered character but this one, each with a
+--- button to forget it. build(parent, setHeight) as ModulePage wants it.
+local function buildCharacters(parent, setHeight)
+    local view = CreateFrame("Frame", nil, parent)
+    view:SetPoint("TOPLEFT")
+    view:SetPoint("TOPRIGHT")
+    view.rows = {}
+    view.empty = Widgets.Text(view, 14, "muted")
+    view.empty:SetPoint("TOPLEFT", 0, -12)
+    view.empty:SetText(L.NO_CHARACTERS)
+
+    function view:Refresh()
+        local others = Inventory:Others()
+        for i, char in ipairs(others) do
+            local row = self.rows[i]
+            if not row then
+                local forget = Widgets.Button(self, L.FORGET_BUTTON, "danger", function(button)
+                    local target = button:GetParent().char
+                    if target then
+                        Inventory:Forget(target.realm, target.name)
+                        self:Refresh()
+                    end
+                end)
+                forget:SetWidth(math.max(90, forget.label:GetStringWidth() + 28))
+                row = Widgets.Row(self, "", forget)
+                row:SetHeight(CHARACTER_ROW)
+                row:SetPoint("TOPLEFT", 0, -(i - 1) * CHARACTER_ROW)
+                row:SetPoint("TOPRIGHT", 0, -(i - 1) * CHARACTER_ROW)
+                row.forget = forget
+                self.rows[i] = row
+            end
+            row.char = char
+            local text = char.name .. "-" .. char.realm
+            local color = char.class and C_ClassColor and C_ClassColor.GetClassColor(char.class)
+            row.label:SetText(color and color:WrapTextInColorCode(text) or text)
+            row:Show()
+        end
+        for i = #others + 1, #self.rows do
+            self.rows[i].char = nil
+            self.rows[i]:Hide()
+        end
+        self.empty:SetShown(#others == 0)
+        local height = math.max(#others * CHARACTER_ROW, 40)
+        self:SetHeight(height)
+        setHeight(height)
     end
-    for _, char in ipairs(others) do
-        entries[#entries + 1] = {
-            text = L.FORGET:format(char.name .. "-" .. char.realm),
-            onClick = function()
-                Inventory:Forget(char.realm, char.name)
-            end,
-        }
-    end
-    Widgets.Menu(owner, entries, 220)
+
+    view:SetScript("OnShow", view.Refresh)
+    view:Refresh()
+    return view
 end
+
+Module.tabs = { { key = "characters", text = L.CHARACTERS, build = buildCharacters, description = L.CHARACTERS_HINT } }
+Module.defaultTab = "general"
 
 --- A check box with a label at its right: onClick(value) after it changes.
 local function newCheck(parent, text, onClick)
@@ -1161,10 +1196,11 @@ function Grid.New(module, kind)
     self.toolbar = CreateFrame("Frame", nil, w.body)
     w.close:SetParent(self.toolbar)
 
+    -- The module's options (forgetting characters is in their Characters tab).
     self.menu = Widgets.Button(self.toolbar, "...", "ghost", function()
-        self:OpenMenu(self.menu)
+        E:OpenOptions(addonName, "general")
     end)
-    hint(self.menu, L.CHARACTERS, L.CHARACTERS_HINT)
+    hint(self.menu, L.OPTIONS, L.OPTIONS_HINT)
 
     self.search = Widgets.Input(self.toolbar, nil, L.SEARCH)
     self.search:SetMaxLetters(60)
