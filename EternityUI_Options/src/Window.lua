@@ -54,6 +54,15 @@ function Window.SetHeader(title, note, status, sections)
     chrome.body:ClearAllPoints()
     chrome.body:SetPoint("TOPLEFT", SIDEBAR + 26, -math.max(TOP, math.ceil(top)))
     chrome.body:SetPoint("BOTTOMRIGHT", -26, 22)
+    -- The open page's own button beside the close button (V2's preview), not during a search.
+    local page = Window.current
+    local action = status == nil and page and page.HeaderAction and page.HeaderAction()
+    chrome.action.run = action and action.run
+    chrome.action:SetShown(action ~= nil)
+    if action then
+        chrome.action.label:SetText(action.text)
+        chrome.action:SetWidth(math.max(90, chrome.action.label:GetStringWidth() + 28))
+    end
 end
 
 --- Rewrites the current page's header, for a page whose sections changed (another tab opened).
@@ -254,6 +263,14 @@ local function buildHeader(frame)
     end)
     close:SetSize(34, 34)
     close:SetPoint("TOPRIGHT", -18, -18)
+    chrome.action = Widgets.Button(frame, "", "ghost", function()
+        if chrome.action.run then
+            chrome.action.run()
+        end
+    end)
+    chrome.action:SetHeight(34)
+    chrome.action:SetPoint("RIGHT", close, "LEFT", -8, 0)
+    chrome.action:Hide()
 
     chrome.body = CreateFrame("Frame", nil, frame)
     chrome.body:SetPoint("TOPLEFT", SIDEBAR + 26, -TOP)
@@ -344,7 +361,15 @@ E.Events.Listen(E.CONFIG_CHANGED, Window, function(_, _, path)
     if path == "general.optionsScale" and Window.frame then
         Window.frame:Paint()
     end
-    if Window.frame and Window.frame:IsShown() and path and path:sub(1, 1) == "@" then
+    -- Another layout or level for the modules' pages: the open one is laid out again now.
+    local relayout = path == "general.optionsVersion"
+        or path == "general.optionsLevel"
+        or path == "general.optionsFieldShade"
+    -- The core's rows (Widgets.Row) draw as V2 fields too, in pages and tabs modules draw.
+    if path == "general.optionsVersion" or path == "general.optionsFieldShade" then
+        Widgets.RepaintAll()
+    end
+    if Window.frame and Window.frame:IsShown() and path and (relayout or path:sub(1, 1) == "@") then
         Window.Refresh()
     end
 end)

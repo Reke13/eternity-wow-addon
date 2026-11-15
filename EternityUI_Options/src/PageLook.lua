@@ -80,6 +80,25 @@ local function buildGeneral(tab)
         L.OPTIONS_SCALE,
         Widgets.Slider(tab, 0.7, 1.5, 0.05, factor, setter("general.optionsScale"))
     )
+    -- How the modules' pages are laid out (ModulePage.lua and ListV2.lua). Same options either way.
+    addRow(
+        tab,
+        "general.optionsVersion",
+        L.OPTIONS_VERSION,
+        Widgets.Dropdown(tab, {
+            { "v1", L.OPTIONS_V1 },
+            { "v2", L.OPTIONS_V2 },
+        }, setter("general.optionsVersion"))
+    )
+    addRow(
+        tab,
+        "general.optionsFieldShade",
+        L.OPTIONS_FIELD_SHADE,
+        Widgets.Slider(tab, 0, 0.2, 0.01, percent, setter("general.optionsFieldShade")),
+        function()
+            return E.store:Get(CORE, "general.optionsVersion") == "v2"
+        end
+    )
     addRow(tab, "general.minimapEntry", L.MINIMAP_ENTRY, Widgets.Toggle(tab, setter("general.minimapEntry")))
     addRow(tab, "general.loadMessage", L.LOAD_MESSAGE, Widgets.Toggle(tab, setter("general.loadMessage")))
     local note = Widgets.Input(tab, setter("general.profileNote"))

@@ -7,6 +7,7 @@
 local _, ns = ...
 local L = ns.L
 local E = EternityUI
+local Theme = E.Theme
 local Widgets = E.Widgets
 
 local ModulePage = {}
@@ -64,32 +65,50 @@ local function newControl(parent, option, onChange)
     return box
 end
 
--- The options of a group as { path, option } entries.
+-- The options of a group as { path, option, advanced } entries. `advanced` on an option or on its
+-- whole group: V2's Basic level hides it.
 local function entriesOf(group)
     local entries = {}
     for _, option in ipairs(group.options) do
-        entries[#entries + 1] = { path = group.id .. "." .. option.id, option = option }
+        entries[#entries + 1] = {
+            path = group.id .. "." .. option.id,
+            option = option,
+            advanced = (option.advanced or group.advanced) and true or false,
+        }
     end
     return entries
 end
 
--- One list of sections in a scroll area. A section is { label, entries }.
-local function newList(parent, page, sections)
-    local scroll = Widgets.Scroll(parent)
-    local list = { scroll = scroll, items = {} }
-    local child = scroll.child
+--- The layout the modules' pages use now: "v1" (rows) or "v2" (cards, ListV2.lua).
+---@return string
+function ModulePage.Version()
+    return E.store:Get("EternityUI", "general.optionsVersion")
+end
+
+-- An option's control, already saving to the store.
+local function controlFor(parent, page, entry)
+    local path, option = entry.path, entry.option
+    return newControl(parent, option, function(value)
+        E.store:Set(page.module.name, path, value)
+        if option.type ~= "range" then
+            page.Refresh()
+        elseif page.preview and page.picked then
+            -- A slider changes on every step: only the live preview follows it.
+            page.preview:Refresh(page.picked)
+        end
+    end)
+end
+ModulePage.Format = format
+
+-- V1: a caption per section and one row per option.
+local function fillRows(list, child, page, sections)
     for _, section in ipairs(sections) do
         local caption = Widgets.Text(child, 13, "muted")
         caption:SetText(E.Localize(section.label):upper())
         table.insert(list.items, { caption = caption })
         for _, entry in ipairs(section.entries) do
             local path, option = entry.path, entry.option
-            local control = newControl(child, option, function(value)
-                E.store:Set(page.module.name, path, value)
-                if option.type ~= "range" then
-                    page.Refresh()
-                end
-            end)
+            local control = controlFor(child, page, entry)
             local label = E.Localize(option.label)
             if option.requiresReload then
                 label = label .. " (/reload)"
@@ -105,11 +124,43 @@ local function newList(parent, page, sections)
             table.insert(list.items, { row = row, control = control, option = option, path = path })
         end
     end
+end
+
+-- (Re)makes a list's scroll and items in the layout in use. The scroll fills the list's parent and
+-- keeps whether it was shown; the old one is hidden. Only the layout changes: values stay stored.
+local function fillList(list)
+    local shown = not list.scroll or list.scroll:IsShown()
+    if list.scroll then
+        list.scroll:Hide()
+    end
+    list.version = ModulePage.Version()
+    list.scroll = Widgets.Scroll(list.parent)
+    list.scroll:SetAllPoints()
+    list.scroll:SetShown(shown)
+    list.items = {}
+    if list.version == "v2" then
+        ns.ListV2.Fill(list, list.scroll.child, list.page, list.sections, controlFor)
+    else
+        fillRows(list, list.scroll.child, list.page, list.sections)
+    end
+end
+
+-- One list of sections in a scroll area, filling parent. A section is { label, entries }.
+local function newList(parent, page, sections)
+    local list = { parent = parent, page = page, sections = sections }
+    fillList(list)
     page.lists[#page.lists + 1] = list
     return list
 end
 
 local function refreshList(list, module)
+    if list.version ~= ModulePage.Version() then
+        fillList(list)
+    end
+    if list.version == "v2" then
+        ns.ListV2.Layout(list, module, isVisible)
+        return
+    end
     local y = 0
     for _, item in ipairs(list.items) do
         if item.caption then
@@ -142,20 +193,52 @@ end
 -- text, sections } }. tab.onPick(id) is told when another view is chosen.
 local TOP_PICKER = 30 + 14
 
-local function buildPicked(tab, frame, page, views)
-    local top = 0
-    if tab.preview then
-        page.preview = tab.preview(frame)
-        page.preview:SetPoint("TOPLEFT")
-        page.preview:SetPoint("TOPRIGHT")
-        top = -page.preview:GetHeight() - 12
+-- V2 gives the options more room: a preview that draws itself goes in a window beside the options
+-- (a short one, like UnitFrames' strip that opens its own window, stays), and the picker on the left
+-- is one column.
+local INLINE_PREVIEW_MAX = 60
+local PICK_ROW = 36
+local PREVIEW_PAD = 12
+
+-- The window that holds a tab's preview in V2, made the first time it opens.
+-- onShown(open) is told when it opens or closes.
+local function previewWindow(page, tab, frame, onShown)
+    if page.previewWindows[tab.key] then
+        return page.previewWindows[tab.key]
     end
+    local w = Widgets.Window(nil, page.title .. " · " .. L.V2_PREVIEW)
+    w:SetFrameStrata("DIALOG")
+    w:SetWidth(440)
+    -- Looks like the options window: its background image and veil, its scale and no shadow.
+    w.wallpaper = Theme.NewWallpaper(w)
+    function w.onPaint(self)
+        -- No drop shadow around it: the options window has none.
+        self.shadow:Hide()
+        Theme.PaintWallpaper(self.wallpaper, "window")
+        self:SetScale(E.store:Get("EternityUI", "general.optionsScale"))
+    end
+    w:HookScript("OnShow", function()
+        onShown(true)
+    end)
+    w:HookScript("OnHide", function()
+        onShown(false)
+    end)
+    -- Closes with the tab (another tab, another page, the options window).
+    frame:HookScript("OnHide", function()
+        w:Hide()
+    end)
+    page.previewWindows[tab.key] = w
+    return w
+end
+
+local function buildPicked(tab, frame, page, views)
+    local preview = tab.preview and tab.preview(frame)
+    page.preview = preview
+    page.previewWindows = page.previewWindows or {}
     page.pickButtons = {}
     page.pickLists = {}
     local onTop = tab.picker == "top"
     local holder = CreateFrame("Frame", nil, frame)
-    holder:SetPoint("TOPLEFT", onTop and 0 or 186, onTop and top - TOP_PICKER or top)
-    holder:SetPoint("BOTTOMRIGHT")
     local byView = {}
     for _, view in ipairs(views) do
         byView[view.id] = view
@@ -190,20 +273,121 @@ local function buildPicked(tab, frame, page, views)
             choices[#choices + 1] = { view.id, view.text }
         end
         segmented = Widgets.Segmented(frame, choices, page.Pick)
-        segmented:SetPoint("TOPLEFT", 0, top)
-        page.Pick(views[1].id)
-        return
+    else
+        for _, view in ipairs(views) do
+            page.pickButtons[view.id] = Widgets.Button(frame, view.text, "nav", function()
+                page.Pick(view.id)
+            end)
+        end
     end
 
-    for i, view in ipairs(views) do
-        local button = Widgets.Button(frame, view.text, "nav", function()
-            page.Pick(view.id)
-        end)
-        button:SetSize(84, 32)
-        local column, row = (i - 1) % 2, math.floor((i - 1) / 2)
-        button:SetPoint("TOPLEFT", column * 90, top - row * 36)
-        page.pickButtons[view.id] = button
+    -- V2: the preview opens from a button in the options window's header, left of its close button
+    -- (Window.SetHeader asks page.HeaderAction). A short strip with a button of its own that opens its
+    -- own window (UnitFrames') stays in place, invisible and without the mouse, so it still closes
+    -- that window when the tab hides; the header's button clicks it.
+    local strip = preview ~= nil and preview.button ~= nil and preview:GetHeight() <= INLINE_PREVIEW_MAX
+    page.headerActions = page.headerActions or {}
+    local function headerChanged()
+        if ns.Window.current == page then
+            ns.Window.RefreshHeader()
+        end
     end
+    local function toggleWindow()
+        local w = previewWindow(page, tab, frame, headerChanged)
+        if w:IsShown() then
+            w:Hide()
+            return
+        end
+        w:ClearAllPoints()
+        w:SetPoint("TOPLEFT", ns.Window.frame, "TOPRIGHT", 12, 0)
+        w:Paint()
+        w:Show()
+        page.Refresh()
+    end
+    local function clickStrip()
+        preview.button:Click()
+        headerChanged()
+    end
+
+    -- Lays the tab out for the layout in use; ModulePage calls it again when that changes.
+    local function place()
+        local v2 = ModulePage.Version() == "v2"
+        local windowed = v2 and preview ~= nil and not strip and preview:GetHeight() > INLINE_PREVIEW_MAX
+        local folded = v2 and strip
+        local top = 0
+        page.headerActions[tab.key] = nil
+        if preview then
+            preview:ClearAllPoints()
+            if windowed then
+                local w = previewWindow(page, tab, frame, headerChanged)
+                preview:SetParent(w.body)
+                preview:SetPoint("TOPLEFT", PREVIEW_PAD, -PREVIEW_PAD)
+                preview:SetPoint("TOPRIGHT", -PREVIEW_PAD, -PREVIEW_PAD)
+                w:SetHeight(40 + preview:GetHeight() + PREVIEW_PAD * 2)
+                page.headerActions[tab.key] = {
+                    text = function()
+                        return w:IsShown() and L.V2_PREVIEW_HIDE or L.V2_PREVIEW_SHOW
+                    end,
+                    run = toggleWindow,
+                }
+            else
+                if page.previewWindows[tab.key] then
+                    page.previewWindows[tab.key]:Hide()
+                end
+                preview:SetParent(frame)
+                preview:SetPoint("TOPLEFT")
+                preview:SetPoint("TOPRIGHT")
+                if folded then
+                    page.headerActions[tab.key] = {
+                        text = function()
+                            return preview.button.label:GetText()
+                        end,
+                        run = clickStrip,
+                    }
+                else
+                    top = -preview:GetHeight() - 12
+                end
+            end
+            if strip then
+                preview:SetAlpha(folded and 0 or 1)
+                preview.button:EnableMouse(not folded)
+            end
+            preview:Show()
+        end
+        headerChanged()
+
+        holder:ClearAllPoints()
+        holder:SetPoint("BOTTOMRIGHT")
+        if onTop then
+            segmented:ClearAllPoints()
+            segmented:SetPoint("TOPLEFT", 0, top)
+            holder:SetPoint("TOPLEFT", 0, top - TOP_PICKER)
+            return
+        end
+        -- V1: two columns of small buttons. V2: one column as wide as its longest name.
+        local width = 84
+        if v2 then
+            width = 110
+            for _, button in pairs(page.pickButtons) do
+                width = math.max(width, math.ceil(button.label:GetStringWidth()) + 28)
+            end
+        end
+        for i, view in ipairs(views) do
+            local button = page.pickButtons[view.id]
+            button:SetSize(width, 32)
+            button:ClearAllPoints()
+            if v2 then
+                button:SetPoint("TOPLEFT", 0, top - (i - 1) * PICK_ROW)
+            else
+                local column, row = (i - 1) % 2, math.floor((i - 1) / 2)
+                button:SetPoint("TOPLEFT", column * 90, top - row * 36)
+            end
+        end
+        holder:SetPoint("TOPLEFT", v2 and width + 20 or 186, top)
+    end
+    page.placePickers = page.placePickers or {}
+    page.placePickers[#page.placePickers + 1] = place
+    place()
     page.Pick(views[1].id)
 end
 
@@ -276,6 +460,26 @@ local function placeOptions(module)
     return general, appearance, tabViews
 end
 
+-- Where a tab's content starts under the tab selector, by layout.
+local TAB_TOP = { v1 = 42, v2 = 54 }
+
+-- The tab selector of the layout in use: V1's segmented buttons or V2's tabs (ListV2.Tabs).
+local function applyLayout(page)
+    local v2 = ModulePage.Version() == "v2"
+    if page.layout == v2 then
+        return
+    end
+    page.layout = v2
+    for _, place in ipairs(page.placePickers or {}) do
+        place()
+    end
+    page.selector:SetShown(not v2)
+    page.tabBar:SetShown(v2)
+    for _, entry in pairs(page.tabs) do
+        entry.frame:SetPoint("TOPLEFT", 0, -TAB_TOP[v2 and "v2" or "v1"])
+    end
+end
+
 local function build(page, frame)
     local module = page.module
     local general, appearance, tabViews = placeOptions(module)
@@ -328,6 +532,7 @@ local function build(page, frame)
             entry.frame:SetShown(name == key)
         end
         page.selector:SetValue(key)
+        page.tabBar:SetValue(key)
         page.Refresh()
         if ns.Window.current == page then
             ns.Window.RefreshHeader()
@@ -336,6 +541,9 @@ local function build(page, frame)
 
     page.selector = Widgets.Segmented(frame, choices, page.ShowTab)
     page.selector:SetPoint("TOPLEFT")
+    page.tabBar = ns.ListV2.Tabs(frame, choices, page.ShowTab)
+    page.tabBar:SetPoint("TOPLEFT")
+    page.tabBar:SetPoint("TOPRIGHT")
 
     page.enabled = Widgets.Toggle(frame, function(value)
         E.store:SetModuleEnabled(module.name, value)
@@ -432,6 +640,7 @@ function ModulePage.AddAll()
                 if not page.lists then
                     return
                 end
+                applyLayout(page)
                 page.enabled:SetValue(E.store:IsModuleEnabled(module.name))
                 page.mover:SetShown(ns.MoverSession.HasElements(module.name))
                 for _, list in ipairs(page.lists) do
@@ -459,6 +668,11 @@ function ModulePage.AddAll()
                     end
                 end
             end
+            --- The button the open tab puts in the window's header (V2's preview), or nil.
+            function page.HeaderAction()
+                local action = page.headerActions and page.headerActions[page.current]
+                return action and { text = action.text(), run = action.run }
+            end
             function page.Select(tab, group)
                 if tab and page.tabs[tab] then
                     page.ShowTab(tab)
@@ -472,6 +686,15 @@ function ModulePage.AddAll()
             end
             -- An option hidden by visibleWhen has no row to show: its tab stays open.
             function page.Reveal(path)
+                -- An advanced option the Basic level hides: show the advanced ones first.
+                if ns.ListV2.HiddenByLevel(page, path) then
+                    E.store:Set("EternityUI", "general.optionsLevel", "advanced")
+                    page.Refresh()
+                end
+                -- In a folded card: unfold it.
+                if ns.ListV2.Unfold(page, path) then
+                    page.Refresh()
+                end
                 for _, list in ipairs(page.lists) do
                     for _, item in ipairs(list.items) do
                         if item.path == path and item.row:IsVisible() then

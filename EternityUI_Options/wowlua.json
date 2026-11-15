@@ -29,6 +29,7 @@
       "src/PageProfiles.lua",
       "src/PageModules.lua",
       "src/ModulePage.lua",
+      "src/ListV2.lua",
       "src/Search.lua",
       "src/MoverSession.lua",
       "src/MoverScene.lua",
