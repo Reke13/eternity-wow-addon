@@ -1,0 +1,16 @@
+-- A bar's opacity reaches its frame and its buttons.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_ActionBars"
+
+@test("a bar's opacity reaches the bar and what its buttons show")
+local function alpha()
+    local module = EternityUI:GetModule(NAME)
+    EternityUI.store:Set(NAME, "bar1.alpha", 0.4)
+    module:Apply(true)
+    local frame = _G.EternityActionBar_bar1
+    expect(math.abs(frame:GetAlpha() - 0.4) < 0.01).toBe(true)
+    local button = _G.EternityActionBar_bar1Button1
+    expect(button:GetEffectiveAlpha() < 0.5).toBe(true)
+    EternityUI.store:Reset(NAME)
+end

@@ -393,6 +393,20 @@
       ]
     },
     {
+      "id": "all",
+      "label": { "enUS": "All bars", "esES": "Todas las barras" },
+      "options": [
+        {"id": "size", "type": "range", "default": 36, "min": 16, "max": 64, "step": 1, "label": {"enUS": "Button size", "esES": "Tamaño de los botones"}},
+        {"id": "spacing", "type": "range", "default": 4, "min": 0, "max": 20, "step": 1, "label": {"enUS": "Spacing", "esES": "Separación"}},
+        {"id": "scale", "type": "range", "default": 1, "min": 0.5, "max": 2, "step": 0.05, "label": {"enUS": "Scale", "esES": "Escala"}},
+        {"id": "alpha", "type": "range", "default": 1, "min": 0, "max": 1, "step": 0.05, "label": {"enUS": "Opacity", "esES": "Opacidad"}},
+        {"id": "visibility", "type": "select", "default": "always", "label": {"enUS": "Show", "esES": "Mostrar"}, "values": [{"value": "always", "label": {"enUS": "Always", "esES": "Siempre"}}, {"value": "combat", "label": {"enUS": "In combat", "esES": "En combate"}}, {"value": "nocombat", "label": {"enUS": "Out of combat", "esES": "Fuera de combate"}}, {"value": "target", "label": {"enUS": "With a target", "esES": "Con objetivo"}}, {"value": "mouseover", "label": {"enUS": "On mouseover", "esES": "Al pasar el ratón"}}, {"value": "custom", "label": {"enUS": "Custom conditions", "esES": "Condiciones propias"}}], "description": {"enUS": "Always hidden in pet battles.", "esES": "Siempre oculta en duelos de mascotas."}},
+        {"id": "fadedAlpha", "type": "range", "default": 0, "min": 0, "max": 1, "step": 0.05, "label": {"enUS": "Opacity without the mouse", "esES": "Opacidad sin el ratón"}, "description": {"enUS": "For \"On mouseover\".", "esES": "Para «Al pasar el ratón»."}},
+        {"id": "conditions", "type": "text", "default": "[combat] show; hide", "maxLength": 200, "label": {"enUS": "Custom conditions", "esES": "Condiciones propias"}, "description": {"enUS": "Macro conditions ending in show or hide, e.g. [mod:shift][combat] show; hide.", "esES": "Condiciones de macro que acaban en show o hide, p. ej. [mod:shift][combat] show; hide."}},
+        {"id": "showGrid", "type": "toggle", "default": false, "label": {"enUS": "Show empty slots", "esES": "Mostrar las ranuras vacías"}}
+      ]
+    },
+    {
       "id": "bar1",
       "label": { "enUS": "Bar 1 (main)", "esES": "Barra 1 (principal)" },
       "options": [
@@ -423,6 +437,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 36,
           "min": 16,
@@ -432,6 +447,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -454,6 +470,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -463,6 +480,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -472,6 +490,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -487,6 +506,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -497,6 +517,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -548,6 +569,7 @@
         },
         {
           "id": "showGrid",
+          "inherit": "all.showGrid",
           "type": "toggle",
           "default": false,
           "label": { "enUS": "Show empty slots", "esES": "Mostrar las ranuras vacías" }
@@ -585,6 +607,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 36,
           "min": 16,
@@ -594,6 +617,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -616,6 +640,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -625,6 +650,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -634,6 +660,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -649,6 +676,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -659,6 +687,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -674,6 +703,7 @@
         },
         {
           "id": "showGrid",
+          "inherit": "all.showGrid",
           "type": "toggle",
           "default": false,
           "label": { "enUS": "Show empty slots", "esES": "Mostrar las ranuras vacías" }
@@ -711,6 +741,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 36,
           "min": 16,
@@ -720,6 +751,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -742,6 +774,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -751,6 +784,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -760,6 +794,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -775,6 +810,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -785,6 +821,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -800,6 +837,7 @@
         },
         {
           "id": "showGrid",
+          "inherit": "all.showGrid",
           "type": "toggle",
           "default": false,
           "label": { "enUS": "Show empty slots", "esES": "Mostrar las ranuras vacías" }
@@ -837,6 +875,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 36,
           "min": 16,
@@ -846,6 +885,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -868,6 +908,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -877,6 +918,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -886,6 +928,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -901,6 +944,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -911,6 +955,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -926,6 +971,7 @@
         },
         {
           "id": "showGrid",
+          "inherit": "all.showGrid",
           "type": "toggle",
           "default": false,
           "label": { "enUS": "Show empty slots", "esES": "Mostrar las ranuras vacías" }
@@ -963,6 +1009,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 36,
           "min": 16,
@@ -972,6 +1019,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -994,6 +1042,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -1003,6 +1052,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -1012,6 +1062,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -1027,6 +1078,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -1037,6 +1089,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -1052,6 +1105,7 @@
         },
         {
           "id": "showGrid",
+          "inherit": "all.showGrid",
           "type": "toggle",
           "default": false,
           "label": { "enUS": "Show empty slots", "esES": "Mostrar las ranuras vacías" }
@@ -1089,6 +1143,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 36,
           "min": 16,
@@ -1098,6 +1153,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -1120,6 +1176,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -1129,6 +1186,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -1138,6 +1196,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -1153,6 +1212,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -1163,6 +1223,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -1178,6 +1239,7 @@
         },
         {
           "id": "showGrid",
+          "inherit": "all.showGrid",
           "type": "toggle",
           "default": false,
           "label": { "enUS": "Show empty slots", "esES": "Mostrar las ranuras vacías" }
@@ -1215,6 +1277,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 36,
           "min": 16,
@@ -1224,6 +1287,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -1246,6 +1310,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -1255,6 +1320,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -1264,6 +1330,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -1279,6 +1346,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -1289,6 +1357,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -1304,6 +1373,7 @@
         },
         {
           "id": "showGrid",
+          "inherit": "all.showGrid",
           "type": "toggle",
           "default": false,
           "label": { "enUS": "Show empty slots", "esES": "Mostrar las ranuras vacías" }
@@ -1341,6 +1411,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 36,
           "min": 16,
@@ -1350,6 +1421,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -1372,6 +1444,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -1381,6 +1454,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -1390,6 +1464,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -1405,6 +1480,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -1415,6 +1491,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -1430,6 +1507,7 @@
         },
         {
           "id": "showGrid",
+          "inherit": "all.showGrid",
           "type": "toggle",
           "default": false,
           "label": { "enUS": "Show empty slots", "esES": "Mostrar las ranuras vacías" }
@@ -1467,6 +1545,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 30,
           "min": 16,
@@ -1476,6 +1555,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -1498,6 +1578,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -1507,6 +1588,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -1516,6 +1598,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -1531,6 +1614,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -1541,6 +1625,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -1587,6 +1672,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 30,
           "min": 16,
@@ -1596,6 +1682,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -1618,6 +1705,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -1627,6 +1715,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -1636,6 +1725,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -1651,6 +1741,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -1661,6 +1752,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -1676,6 +1768,7 @@
         },
         {
           "id": "showGrid",
+          "inherit": "all.showGrid",
           "type": "toggle",
           "default": false,
           "label": { "enUS": "Show empty slots", "esES": "Mostrar las ranuras vacías" }
@@ -1705,6 +1798,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 0,
           "min": -10,
@@ -1727,6 +1821,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -1736,6 +1831,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -1745,6 +1841,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -1759,6 +1856,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -1769,6 +1867,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] hide; show",
           "maxLength": 200,
@@ -1804,6 +1903,7 @@
         },
         {
           "id": "size",
+          "inherit": "all.size",
           "type": "range",
           "default": 30,
           "min": 16,
@@ -1823,6 +1923,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -1845,6 +1946,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -1854,6 +1956,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -1863,6 +1966,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -1877,6 +1981,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -1887,6 +1992,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] hide; show",
           "maxLength": 200,
@@ -1915,6 +2021,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -1924,6 +2031,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -1933,6 +2041,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -1948,6 +2057,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -1958,6 +2068,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
@@ -2003,6 +2114,7 @@
         },
         {
           "id": "spacing",
+          "inherit": "all.spacing",
           "type": "range",
           "default": 4,
           "min": 0,
@@ -2016,6 +2128,7 @@
         },
         {
           "id": "scale",
+          "inherit": "all.scale",
           "type": "range",
           "default": 1,
           "min": 0.5,
@@ -2025,6 +2138,7 @@
         },
         {
           "id": "alpha",
+          "inherit": "all.alpha",
           "type": "range",
           "default": 1,
           "min": 0,
@@ -2034,6 +2148,7 @@
         },
         {
           "id": "visibility",
+          "inherit": "all.visibility",
           "type": "select",
           "default": "always",
           "label": { "enUS": "Show", "esES": "Mostrar" },
@@ -2049,6 +2164,7 @@
         },
         {
           "id": "fadedAlpha",
+          "inherit": "all.fadedAlpha",
           "type": "range",
           "default": 0,
           "min": 0,
@@ -2059,6 +2175,7 @@
         },
         {
           "id": "conditions",
+          "inherit": "all.conditions",
           "type": "text",
           "default": "[combat] show; hide",
           "maxLength": 200,
