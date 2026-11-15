@@ -4,6 +4,15 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 
 ## Unreleased
 
+### Added
+- Options: a new layout for the modules' pages, picked in Personalization > General ("Options layout"): cards that fold, two columns, a lighter field per option whose tone you set, a mark and a reset button on the options you changed, and a Basic / Advanced level. The classic layout stays the default.
+- Options: in the new layout, a module's preview (Action Bars, Unit Frames) opens in a window beside the options from a button next to the close button.
+- Action Bars: "All bars" settings for size, spacing, scale, opacity and when the bars show. Every bar follows them until you change that setting in the bar itself.
+
+### Changed
+- Action Bars: the preview shows real buttons with your shape, border, backdrop, shadow and icons, and the bar's opacity.
+- Options: sliders update the live preview while you drag them.
+
 ### Fixed
 - Map: with OpenMap (or MoveAny, Mapster, Leatrix Maps) the world map could no longer be dragged. Eternity now leaves the map's position and scale to that addon and says so once in the chat.
 - Minimap: the addon buttons panel opens again with Zygor Guides (it failed with "stack overflow"), and another addon's broken frames no longer stop it.
