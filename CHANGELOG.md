@@ -2,6 +2,11 @@
 
 What changed in each release of the Eternity suite, newest first. Every addon shares the release's version.
 
+## Unreleased
+
+### Fixed
+- Map: with OpenMap (or MoveAny, Mapster, Leatrix Maps) the world map could no longer be dragged. Eternity now leaves the map's position and scale to that addon and says so once in the chat.
+
 ## 0.9.0 (2026-11-14)
 
 ### Added

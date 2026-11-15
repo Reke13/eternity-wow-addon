@@ -78,7 +78,12 @@ SlashCmdList.ETERNITYMAP = function(text)
     end
     if strtrim(text or ""):lower() == "reset" then
         ns.Window:Reset()
-        Core.Print(L.RESET_DONE)
+        local mover = Core.MapMover()
+        if mover then
+            Core.Print(L.MOVER_OWNED:format(mover, mover))
+        else
+            Core.Print(L.RESET_DONE)
+        end
     else
         Core.Print(L.USAGE)
     end

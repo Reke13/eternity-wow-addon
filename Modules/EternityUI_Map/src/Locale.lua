@@ -26,6 +26,7 @@ local strings = {
         RESET_HINT = "Drag to move · Right-click: Blizzard's spot",
         RESET_DONE = "the map is back in Blizzard's spot.",
         USAGE = "/etmap reset puts the map back in Blizzard's spot.",
+        MOVER_OWNED = "%s moves the world map: Eternity leaves the map's position and scale to it (drag the map with %s).",
     },
     esES = {
         TITLE = "Mapa",
@@ -36,6 +37,7 @@ local strings = {
         RESET_HINT = "Arrastra para mover · Clic derecho: sitio de Blizzard",
         RESET_DONE = "el mapa ha vuelto al sitio de Blizzard.",
         USAGE = "/etmap reset devuelve el mapa al sitio de Blizzard.",
+        MOVER_OWNED = "%s mueve el mapa del mundo: Eternity le deja la posición y la escala del mapa (arrástralo con %s).",
     },
 }
 ns.L = setmetatable(strings[GetLocale()] or {}, { __index = strings.enUS })

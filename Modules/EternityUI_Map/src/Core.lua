@@ -38,6 +38,27 @@ function Core.Gamepad()
     return util ~= nil and util.IsGamepadUIEnabled ~= nil and util.IsGamepadUIEnabled() == true
 end
 
+-- Addons that drag, place or scale the windowed map themselves. Two movers on one frame fight:
+-- OpenMap puts its saved spot back on every SetPoint of the map, so our drag froze it.
+Core.MAP_MOVERS = { "OpenMap", "MoveAny", "Mapster", "Leatrix_Maps" }
+
+--- The first loaded addon that moves the windowed map (nil when none does). Asked each time:
+--- those addons may load after this module.
+function Core.MapMover()
+    local addons = _G.C_AddOns
+    local loaded = addons and addons.IsAddOnLoaded or _G.IsAddOnLoaded
+    if not loaded then
+        return nil
+    end
+    for _, name in ipairs(Core.MAP_MOVERS) do
+        local ok, on = pcall(loaded, name)
+        if ok and on then
+            return name
+        end
+    end
+    return nil
+end
+
 --- The account-wide saved state: { version, point = { point, x, y }? }.
 function Core.DB()
     local db = _G.EternityUIMapDB
