@@ -95,6 +95,26 @@ function Store:GetProfile()
     return self.raw.profiles[self:GetProfileName()]
 end
 
+--- What an option is worth while the profile sets none: the value of the option it inherits
+--- (`inherit = "group.option"`, same module) or else its own default. An inheriting option the
+--- player changed keeps its value; set back to what it inherits, it inherits again.
+---@param module string
+---@param path string
+---@return any
+function Store:GetDefault(module, path)
+    local option = Schema.GetOption(module, path)
+    if not option then
+        return nil
+    end
+    if option.inherit and option.inherit ~= path then
+        local inherited = self:Get(module, option.inherit)
+        if inherited ~= nil then
+            return inherited
+        end
+    end
+    return option.default
+end
+
 --- Effective value: the profile's or the default. Returns nil and the reason for an unknown path.
 ---@param module string
 ---@param path string
@@ -107,7 +127,7 @@ function Store:Get(module, path)
     local values = self:GetProfile().values[module]
     local value = values and values[path]
     if value == nil then
-        return option.default
+        return self:GetDefault(module, path)
     end
     return value
 end
@@ -128,7 +148,7 @@ function Store:Set(module, path, value)
     end
     local profile = self:GetProfile()
     local stored = normalized
-    if stored == option.default then
+    if stored == self:GetDefault(module, path) then
         stored = nil
     end
     local values = profile.values[module]
