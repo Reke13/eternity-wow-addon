@@ -1,0 +1,148 @@
+-- Nothing of ours runs inside Blizzard's secure code (group headers setting units, the unit watch
+-- showing a button), and nothing protected is touched in combat: it waits for the end of it.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function set(path, value)
+    EternityUI.store:Set(NAME, path, value)
+end
+
+-- Runs `body` as if in combat (InCombatLockdown true), then leaves combat.
+local function inCombat(body)
+    local saved = InCombatLockdown
+    _G.InCombatLockdown = function()
+        return true
+    end
+    local ok, err = pcall(body)
+    _G.InCombatLockdown = saved
+    if not ok then
+        error(err)
+    end
+end
+
+@test("a new unit attribute or the button showing up runs none of our code right then")
+local function noHooks()
+    local m = module()
+    local f = m.holders.focus.button
+    local calls = 0
+    local original = m.Elements.UpdateAll
+    m.Elements.UpdateAll = function(...)
+        calls = calls + 1
+        return original(...)
+    end
+    local before = f:GetAttribute("unit")
+    f:SetAttribute("unit", "player")
+    local unitThen = f.unit
+    f:Hide()
+    m.Frame.Sync(f)
+    calls = 0
+    f:Show()
+    local callsThen = calls
+    -- Our timer (or events) pick both up.
+    m.Frame.Sync(f)
+    local unitAfter, callsAfter = f.unit, calls
+    m.Elements.UpdateAll = original
+    f:SetAttribute("unit", before)
+    m.Frame.Sync(f)
+    f:Hide()
+    expect(unitThen).toBe(before)
+    expect(callsThen).toBe(0)
+    expect(unitAfter).toBe("player")
+    expect(callsAfter).toBe(1)
+end
+
+@test("in combat the target buttons aren't made or touched; after it, they are, once")
+local function targetsWait()
+    local m = module()
+    m.Groups.FinishBuilding()
+    local f = m.holders.party.header:GetAttribute("child2")
+    expect(f ~= nil).toBe(true)
+    expect(f.targetButton).toBe(nil)
+    local attributes = 0
+    local original = f.SetAttribute
+    f.SetAttribute = function(...)
+        attributes = attributes + 1
+        return original(...)
+    end
+    inCombat(function()
+        set("partyTargets.enabled", true)
+        -- The option waits too; calling the layout again queues it once.
+        m.Targets.Layout(f)
+        m.Targets.Layout(f)
+        expect(f.targetButton).toBe(nil)
+    end)
+    f.SetAttribute = original
+    expect(attributes).toBe(0)
+    EternityUI.Combat.Flush()
+    m:ApplyAll()
+    local t = f.targetButton
+    expect(t ~= nil).toBe(true)
+    expect(t:GetAttribute("unitsuffix")).toBe("target")
+    expect(EternityUI.Combat.Pending()).toBe(0)
+    set("partyTargets.enabled", false)
+end
+
+@test("a group button made in combat waits for the end of it to get its inside")
+local function buildWaits()
+    local m = module()
+    local header = m.holders.party.header
+    local button = CreateFrame("Button", "EternityUIUnitFramesCombatTestButton", UIParent, "SecureUnitButtonTemplate")
+    local clicks = 0
+    local register = button.RegisterForClicks
+    button.RegisterForClicks = function(...)
+        clicks = clicks + 1
+        return register(...)
+    end
+    inCombat(function()
+        header.etInitialConfig(header, button:GetName())
+    end)
+    expect(button.uf).toBe(nil)
+    expect(clicks).toBe(0)
+    EternityUI.Combat.Flush()
+    expect(button.uf ~= nil).toBe(true)
+    expect(clicks).toBe(1)
+    button:Hide()
+end
+
+@test("no secure button of ours has a field Blizzard's secure code reads (bar, buttonType...)")
+local function noSecureFields()
+    local m = module()
+    m.Groups.FinishBuilding()
+    set("partyTargets.enabled", true)
+    local read = { "bar", "buttonType", "isExtra", "popup" }
+    local checked = 0
+    local function check(button)
+        if not button then
+            return
+        end
+        checked = checked + 1
+        for _, field in ipairs(read) do
+            if rawget(button, field) ~= nil then
+                error("field " .. field .. " on " .. tostring(button:GetName()))
+            end
+        end
+    end
+    for _, holder in pairs(m.holders) do
+        check(holder.button)
+        local header = holder.header
+        for i = 1, 40 do
+            local button = header and header:GetAttribute("child" .. i)
+            if button then
+                check(button)
+                check(button.targetButton)
+            end
+        end
+    end
+    expect(checked > 10).toBe(true)
+    -- The target button gets its unit from its parent, as the unit watch asks for it.
+    local f = m.holders.party.header:GetAttribute("child1")
+    if SecureButton_GetUnit and f:GetAttribute("unit") then
+        expect(SecureButton_GetUnit(f.targetButton)).toBe(f:GetAttribute("unit") .. "target")
+    end
+    set("partyTargets.enabled", false)
+end

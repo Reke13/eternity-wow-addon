@@ -12,6 +12,9 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 - Alerts: in General, where the names go (below, above, beside or inside the icon) and their size, the size of the value, the icon border, and the countdown's position (inside or outside the icon), size, color and a border of its own color and size.
 - Alerts: each rule can set its own icon size, show or hide its name, glow in its own color, use an icon of its own and turn its countdown off.
 - Alerts: rules can have an "up to level" besides "from level": they show only between the two, both included (no limit by default).
+- Unit frames: threat (aggro) on every frame: a border or glow, yellow when the unit is about to pull aggro and orange or red once it has it (on enemies, your threat on them). Each frame can switch it off; the look, the colors and the early warning are in General.
+- Unit frames: each group member's target beside their frame (off by default): a small health bar with an icon (raid mark, class or portrait), name and percent, with its own size, place and colors. Click it to target that unit.
+- Unit frames: raid tanks in a frame of their own (main tanks and assists, or the tank role), each with their target, buffs on, and their own aura filters.
 
 ### Changed
 - Action Bars: the preview shows real buttons with your shape, border, backdrop, shadow and icons, and the bar's opacity.
@@ -20,6 +23,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 ### Fixed
 - Map: with OpenMap (or MoveAny, Mapster, Leatrix Maps) the world map could no longer be dragged. Eternity now leaves the map's position and scale to that addon and says so once in the chat.
 - Minimap: the addon buttons panel opens again with Zygor Guides (it failed with "stack overflow"), and another addon's broken frames no longer stop it.
+- Unit frames: the level of NPCs and enemy players is shown in its difficulty color (gray to red) instead of always white.
 
 ## 0.9.0 (2026-11-14)
 

@@ -6,7 +6,8 @@
 --   Portrait: class icon, 2D portrait or 3D model.
 --   Cast: the unit's cast or channel, on the cast's Duration object (SetTimerDuration).
 --   Auras: buffs and debuffs in Blizzard's aura container (AuraBox.lua), so they show in combat.
---   Indicators: raid target, leader, combat, resting, PvP, ready check, highlights and range.
+--   Indicators: raid target, leader, combat, resting, PvP, ready check, highlights, threat and
+--     range.
 
 ---@type string, EternityUIUnitFramesNamespace
 local addonName, ns = ...
@@ -211,6 +212,8 @@ function Elements.Create(f)
     f.ffaIcon:SetTexture(PVP_ICONS.FFA)
     f.ffaIcon:SetTexCoord(0, 0.65, 0, 0.65)
     f.readyIcon = top:CreateTexture(nil, "OVERLAY", nil, 3)
+
+    Elements.CreateThreat(f)
 
     f.hover = f.overlay:CreateTexture(nil, "OVERLAY", nil, -1)
     f.hover:SetTexture("Interface\\Buttons\\WHITE8X8")
@@ -480,10 +483,41 @@ function Elements.Layout(f, width, height)
     local hc = Style.Color("highlight")
     f.hover:SetVertexColor(hc[1], hc[2], hc[3], 0.12)
     Shape.Paint(f.targeted, 0, nil, { hc[1], hc[2], hc[3], 0.9 })
+    Elements.LayoutThreat(f)
     Elements.LayoutAuras(f, width)
 end
 
 -- Health --------------------------------------------------------------------------------------
+
+-- The red of a level too high to show (skull), as Blizzard's target frame paints it.
+local SKULL_COLOR = { r = 1, g = 0.1, b = 0.1 }
+
+--- The color a unit's level is written in: by how hard it is for you (Blizzard's creature
+--- difficulty colors: gray, green, yellow, orange, red) for NPCs and for players you can
+--- attack (the other faction, or flagged); nil (the text's own color) for friendly players, or
+--- when the game won't say (a secret answer) or the option is off.
+---@param unit string
+---@param level number a plain level (0 or less: unknown, a skull)
+---@return table? { r, g, b }
+function Elements.LevelColor(unit, level)
+    if not opt("colors.levelColor") then
+        return nil
+    end
+    if Plain(try(UnitIsPlayer, unit), nil) ~= false then
+        -- A player (or unknown): only if you can attack them.
+        if Plain(try(UnitCanAttack, "player", unit), nil) ~= true then
+            return nil
+        end
+    end
+    if level <= 0 then
+        return SKULL_COLOR
+    end
+    local color = GetCreatureDifficultyColor and try(GetCreatureDifficultyColor, level)
+    if type(color) == "table" and type(color.r) == "number" and not secret(color.r) then
+        return color
+    end
+    return nil
+end
 
 local function levelText(unit)
     local level = Plain(UnitLevel(unit), nil)
@@ -499,8 +533,18 @@ local function levelText(unit)
     elseif kind == "rare" then
         value = value .. "R"
     end
+    local color = Elements.LevelColor(unit, level)
+    if color then
+        value = ("|cff%02x%02x%02x%s|r"):format(
+            math.floor(color.r * 255 + 0.5),
+            math.floor(color.g * 255 + 0.5),
+            math.floor(color.b * 255 + 0.5),
+            value
+        )
+    end
     return value
 end
+Elements.LevelText = levelText
 
 -- The color of the health bar: offline or dead, tapped, class, reaction or the health color.
 local function healthColor(unit)
@@ -531,6 +575,8 @@ local function healthColor(unit)
     end
     return Style.Color("health")
 end
+
+Elements.HealthColor = healthColor
 
 -- Dead, ghost or offline, or nil.
 local function statusOf(unit)
@@ -564,6 +610,12 @@ local function percentOf(fn, unit)
         end
     end
     return nil
+end
+
+--- A unit's health percent (0-100, may be secret), or nil.
+---@param unit string
+function Elements.HealthPercent(unit)
+    return percentOf(UnitHealthPercent, unit)
 end
 
 local function healthRightText(fs, mode, unit, style)
@@ -993,6 +1045,7 @@ function Elements.UpdateIndicators(f)
     Elements.UpdateStatus(f)
     Elements.UpdateReady(f)
     Elements.UpdateTargeted(f)
+    Elements.UpdateThreat(f)
 end
 
 function Elements.UpdateReady(f)
@@ -1021,6 +1074,149 @@ function Elements.UpdateTargeted(f)
     else
         f.targeted.border:SetAlpha(same and 1 or 0)
     end
+end
+
+-- Threat ----------------------------------------------------------------------------------------
+-- A border around the frame, or a glow on its edges, in the color of the unit's threat state, as
+-- UnitThreatSituation gives it: 1 about to pull aggro, 2 tanking but not securely, 3 tanking
+-- (0 or nil: nothing). What each frame asks:
+--   your frame, your pet's, group and raid members and their pets: the unit's own highest state
+--     on any enemy, UnitThreatSituation(unit);
+--   target, focus and target of target: on an enemy, your threat on it,
+--     UnitThreatSituation("player", unit); on a friend, its own state, as above.
+-- Forever can hand the state as a secret (SecretWhenUnitThreatStateRestricted), though its own
+-- docs say single-unit queries and the player against a target are generally plain. A secret
+-- can't be compared, and a color curve won't take one from addon code (Evaluate is
+-- AllowedWhenUntainted), so a secret state shows nothing. Updated on the threat events, not polled.
+
+-- Frames whose unit may be an enemy: there, the player's threat on it.
+local ENEMY_FRAMES = { target = true, focus = true, targettarget = true }
+Elements.THREAT_ENEMY_FRAMES = ENEMY_FRAMES
+-- The threat state -> its color option.
+local THREAT_COLORS = { "threat.high", "threat.insecure", "threat.tanking" }
+local THREAT_BORDER, THREAT_GLOW_OUT = 2, 3
+local GLOW_ATLAS = "RaidFrame-AgroFrame"
+
+--- Builds the threat border and glow (once), hidden.
+---@param f table
+function Elements.CreateThreat(f)
+    local holder = CreateFrame("Frame", nil, f)
+    holder:SetAllPoints(f)
+    -- Over the bars, under the texts and icons.
+    holder:SetFrameLevel(f.health:GetFrameLevel() + 4)
+    local edges = {}
+    for i = 1, 4 do
+        local edge = holder:CreateTexture(nil, "OVERLAY")
+        edge:SetTexture("Interface\\Buttons\\WHITE8X8")
+        edges[i] = edge
+    end
+    holder.edges = edges
+    local glow = holder:CreateTexture(nil, "OVERLAY")
+    local info = C_Texture and C_Texture.GetAtlasInfo and try(C_Texture.GetAtlasInfo, GLOW_ATLAS)
+    if info then
+        glow:SetAtlas(GLOW_ATLAS)
+    else
+        glow:SetTexture("Interface\\RaidFrame\\Raid-FrameHighlights")
+        glow:SetTexCoord(0.0078125, 0.5546875, 0.0078125, 0.2734375)
+    end
+    glow:SetBlendMode("ADD")
+    holder.glow = glow
+    holder:Hide()
+    f.threat = holder
+end
+
+--- Places the border (just outside the frame) or the glow (on its edges) by the "Threat look" option.
+---@param f table
+function Elements.LayoutThreat(f)
+    local holder = f.threat
+    if not holder then
+        return
+    end
+    local glow = opt("threat.style") == "glow"
+    holder.style = glow and "glow" or "border"
+    local e = holder.edges
+    local out = (opt("look.border") and 1 or 0) + THREAT_BORDER
+    local size = THREAT_BORDER
+    place(e[1], "BOTTOMLEFT", f, "TOPLEFT", -out, out - size)
+    e[1]:SetPoint("BOTTOMRIGHT", f, "TOPRIGHT", out, out - size)
+    e[1]:SetHeight(size)
+    place(e[2], "TOPLEFT", f, "BOTTOMLEFT", -out, -out + size)
+    e[2]:SetPoint("TOPRIGHT", f, "BOTTOMRIGHT", out, -out + size)
+    e[2]:SetHeight(size)
+    place(e[3], "TOPRIGHT", f, "TOPLEFT", -out + size, out - size)
+    e[3]:SetPoint("BOTTOMRIGHT", f, "BOTTOMLEFT", -out + size, -out + size)
+    e[3]:SetWidth(size)
+    place(e[4], "TOPLEFT", f, "TOPRIGHT", out - size, out - size)
+    e[4]:SetPoint("BOTTOMLEFT", f, "BOTTOMRIGHT", out - size, -out + size)
+    e[4]:SetWidth(size)
+    for _, edge in ipairs(e) do
+        edge:SetShown(not glow)
+    end
+    holder.glow:ClearAllPoints()
+    holder.glow:SetPoint("TOPLEFT", f, "TOPLEFT", -THREAT_GLOW_OUT, THREAT_GLOW_OUT)
+    holder.glow:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", THREAT_GLOW_OUT, -THREAT_GLOW_OUT)
+    holder.glow:SetShown(glow)
+end
+
+--- The threat state a frame shows: 0-3, a secret, or nil when there's none.
+---@param f table
+---@return any
+function Elements.ThreatStatus(f)
+    local unit = f.unit
+    if not (UnitThreatSituation and unit) then
+        return nil
+    end
+    if ENEMY_FRAMES[f.uf.key] then
+        -- A plain "can't attack" is a friend: its own state. An enemy, or a secret answer: the
+        -- player's threat on it (nil on a unit without a threat list).
+        if Plain(try(UnitCanAttack, "player", unit), nil) == false then
+            return try(UnitThreatSituation, unit)
+        end
+        return try(UnitThreatSituation, "player", unit)
+    end
+    return try(UnitThreatSituation, unit)
+end
+
+--- Shows a threat state on the frame (nothing for 0, nil or a secret; nothing for 1 when "Also
+--- warn of high threat" is off), in its color option.
+---@param f table
+---@param status any
+function Elements.ShowThreat(f, status)
+    local holder = f.threat
+    if not holder then
+        return
+    end
+    if
+        secret(status)
+        or type(status) ~= "number"
+        or status < 1
+        or not THREAT_COLORS[status]
+        or (status == 1 and not opt("threat.warning"))
+    then
+        holder:Hide()
+        holder.status = nil
+        return
+    end
+    local c = Theme.RGBA(opt(THREAT_COLORS[status]))
+    for _, edge in ipairs(holder.edges) do
+        edge:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+    end
+    holder.glow:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+    holder.status = status
+    holder:Show()
+end
+
+--- The frame's threat, from the unit as it is now, if the frame's option is on.
+---@param f table
+function Elements.UpdateThreat(f)
+    if not f.threat then
+        return
+    end
+    if not (f.unit and U(f.uf.key, "Indicators", "threat")) then
+        Elements.ShowThreat(f, nil)
+        return
+    end
+    Elements.ShowThreat(f, Elements.ThreatStatus(f))
 end
 
 -- Spells of each class whose range tells whether a unit is in reach: an attack for enemies, a

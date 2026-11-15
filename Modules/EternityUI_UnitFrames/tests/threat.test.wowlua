@@ -1,0 +1,224 @@
+-- Threat (aggro): a border or glow in the color of the unit's threat state, on every frame by
+-- default, from the threat events; the player's threat on enemies, a unit's own state elsewhere;
+-- a secret state never compared.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+-- A value that plays a secret: nothing may compare it.
+local SECRET = {}
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function set(path, value)
+    EternityUI.store:Set(NAME, path, value)
+end
+
+-- Runs `body` with some globals replaced, restoring them afterwards.
+local function with(globals, body)
+    local saved = {}
+    for name, value in pairs(globals) do
+        saved[name] = _G[name]
+        _G[name] = value
+    end
+    local ok, err = pcall(body, module())
+    for name in pairs(globals) do
+        _G[name] = saved[name]
+    end
+    if not ok then
+        error(err)
+    end
+end
+
+-- The game's threat answers: `status` for any question; `asked` records the last one.
+local function game(status, canAttack, asked)
+    return {
+        issecretvalue = function(value)
+            return value == SECRET
+        end,
+        UnitThreatSituation = function(a, b)
+            if asked then
+                asked[1], asked[2] = a, b
+            end
+            return status
+        end,
+        UnitCanAttack = function()
+            return canAttack
+        end,
+    }
+end
+
+-- Fires an event at the module's event frame.
+local function fire(m, event, unit)
+    local events = m.Frame.events
+    events:GetScript("OnEvent")(events, event, unit)
+end
+
+-- The red, green and blue of the border's first edge, rounded to hundredths.
+local function edgeColor(f)
+    local r, g, b = f.threat.edges[1]:GetVertexColor()
+    local function round(v)
+        return math.floor(v * 100 + 0.5) / 100
+    end
+    return round(r), round(g), round(b)
+end
+
+@test("threat is on by default on every frame, as a border, warning of high threat")
+local function defaults()
+    local opt = module().Style.Opt
+    for _, key in ipairs({ "player", "pet", "target", "targettarget", "focus", "party", "raid", "grouppets" }) do
+        expect(opt(key .. "Indicators.threat")).toBe(true)
+    end
+    expect(opt("threat.style")).toBe("border")
+    expect(opt("threat.warning")).toBe(true)
+end
+
+@test("the threat events show and hide it on the player's frame, in each level's color")
+local function events()
+    local f = module().holders.player.button
+    with(game(3), function(m)
+        fire(m, "UNIT_THREAT_SITUATION_UPDATE", "player")
+        expect(f.threat:IsShown()).toBe(true)
+        expect(f.threat.status).toBe(3)
+        local r, g, b = edgeColor(f)
+        -- #EF4444
+        expect(r).toBe(0.94)
+        expect(g).toBe(0.27)
+        expect(b).toBe(0.27)
+    end)
+    with(game(1), function(m)
+        fire(m, "UNIT_THREAT_SITUATION_UPDATE", "player")
+        expect(f.threat:IsShown()).toBe(true)
+        local r, g, b = edgeColor(f)
+        -- #FACC15
+        expect(r).toBe(0.98)
+        expect(g).toBe(0.8)
+        expect(b).toBe(0.08)
+    end)
+    with(game(0), function(m)
+        fire(m, "UNIT_THREAT_SITUATION_UPDATE", "player")
+        expect(f.threat:IsShown()).toBe(false)
+    end)
+    with(game(2), function(m)
+        fire(m, "UNIT_THREAT_LIST_UPDATE", "player")
+        expect(f.threat:IsShown()).toBe(true)
+        expect(f.threat.status).toBe(2)
+    end)
+    with(game(nil), function(m)
+        fire(m, "UNIT_THREAT_SITUATION_UPDATE", "player")
+        expect(f.threat:IsShown()).toBe(false)
+    end)
+end
+
+@test("a frame's colors follow their options")
+local function colors()
+    local f = module().holders.player.button
+    set("threat.tanking", "#0000FF")
+    with(game(3), function(m)
+        m.Elements.UpdateThreat(f)
+        local r, g, b = edgeColor(f)
+        expect(r).toBe(0)
+        expect(g).toBe(0)
+        expect(b).toBe(1)
+    end)
+    set("threat.tanking", "#EF4444")
+end
+
+@test("without the high threat warning, only aggro shows")
+local function warning()
+    local f = module().holders.player.button
+    set("threat.warning", false)
+    with(game(1), function(m)
+        m.Elements.UpdateThreat(f)
+        expect(f.threat:IsShown()).toBe(false)
+    end)
+    with(game(2), function(m)
+        m.Elements.UpdateThreat(f)
+        expect(f.threat:IsShown()).toBe(true)
+    end)
+    set("threat.warning", true)
+end
+
+@test("turned off, it never shows, whatever the events say")
+local function off()
+    local f = module().holders.player.button
+    set("playerIndicators.threat", false)
+    with(game(3), function(m)
+        fire(m, "UNIT_THREAT_SITUATION_UPDATE", "player")
+        expect(f.threat:IsShown()).toBe(false)
+        m.Elements.UpdateAll(f)
+        expect(f.threat:IsShown()).toBe(false)
+    end)
+    set("playerIndicators.threat", true)
+    with(game(3), function(m)
+        m.Elements.UpdateThreat(f)
+        expect(f.threat:IsShown()).toBe(true)
+    end)
+end
+
+@test("a secret threat state is never compared and shows nothing")
+local function secretState()
+    local f = module().holders.player.button
+    with(game(SECRET), function(m)
+        local ok = pcall(m.Elements.UpdateThreat, f)
+        expect(ok).toBe(true)
+        expect(f.threat:IsShown()).toBe(false)
+    end)
+end
+
+@test("an enemy frame shows the player's threat on it; a friendly one its own state")
+local function enemy()
+    local m = module()
+    local f = m.holders.target.button
+    local saved = f.unit
+    f.unit = "target"
+    local asked = {}
+    with(game(2, true, asked), function()
+        m.Elements.UpdateThreat(f)
+        expect(asked[1]).toBe("player")
+        expect(asked[2]).toBe("target")
+        expect(f.threat:IsShown()).toBe(true)
+    end)
+    -- A secret "can attack" still asks for the player's threat.
+    with(game(3, SECRET, asked), function()
+        m.Elements.UpdateThreat(f)
+        expect(asked[1]).toBe("player")
+        expect(asked[2]).toBe("target")
+    end)
+    with(game(3, false, asked), function()
+        m.Elements.UpdateThreat(f)
+        expect(asked[1]).toBe("target")
+        expect(asked[2]).toBe(nil)
+        expect(f.threat:IsShown()).toBe(true)
+    end)
+    -- Your own frame (as the pet's, group and raid ones) always asks about its unit.
+    local p = m.holders.player.button
+    with(game(3, true, asked), function()
+        m.Elements.UpdateThreat(p)
+        expect(asked[1]).toBe("player")
+        expect(asked[2]).toBe(nil)
+    end)
+    f.unit = saved
+    m.Elements.ShowThreat(f, nil)
+end
+
+@test("the glow look shows the glow instead of the border")
+local function glow()
+    local m = module()
+    local f = m.holders.player.button
+    set("threat.style", "glow")
+    with(game(3), function()
+        m.Elements.UpdateThreat(f)
+        expect(f.threat:IsShown()).toBe(true)
+        expect(f.threat.glow:IsShown()).toBe(true)
+        expect(f.threat.edges[1]:IsShown()).toBe(false)
+    end)
+    set("threat.style", "border")
+    expect(f.threat.glow:IsShown()).toBe(false)
+    expect(f.threat.edges[1]:IsShown()).toBe(true)
+    with(game(0), function()
+        m.Elements.UpdateThreat(f)
+    end)
+end

@@ -17,7 +17,7 @@ local STRIP = 34
 local PAD = 16
 local MAX_W, MAX_H = 760, 560
 local TICK = 0.5
-local SAMPLES = { party = 4, raid = 10, grouppets = 4 }
+local SAMPLES = { party = 4, raid = 10, grouppets = 4, tanks = 3 }
 local CAST_ICON = 135812
 local ICONS = "Interface\\Icons\\"
 
@@ -315,6 +315,8 @@ local function samplePerson(f, person, index)
     f.targeted.border:SetAlpha((f.uf.group and on("targetHighlight") and person.target) and 1 or 0)
     local alive = not person.dead and not person.offline
     sampleStatus(f, alive and index % 2 == 1, alive and index % 3 == 1 and sampleFaction() or nil)
+    -- Threat: none, about to pull, tanking loosely, tanking, in turns.
+    Elements.ShowThreat(f, (alive and on("threat")) and (index - 1) % 4 or nil)
     local rangeAlpha = on("rangeAlpha")
     f:SetAlpha((rangeAlpha and index == 3) and rangeAlpha or 1)
 end
@@ -377,9 +379,13 @@ function Preview.Draw()
             if def.group then
                 local list = def.pets and PETS or PEOPLE
                 samplePerson(f, list[(n % #list) + 1], n + 1)
+                ns.Targets.Layout(f)
+                ns.Targets.Sample(f, n + 1)
             else
                 -- The real unit, with the icons a fight would show.
+                ns.Targets.Layout(f)
                 sampleStatus(f, true, sampleFaction())
+                Elements.ShowThreat(f, U(key, "Indicators", "threat") and 3 or nil)
                 if U(key, "Indicators", "raidTarget") then
                     Elements.SetRaidIcon(f.raidIcon, 8)
                 end
@@ -395,6 +401,9 @@ function Preview.Draw()
     end
     -- Room around for texts, cast bars and auras outside the frames.
     local margin = math.max(U(key, "Auras", "size") * 2 + 24, 60)
+    if def.targets and U(key, "Targets", "enabled") then
+        margin = math.max(margin, U(key, "Targets", "width") + U(key, "Targets", "gap") + 12)
+    end
     local spanW, spanH = (maxX - minX) + margin * 2, (maxY - minY) + margin * 2
     local scale = math.min(1, (MAX_W - PAD * 2) / spanW, (MAX_H - 60) / spanH) * U(key, "", "scale")
     w.content:SetScale(scale)

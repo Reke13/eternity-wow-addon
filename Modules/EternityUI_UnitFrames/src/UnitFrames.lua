@@ -2,8 +2,8 @@
 -- Each one has its own size, bars, texts, auras and icons (Elements.lua), is placed with the Mover
 -- and can hide Blizzard's (Blizzard.lua). Single frames are secure unit buttons (Frame.lua); the
 -- group and the raid are secure group headers (Groups.lua).
--- Options page: "General" with the frame picked on top ("General" there holds the look and the
--- colors of all of them).
+-- Options page: "General" with the frame picked on top ("General" there holds the look, the
+-- colors and the threat look of all of them).
 -- Everything protected (sizes, places, shown or not, header attributes) changes only out of
 -- combat: a change made in combat waits for the end of it.
 
@@ -17,11 +17,16 @@ local U = Style.U
 
 local SECTIONS = { "", "Bars", "Text", "Auras", "Buffs", "Debuffs", "Indicators" }
 
-local VIEWS = { { id = "general", text = L.GENERAL, sections = { { group = "look" }, { group = "colors" } } } }
+local VIEWS = {
+    { id = "general", text = L.GENERAL, sections = { { group = "look" }, { group = "colors" }, { group = "threat" } } },
+}
 for _, def in ipairs(ns.UNITS) do
     local sections = {}
     for _, section in ipairs(SECTIONS) do
         sections[#sections + 1] = { group = def.key .. section }
+    end
+    if def.targets then
+        sections[#sections + 1] = { group = def.key .. "Targets" }
     end
     VIEWS[#VIEWS + 1] = { id = def.key, text = def.label, sections = sections }
 end
@@ -55,6 +60,7 @@ local Module = {
     Blizzard = Blizzard,
     Style = Style,
     Elements = ns.Elements,
+    Targets = ns.Targets,
     AuraBox = ns.AuraBox,
 }
 
