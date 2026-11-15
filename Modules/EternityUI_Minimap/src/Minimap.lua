@@ -65,6 +65,52 @@ local GAP, PAD, MARGIN = 4, 8, 12
 local INFO_ITEMS = { "zone", "clock", "coords" }
 local INFO_SLOTS = { "above", "top", "bottom", "below" }
 
+-- Reading another frame's children, safely. Other addons replace GetChildren on Minimap (Zygor
+-- hides its waypoints behind a Lua wrapper), and a frame with thousands of children (Zygor's route
+-- dots) overflows the Lua stack when the client returns them all at once. So the method comes
+-- from the frame's metatable (not the replaced one), it's only called when the child count fits,
+-- and any error gives nil instead of breaking the caller.
+local childLimit = { max = 2000 }
+
+local function originalMethod(frame, method)
+    local mt = getmetatable(frame)
+    local index = type(mt) == "table" and rawget(mt, "__index")
+    local fn = type(index) == "table" and rawget(index, method)
+    if type(fn) == "function" then
+        return fn
+    end
+    fn = frame[method]
+    return type(fn) == "function" and fn or nil
+end
+
+local function packChildren(getChildren, frame)
+    return { getChildren(frame) }
+end
+
+--- The children of `frame` as a list, or nil if they can't be read (errors, too many of them).
+local function readChildren(frame)
+    local ok, getNum, getChildren = pcall(function()
+        return originalMethod(frame, "GetNumChildren"), originalMethod(frame, "GetChildren")
+    end)
+    if not ok or not getChildren then
+        return nil
+    end
+    if getNum then
+        local okNum, count = pcall(getNum, frame)
+        if not okNum or type(count) ~= "number" or (issecretvalue and issecretvalue(count)) then
+            return nil
+        end
+        if count > childLimit.max then
+            return nil
+        end
+    end
+    local okList, list = pcall(packChildren, getChildren, frame)
+    if okList and type(list) == "table" then
+        return list
+    end
+    return nil
+end
+
 -- Blizzard elements that can be hidden: option → frames (those that exist on this client).
 local function cluster()
     return _G.MinimapCluster
@@ -82,7 +128,7 @@ local function hasCycleAtlas(frame, depth)
         end
     end
     if depth > 0 then
-        for _, child in ipairs({ frame:GetChildren() }) do
+        for _, child in ipairs(readChildren(frame) or {}) do
             if hasCycleAtlas(child, depth - 1) then
                 return true
             end
@@ -100,7 +146,7 @@ local function findDayNight()
     if not container then
         return nil
     end
-    for _, child in ipairs({ container:GetChildren() }) do
+    for _, child in ipairs(readChildren(container) or {}) do
         if child ~= Minimap and hasCycleAtlas(child, 1) then
             dayNightFrame = child
             return child
@@ -164,7 +210,7 @@ local BLIZZARD_NAMES = {
     GarrisonLandingPageMinimapButton = true,
 }
 -- Other addons' map pins: they must stay on the map.
-local PIN_PATTERNS = { "^HereBeDragons", "^HandyNotes", "^GatherMate", "^TomTom", "^Questie", "Pin%d*$" }
+local PIN_PATTERNS = { "^HereBeDragons", "^HandyNotes", "^GatherMate", "^TomTom", "^Questie", "^ZGVMarker", "Pin%d*$" }
 local MIN_BUTTON, MAX_BUTTON = 14, 48
 local CLOSE_DELAY = 1
 
@@ -186,8 +232,10 @@ local CLOSE_DELAY = 1
 ---@field buttonHooks table<table, boolean>
 ---@field original table? the minimap's original scale, alpha, points and wheel
 ---@field layingOut boolean?
+---@field childLimit { max: integer } how many children a frame may have before the collector stops asking for them all at once
 local Module = {
     schema = ns.OptionsSchema,
+    childLimit = childLimit,
     captured = {},
     buttonHooks = {},
     placed = {}, -- Blizzard button -> { points, scale } while it sits on the edge
@@ -845,6 +893,31 @@ local function isCandidate(frame)
     return w >= MIN_BUTTON and w <= MAX_BUTTON and h >= MIN_BUTTON and h <= MAX_BUTTON
 end
 
+local function wantsCapture(child, tokens)
+    return isCandidate(child) and not isExcluded(child:GetName(), tokens)
+end
+
+--- When a parent's children can't be read: the named frames in _G whose parent it is (the
+--- collector only takes named buttons, so none is missed).
+local function namedChildren(parent)
+    local list = {}
+    if not parent then
+        return list
+    end
+    for name, value in pairs(_G) do
+        if type(name) == "string" and type(value) == "table" then
+            local ok, isChild = pcall(function()
+                local getParent = originalMethod(value, "GetParent")
+                return getParent ~= nil and getParent(value) == parent and value:GetName() == name
+            end)
+            if ok and isChild then
+                list[#list + 1] = value
+            end
+        end
+    end
+    return list
+end
+
 --- Display name (without the LibDBIcon prefix).
 local function displayName(button)
     return (button:GetName():gsub("^LibDBIcon10_", ""))
@@ -927,14 +1000,31 @@ function Module:Scan()
             self:Release(button)
         end
     end
+    -- One level only, each frame once; a frame that errors is skipped, never the whole scan.
+    local seen = {}
     for _, parent in ipairs({ Minimap, _G.MinimapBackdrop }) do
-        for _, child in ipairs({ parent:GetChildren() }) do
-            if not self.captured[child] and isCandidate(child) and not isExcluded(child:GetName(), tokens) then
-                self:Capture(child)
+        for _, child in ipairs(readChildren(parent) or namedChildren(parent)) do
+            if not seen[child] then
+                seen[child] = true
+                self:TryCapture(child, tokens)
             end
         end
     end
     self:Layout()
+end
+
+--- Captures `child` if it's a button to collect. Another addon's frame that errors is ignored.
+function Module:TryCapture(child, tokens)
+    if self.captured[child] then
+        return
+    end
+    local ok, wanted = pcall(wantsCapture, child, tokens)
+    if not ok or not wanted then
+        return
+    end
+    if not pcall(self.Capture, self, child) and self.captured[child] then
+        pcall(self.Release, self, child)
+    end
 end
 
 --- Searches on the next frame (addons create their buttons on their ADDON_LOADED or later).

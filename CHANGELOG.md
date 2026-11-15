@@ -6,6 +6,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 
 ### Fixed
 - Map: with OpenMap (or MoveAny, Mapster, Leatrix Maps) the world map could no longer be dragged. Eternity now leaves the map's position and scale to that addon and says so once in the chat.
+- Minimap: the addon buttons panel opens again with Zygor Guides (it failed with "stack overflow"), and another addon's broken frames no longer stop it.
 
 ## 0.9.0 (2026-11-14)
 
