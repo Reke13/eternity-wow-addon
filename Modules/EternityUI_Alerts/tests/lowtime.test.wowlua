@@ -1,0 +1,226 @@
+-- Buff rules with "seconds left": a buff about to run out counts as missing.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Alerts"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+-- Fakes the player's buffs for the length of fn.
+local function withAuras(auras, fn)
+    local read = C_UnitAuras.GetAuraDataByIndex
+    C_UnitAuras.GetAuraDataByIndex = function(_, index)
+        return auras[index]
+    end
+    local ok, err = pcall(fn)
+    C_UnitAuras.GetAuraDataByIndex = read
+    if not ok then
+        error(err, 0)
+    end
+end
+
+@test("a buff counts while it has more than the margin left")
+local function margin()
+    local firing = module().Checks.BuffFiring
+    local now = 1000
+    local _, wake = firing({ now + 30 }, 0, now)
+    expect(wake).toBe(nil)
+    expect((firing({ false }, 60, now))).toBe(true)
+    expect((firing({ now + 61 }, 60, now))).toBe(false)
+    expect((firing({ now + 60 }, 60, now))).toBe(true)
+    expect((firing({ now + 30 }, 60, now))).toBe(true)
+    -- Without the margin only a missing or ended buff fires.
+    expect((firing({ now + 30 }, 0, now))).toBe(false)
+    expect((firing({ now - 1 }, 0, now))).toBe(true)
+end
+
+@test("a buff without an end never fires by time")
+local function permanent()
+    local firing, wake = module().Checks.BuffFiring({ 0 }, 600, 1000)
+    expect(firing).toBe(false)
+    expect(wake).toBe(nil)
+end
+
+@test("any buff of the rule with time to spare is enough, and the wake is the soonest crossing")
+local function anyOf()
+    local firing, wake = module().Checks.BuffFiring({ false, 1100, 1300 }, 60, 1000)
+    expect(firing).toBe(false)
+    expect(wake).toBe(1040)
+    firing, wake = module().Checks.BuffFiring({ 1050, false }, 60, 1000)
+    expect(firing).toBe(true)
+    expect(wake).toBe(nil)
+end
+
+@test("new rules start without the margin, and saved seconds stay between 1 and 600")
+local function defaults()
+    local Rules = module().Rules
+    local plain = Rules.Add("buff")
+    expect(plain.lowTime).toBe(false)
+    expect(plain.lowTimeSeconds).toBe(60)
+    local high = Rules.Add("buff", { lowTime = true, lowTimeSeconds = 5000 })
+    local low = Rules.Add("buff", { lowTimeSeconds = 0 })
+    local broken = Rules.Add("buff", { lowTimeSeconds = "x", lowTime = "yes" })
+    expect(high.lowTimeSeconds).toBe(600)
+    expect(high.lowTime).toBe(true)
+    expect(low.lowTimeSeconds).toBe(1)
+    expect(broken.lowTimeSeconds).toBe(60)
+    expect(broken.lowTime).toBe(false)
+    for _, rule in ipairs({ plain, high, low, broken }) do
+        Rules.Remove(rule)
+    end
+end
+
+@test("out of combat a buff running low fires the rule only with the margin on")
+local function outOfCombat()
+    local Checks = module().Checks
+    withAuras({ { name = "Thorns", spellId = 467, expirationTime = GetTime() + 30, duration = 600 } }, function()
+        expect((Checks.Run({ kind = "buff", spells = "Thorns" }))).toBe(false)
+        expect((Checks.Run({ kind = "buff", spells = "Thorns", lowTime = true, lowTimeSeconds = 60 }))).toBe(true)
+        expect((Checks.Run({ kind = "buff", spells = "Thorns", lowTime = true, lowTimeSeconds = 10 }))).toBe(false)
+    end)
+end
+
+@test("a secret expiration counts as no end: it never fires by time")
+local function secretExpiration()
+    local Checks = module().Checks
+    local check = issecretvalue
+    local hidden = {}
+    _G.issecretvalue = function(value)
+        return value == hidden
+    end
+    local ok, err = pcall(withAuras, { { name = "Thorns", spellId = 467, expirationTime = hidden } }, function()
+        expect((Checks.Run({ kind = "buff", spells = "Thorns", lowTime = true, lowTimeSeconds = 600 }))).toBe(false)
+    end)
+    _G.issecretvalue = check
+    if not ok then
+        error(err, 0)
+    end
+end
+
+@test("in combat the margin works on the estimate")
+local function inCombat()
+    local Checks = module().Checks
+    local restricted, known = Checks.AurasRestricted, Checks.known
+    Checks.AurasRestricted = function()
+        return true
+    end
+    Checks.known = { ["battle shout"] = GetTime() + 20, ["thorns"] = GetTime() + 300 }
+    local shout = { kind = "buff", spells = "Battle Shout", lowTime = true, lowTimeSeconds = 30 }
+    local thorns = { kind = "buff", spells = "Thorns", lowTime = true, lowTimeSeconds = 30 }
+    local ok, err = pcall(function()
+        expect((Checks.Run(shout))).toBe(true)
+        expect((Checks.Run(thorns))).toBe(false)
+    end)
+    Checks.AurasRestricted, Checks.known = restricted, known
+    if not ok then
+        error(err, 0)
+    end
+end
+
+@test("the module sets one timer for the moment a buff goes under the margin")
+local function wake()
+    local mod = module()
+    local Rules = mod.Rules
+    local expires = GetTime() + 100
+    local rule = Rules.Add("buff", { spells = "Thorns", lowTime = true, lowTimeSeconds = 60 })
+    withAuras({ { name = "Thorns", spellId = 467, expirationTime = expires, duration = 600 } }, function()
+        mod:Evaluate()
+        expect(mod.state[rule.id].firing).toBe(false)
+        expect(mod.wakeAt).toBe(expires - 60)
+        expect(mod.wakeTimer ~= nil).toBe(true)
+        -- Off: the buff's own end sends an event, nothing to wait for.
+        rule.lowTime = false
+        mod:Evaluate()
+        expect(mod.wakeAt).toBe(nil)
+        expect(mod.wakeTimer).toBe(nil)
+    end)
+    Rules.Remove(rule)
+end
+
+@test("the buff form has the switch, and the seconds only while it's on")
+local function form()
+    local mod = module()
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 500)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    local Editor, Rules = mod.Editor, mod.Rules
+    local view = Editor.Build(child, function() end)
+    local buff = Rules.Add("buff", { spells = "Thorns" })
+    Editor.Select(buff)
+    local fields = view.form
+    expect(fields.lowTimeRow:IsShown()).toBe(true)
+    expect(fields.lowTimeSecondsRow:IsShown()).toBe(false)
+    local plain = Editor.Summary(buff)
+    buff.lowTime = true
+    Editor.Select(buff)
+    expect(fields.lowTimeSecondsRow:IsShown()).toBe(true)
+    -- The list says it too.
+    local summary = Editor.Summary(buff)
+    expect(summary:sub(1, #plain)).toBe(plain)
+    expect(summary:find("60", #plain, true) ~= nil).toBe(true)
+    -- Other kinds don't have it.
+    local slots = Rules.Add("slots")
+    Editor.Select(slots)
+    expect(fields.lowTimeRow:IsShown()).toBe(false)
+    Editor.Delete(buff)
+    Editor.Delete(slots)
+end
+
+@test("a rule firing with the buff still on says when it runs out")
+local function ends()
+    local firing = module().Checks.BuffFiring
+    local yes, _, at = firing({ 1020, false, 1010 }, 60, 1000)
+    expect(yes).toBe(true)
+    expect(at).toBe(1020)
+    -- Missing altogether, or still with time to spare: nothing to count down.
+    _, _, at = firing({ false }, 60, 1000)
+    expect(at).toBe(nil)
+    _, _, at = firing({ 1020, 1100 }, 60, 1000)
+    expect(at).toBe(nil)
+end
+
+@test("the countdown reads in seconds, and in minutes from one")
+local function format()
+    local left = module().Display.FormatLeft
+    expect(left(0)).toBe("")
+    expect(left(-3)).toBe("")
+    expect(left(0.2)).toBe("1")
+    expect(left(59.5)).toBe("1:00")
+    expect(left(45)).toBe("45")
+    expect(left(125)).toBe("2:05")
+    expect(left(600)).toBe("10:00")
+end
+
+@test("the icon of a buff running low counts down inside it, and stops after")
+local function countdown()
+    local mod = module()
+    local Display, Rules = mod.Display, mod.Rules
+    local expires = GetTime() + 30
+    local rule = Rules.Add("buff", { spells = "Thorns", lowTime = true, lowTimeSeconds = 60 })
+    withAuras({ { name = "Thorns", spellId = 467, expirationTime = expires, duration = 600 } }, function()
+        mod:Evaluate()
+    end)
+    expect(mod.state[rule.id].firing).toBe(true)
+    expect(mod.state[rule.id].ends).toBe(expires)
+    local shown
+    for _, icon in ipairs(Display.icons) do
+        if icon:IsShown() and icon.ends == expires then
+            shown = icon
+        end
+    end
+    expect(shown ~= nil).toBe(true)
+    expect(shown.countdown:GetText()).toBe("30")
+    expect(Display.ticker ~= nil).toBe(true)
+    -- Gone: the rule fires as missing, without a countdown.
+    withAuras({}, function()
+        mod:Evaluate()
+    end)
+    expect(mod.state[rule.id].ends).toBe(nil)
+    for _, icon in ipairs(Display.icons) do
+        expect(icon.countdown:GetText() or "").toBe("")
+    end
+    Rules.Remove(rule)
+    mod:Evaluate()
+end

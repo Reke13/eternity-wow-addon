@@ -61,6 +61,9 @@ function Conditions.Passes(rule, context)
     if context.level < rule.minLevel then
         return false
     end
+    if (rule.maxLevel or 0) > 0 and context.level > rule.maxLevel then
+        return false
+    end
     if rule.place == "instance" and not context.instance then
         return false
     end

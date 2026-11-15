@@ -22,11 +22,20 @@ local L = ns.L
 ---@field sound string key of Rules.SOUNDS
 ---@field class string class token, "" for any
 ---@field minLevel number
+---@field maxLevel number 0 for no limit; never under minLevel
 ---@field group string "any", "solo", "group" or "raid"
 ---@field place string "any", "instance" or "world"
 ---@field hideResting boolean
 ---@field hideMounted boolean
 ---@field combat string "out" (only out of combat), "in" (only in combat) or "any"
+---@field lowTime boolean buff rules: a buff with lowTimeSeconds or less left counts as missing
+---@field lowTimeSeconds number 1 to 600
+---@field scale number the icon's size, in percent of the row's (50 to 200)
+---@field showName string "default" (as the row), "show" or "hide"
+---@field customGlow boolean glows in glowColor instead of the theme's accent
+---@field glowColor string "#RRGGBB"
+---@field countdown boolean buff rules: count down the seconds left inside the icon
+---@field iconOverride string a spell or item ID, or a texture; "" for the rule's own
 
 ---@class EternityUIAlertsRules
 ---@field db table? EternityUIAlertsDB once bound
@@ -52,12 +61,25 @@ local DEFAULTS = {
     sound = "none",
     class = "",
     minLevel = 0,
+    maxLevel = 0,
     group = "any",
     place = "any",
     hideResting = false,
     hideMounted = false,
     combat = "out",
+    lowTime = false,
+    lowTimeSeconds = 60,
+    scale = 100,
+    showName = "default",
+    customGlow = false,
+    glowColor = "#FFD100",
+    countdown = true,
+    iconOverride = "",
 }
+
+Rules.LOW_TIME_MIN, Rules.LOW_TIME_MAX = 1, 600
+Rules.SCALE_MIN, Rules.SCALE_MAX = 50, 200
+Rules.SHOW_NAME = { "default", "show", "hide" }
 
 local THRESHOLDS = { buff = 0, enchant = 0, durability = 20, slots = 5, item = 5 }
 
@@ -71,6 +93,24 @@ local function fill(rule)
         if rule[key] == nil then
             rule[key] = value
         end
+    end
+    -- Hand edited or broken saved values: back into range.
+    local seconds = tonumber(rule.lowTimeSeconds) or DEFAULTS.lowTimeSeconds
+    rule.lowTimeSeconds = math.min(Rules.LOW_TIME_MAX, math.max(Rules.LOW_TIME_MIN, math.floor(seconds)))
+    rule.lowTime = rule.lowTime == true
+    rule.minLevel = math.max(0, math.floor(tonumber(rule.minLevel) or 0))
+    rule.maxLevel = math.max(0, math.floor(tonumber(rule.maxLevel) or 0))
+    Rules.FitLevels(rule, "minLevel")
+    local scale = tonumber(rule.scale) or DEFAULTS.scale
+    rule.scale = math.min(Rules.SCALE_MAX, math.max(Rules.SCALE_MIN, math.floor(scale)))
+    if rule.showName ~= "show" and rule.showName ~= "hide" then
+        rule.showName = "default"
+    end
+    if type(rule.glowColor) ~= "string" or not rule.glowColor:match("^#%x%x%x%x%x%x$") then
+        rule.glowColor = DEFAULTS.glowColor
+    end
+    if type(rule.iconOverride) ~= "string" then
+        rule.iconOverride = ""
     end
     return rule
 end
@@ -119,6 +159,23 @@ end
 ---@return EternityUIAlertsRule[]
 function Rules.List()
     return Rules.db.rules
+end
+
+--- Keeps "up to level" from going under "from level": the one that wasn't just changed gives way.
+--- Returns true when it changed one.
+---@param rule EternityUIAlertsRule
+---@param changed string "minLevel" or "maxLevel"
+---@return boolean
+function Rules.FitLevels(rule, changed)
+    if rule.maxLevel <= 0 or rule.maxLevel >= rule.minLevel then
+        return false
+    end
+    if changed == "maxLevel" then
+        rule.minLevel = rule.maxLevel
+    else
+        rule.maxLevel = rule.minLevel
+    end
+    return true
 end
 
 --- Removes a rule.

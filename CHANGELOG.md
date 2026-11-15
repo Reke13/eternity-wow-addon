@@ -8,6 +8,10 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 - Options: a new layout for the modules' pages, picked in Personalization > General ("Options layout"): cards that fold, two columns, a lighter field per option whose tone you set, a mark and a reset button on the options you changed, and a Basic / Advanced level. The classic layout stays the default.
 - Options: in the new layout, a module's preview (Action Bars, Unit Frames) opens in a window beside the options from a button next to the close button.
 - Action Bars: "All bars" settings for size, spacing, scale, opacity and when the bars show. Every bar follows them until you change that setting in the bar itself.
+- Alerts: a missing buff rule can also warn when the buff has a few seconds left (1 to 600, off by default), with a countdown on its icon. Buffs that don't run out never count.
+- Alerts: in General, where the names go (below, above, beside or inside the icon) and their size, the size of the value, the icon border, and the countdown's position (inside or outside the icon), size, color and a border of its own color and size.
+- Alerts: each rule can set its own icon size, show or hide its name, glow in its own color, use an icon of its own and turn its countdown off.
+- Alerts: rules can have an "up to level" besides "from level": they show only between the two, both included (no limit by default).
 
 ### Changed
 - Action Bars: the preview shows real buttons with your shape, border, backdrop, shadow and icons, and the bar's opacity.

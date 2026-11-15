@@ -28,6 +28,35 @@
           ]
         },
         { "id": "labels", "type": "toggle", "default": true, "label": { "enUS": "Show names", "esES": "Mostrar los nombres" } },
+        {
+          "id": "labelPosition",
+          "type": "select",
+          "default": "below",
+          "label": { "enUS": "Name position", "esES": "Posición del nombre" },
+          "values": [
+            { "value": "below", "label": { "enUS": "Below the icon", "esES": "Debajo del icono" } },
+            { "value": "above", "label": { "enUS": "Above the icon", "esES": "Encima del icono" } },
+            { "value": "left", "label": { "enUS": "Left of the icon", "esES": "A la izquierda del icono" } },
+            { "value": "right", "label": { "enUS": "Right of the icon", "esES": "A la derecha del icono" } },
+            { "value": "inside", "label": { "enUS": "Inside the icon", "esES": "Dentro del icono" } }
+          ],
+          "visibleWhen": { "display.labels": true }
+        },
+        { "id": "labelSize", "type": "range", "default": 12, "min": 8, "max": 24, "step": 1, "label": { "enUS": "Name size", "esES": "Tamaño del nombre" }, "visibleWhen": { "display.labels": true } },
+        {
+          "id": "valueSize",
+          "type": "range",
+          "default": 13,
+          "min": 8,
+          "max": 24,
+          "step": 1,
+          "label": { "enUS": "Value size", "esES": "Tamaño del valor" },
+          "description": {
+            "enUS": "The number some rules show on their icon: durability, free slots, item count.",
+            "esES": "El número que algunas reglas muestran en su icono: durabilidad, huecos libres, cantidad del objeto."
+          }
+        },
+        { "id": "border", "type": "toggle", "default": true, "label": { "enUS": "Icon border", "esES": "Borde de los iconos" } },
         { "id": "opacity", "type": "range", "default": 1, "min": 0.3, "max": 1, "step": 0.05, "label": { "enUS": "Opacity", "esES": "Opacidad" } },
         {
           "id": "sounds",
@@ -39,6 +68,43 @@
             "esES": "Cada regla elige su sonido. Esto los apaga todos a la vez."
           }
         }
+      ]
+    },
+    {
+      "id": "countdown",
+      "label": { "enUS": "Countdown", "esES": "Contador" },
+      "options": [
+        {
+          "id": "position",
+          "type": "select",
+          "default": "center",
+          "label": { "enUS": "Position", "esES": "Posición" },
+          "description": {
+            "enUS": "The seconds left of a buff rule with \"Warn when few seconds are left\". Outside the icon it goes next to it, and the name moves to make room.",
+            "esES": "Los segundos que le quedan al buff de una regla con «Avisar cuando queden pocos segundos». Fuera del icono va pegado a él, y el nombre se aparta para dejarle sitio."
+          },
+          "values": [
+            { "value": "center", "label": { "enUS": "In the center", "esES": "En el centro" } },
+            { "value": "top", "label": { "enUS": "Top, inside", "esES": "Arriba, dentro" } },
+            { "value": "bottom", "label": { "enUS": "Bottom, inside", "esES": "Abajo, dentro" } },
+            { "value": "above", "label": { "enUS": "Above, outside the icon", "esES": "Arriba, fuera del icono" } },
+            { "value": "below", "label": { "enUS": "Below, outside the icon", "esES": "Abajo, fuera del icono" } }
+          ]
+        },
+        { "id": "size", "type": "range", "default": 42, "min": 20, "max": 80, "step": 2, "label": { "enUS": "Size (% of the icon)", "esES": "Tamaño (% del icono)" } },
+        { "id": "color", "type": "color", "default": "#FF4545", "label": { "enUS": "Color", "esES": "Color" } },
+        {
+          "id": "outline",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Border", "esES": "Borde" },
+          "description": {
+            "enUS": "A line of another color around the numbers, so they read over any icon.",
+            "esES": "Una línea de otro color alrededor de los números, para que se lean sobre cualquier icono."
+          }
+        },
+        { "id": "outlineColor", "type": "color", "default": "#000000", "label": { "enUS": "Border color", "esES": "Color del borde" }, "visibleWhen": { "countdown.outline": true } },
+        { "id": "outlineSize", "type": "range", "default": 1, "min": 1, "max": 4, "step": 1, "label": { "enUS": "Border size", "esES": "Grosor del borde" }, "visibleWhen": { "countdown.outline": true } }
       ]
     }
   ]
