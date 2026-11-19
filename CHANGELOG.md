@@ -26,6 +26,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 - Map: with OpenMap (or MoveAny, Mapster, Leatrix Maps) the world map could no longer be dragged. Eternity now leaves the map's position and scale to that addon and says so once in the chat.
 - Minimap: the addon buttons panel opens again with Zygor Guides (it failed with "stack overflow"), and another addon's broken frames no longer stop it.
 - Unit frames: the level of NPCs and enemy players is shown in its difficulty color (gray to red) instead of always white.
+- Buffs: the messages pointed to `/editmode`, which Forever doesn't have; they now say game menu (Esc) > Edit Mode.
 
 ## 0.9.0 (2026-11-14)
 
