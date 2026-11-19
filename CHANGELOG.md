@@ -19,6 +19,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 ### Changed
 - Action Bars: the preview shows real buttons with your shape, border, backdrop, shadow and icons, and the bar's opacity.
 - Options: sliders update the live preview while you drag them.
+- Alerts: the rules belong to the profile, like every other option: each profile has its own list, and a profile copied, exported or imported takes its rules. The rules saved for the whole account are copied into every profile the first time. Profiles keep a module's own data (`Store:GetData`/`SetData`).
 
 ### Fixed
 - Map: with OpenMap (or MoveAny, Mapster, Leatrix Maps) the world map could no longer be dragged. Eternity now leaves the map's position and scale to that addon and says so once in the chat.

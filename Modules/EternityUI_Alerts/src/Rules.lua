@@ -1,9 +1,11 @@
--- The rules, saved for the whole account (EternityUIAlertsDB): each one can be limited to a class,
--- so one list serves every character. Three sample rules are written the first time only; deleting
--- them is final.
+-- The rules, saved in the Eternity profile (the store's data of the module), so each profile has its
+-- own list; a rule can still be limited to a class or to levels. A profile copied from another
+-- takes its rules; one with none gets three sample rules, and deleting them is final.
+-- They used to be saved for the whole account (EternityUIAlertsDB): the first start with profiles
+-- copies that list into every profile and clears it, so no character loses its rules.
 
 ---@type string, EternityUIAlertsNamespace
-local _, ns = ...
+local addonName, ns = ...
 local L = ns.L
 
 ---@class EternityUIAlertsRule
@@ -38,7 +40,7 @@ local L = ns.L
 ---@field iconOverride string a spell or item ID, or a texture; "" for the rule's own
 
 ---@class EternityUIAlertsRules
----@field db table? EternityUIAlertsDB once bound
+---@field db table? the active profile's { rules, nextId } once bound
 ---@field onChange fun()? set by the module
 local Rules = {
     KINDS = { "buff", "enchant", "durability", "slots", "item" },
@@ -120,7 +122,7 @@ end
 ---@param fields table? values over the defaults
 ---@return EternityUIAlertsRule
 function Rules.Add(kind, fields)
-    local db = Rules.db
+    local db = Rules.Current()
     local rule = fields or {}
     rule.id = db.nextId
     rule.kind = kind
@@ -137,28 +139,56 @@ local function seed()
     Rules.Add("buff", { name = L.SAMPLE_FOOD, spells = L.WELL_FED, place = "instance" })
 end
 
---- Binds EternityUIAlertsDB (the client loads it before the modules start).
-function Rules.Bind()
-    if Rules.db then
+--- Moves the rules once saved for the whole account into every profile that has none yet.
+local function migrate(store)
+    local legacy = _G.EternityUIAlertsDB
+    if type(legacy) ~= "table" then
         return
     end
-    local db = _G.EternityUIAlertsDB
+    if type(legacy.rules) == "table" then
+        local nextId = tonumber(legacy.nextId) or 1
+        for _, rule in ipairs(legacy.rules) do
+            if type(rule.id) == "number" and rule.id >= nextId then
+                nextId = rule.id + 1
+            end
+        end
+        store:SeedData(addonName, { rules = legacy.rules, nextId = nextId })
+    end
+    _G.EternityUIAlertsDB = nil
+end
+
+--- Binds the active profile's rules (the store exists before the modules start). Called again
+--- when the profile changes; a profile without rules gets the sample ones.
+function Rules.Bind()
+    local store = EternityUI.store
+    migrate(store)
+    local db = store:GetData(addonName)
     if type(db) ~= "table" or type(db.rules) ~= "table" then
         db = { rules = {}, nextId = 1 }
+        store:SetData(addonName, db)
         Rules.db = db
         seed()
-    else
-        Rules.db = db
-        for _, rule in ipairs(db.rules) do
-            fill(rule)
-        end
+        return
     end
-    _G.EternityUIAlertsDB = db
+    db.nextId = tonumber(db.nextId) or (#db.rules + 1)
+    for _, rule in ipairs(db.rules) do
+        fill(rule)
+    end
+    Rules.db = db
+end
+
+--- The active profile's { rules, nextId }, bound again if the profile changed since.
+---@return table
+function Rules.Current()
+    if not Rules.db or Rules.db ~= EternityUI.store:GetData(addonName) then
+        Rules.Bind()
+    end
+    return Rules.db
 end
 
 ---@return EternityUIAlertsRule[]
 function Rules.List()
-    return Rules.db.rules
+    return Rules.Current().rules
 end
 
 --- Keeps "up to level" from going under "from level": the one that wasn't just changed gives way.
@@ -181,7 +211,7 @@ end
 --- Removes a rule.
 ---@param rule EternityUIAlertsRule
 function Rules.Remove(rule)
-    for i, other in ipairs(Rules.db.rules) do
+    for i, other in ipairs(Rules.List()) do
         if other == rule then
             table.remove(Rules.db.rules, i)
             return

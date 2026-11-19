@@ -228,10 +228,26 @@ function Module:OnDisable()
     Display.Stop()
 end
 
-function Module:OnConfigChanged()
-    if self.running then
-        Display.Draw()
+function Module:OnConfigChanged(path)
+    if not self.running then
+        return
     end
+    if path == nil then
+        -- Another profile (or a reset): its own rules, judged from scratch. Rule ids repeat between
+        -- profiles, so the state of the old ones goes.
+        local before = Rules.db
+        if Rules.Current() ~= before then
+            self.state = {}
+            self:SetWake(nil)
+            if Editor.current then
+                Editor.Select(nil)
+            elseif Editor.view and Editor.view:IsVisible() then
+                Editor.view:Refresh()
+            end
+            self:Schedule()
+        end
+    end
+    Display.Draw()
 end
 
 --- /etavisos: what the module believes about each buff rule now (to find out why one doesn't show).

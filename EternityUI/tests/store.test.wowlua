@@ -123,3 +123,27 @@ local function inherits()
     store:Set("StoreTest", "g.size", 1.5)
     expect(store:Get("StoreTest", "g.own")).toBe(1.5)
 end
+
+@test("a module's own data lives in the profile, is copied with it and seeded once")
+local function data()
+    expect(store:GetData("StoreTest")).toBe(nil)
+    store:SetData("StoreTest", { list = { "a" } })
+    store:CreateProfile("Copy", "Default")
+    store:CreateProfile("Blank")
+    store:UseProfile("Copy")
+    expect(store:GetData("StoreTest").list[1]).toBe("a")
+    store:GetData("StoreTest").list[1] = "b"
+    store:UseProfile("Default")
+    expect(store:GetData("StoreTest").list[1]).toBe("a")
+    -- Seeding only fills the profiles without data, each with its own copy.
+    expect(store:SeedData("StoreTest", { list = { "old" } })).toBe(1)
+    store:UseProfile("Blank")
+    expect(store:GetData("StoreTest").list[1]).toBe("old")
+    -- Profiles saved before data existed still answer.
+    store.raw.profiles.Blank.data = nil
+    expect(store:GetData("StoreTest")).toBe(nil)
+    -- Sanitize leaves it alone.
+    store:UseProfile("Default")
+    store:Sanitize("StoreTest")
+    expect(store:GetData("StoreTest").list[1]).toBe("a")
+end

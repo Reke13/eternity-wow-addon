@@ -1,0 +1,119 @@
+-- The rules belong to the Eternity profile, and the ones saved for the whole account move into it.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Alerts"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function names()
+    local list = {}
+    for i, rule in ipairs(module().Rules.List()) do
+        list[i] = rule.name
+    end
+    return table.concat(list, ",")
+end
+
+local function backToDefault(...)
+    local store = EternityUI.store
+    store:UseProfile("Default")
+    for _, name in ipairs({ ... }) do
+        store:DeleteProfile(name)
+    end
+end
+
+@test("each profile has its own rules")
+local function ownRules()
+    local store = EternityUI.store
+    local Rules = module().Rules
+    local mine = Rules.Add("slots", { name = "Only in Default" })
+    Rules.Changed()
+    expect(store:CreateProfile("AlertsBlank")).toBe(true)
+    expect(store:UseProfile("AlertsBlank")).toBe(true)
+    -- A profile without rules starts with the samples, not with Default's list.
+    expect(#Rules.List()).toBe(3)
+    expect(names():find("Only in Default", 1, true)).toBe(nil)
+    store:UseProfile("Default")
+    expect(names():find("Only in Default", 1, true) ~= nil).toBe(true)
+    Rules.Remove(mine)
+    backToDefault("AlertsBlank")
+end
+
+@test("a profile copied from another takes its rules, and they stay apart")
+local function copied()
+    local store = EternityUI.store
+    local Rules = module().Rules
+    local mine = Rules.Add("item", { name = "Copied rule" })
+    expect(store:CreateProfile("AlertsCopy", "Default")).toBe(true)
+    store:UseProfile("AlertsCopy")
+    local copy
+    for _, rule in ipairs(Rules.List()) do
+        if rule.name == "Copied rule" then
+            copy = rule
+        end
+    end
+    expect(copy ~= nil).toBe(true)
+    -- Editing the copy leaves Default's rule alone.
+    copy.name = "Changed in the copy"
+    store:UseProfile("Default")
+    expect(mine.name).toBe("Copied rule")
+    Rules.Remove(mine)
+    backToDefault("AlertsCopy")
+end
+
+@test("the account-wide rules move into every profile once")
+local function migrates()
+    local store = EternityUI.store
+    local Rules = module().Rules
+    store:CreateProfile("AlertsOld")
+    for _, name in ipairs(store:ListProfiles()) do
+        store.raw.profiles[name].data = store.raw.profiles[name].data or {}
+        store.raw.profiles[name].data[NAME] = nil
+    end
+    _G.EternityUIAlertsDB = {
+        rules = { { id = 7, kind = "slots", name = "Old rule", threshold = 3 } },
+        nextId = 2,
+    }
+    Rules.Bind()
+    expect(_G.EternityUIAlertsDB).toBe(nil)
+    expect(names()).toBe("Old rule")
+    -- The next id never repeats one already used.
+    expect(Rules.Add("buff").id).toBe(8)
+    store:UseProfile("AlertsOld")
+    expect(names()).toBe("Old rule")
+    expect(Rules.List()[1].threshold).toBe(3)
+    backToDefault("AlertsOld")
+end
+
+@test("switching profiles through the core judges the new list")
+local function switches()
+    local store = EternityUI.store
+    local alerts = module()
+    store:CreateProfile("AlertsSwitch")
+    store:UseProfile("AlertsSwitch")
+    -- The core tells the module (OnConfigChanged with no path) and its list is the profile's.
+    expect(alerts.Rules.db).toBe(store:GetData(NAME))
+    expect(#alerts.Rules.List()).toBe(3)
+    backToDefault("AlertsSwitch")
+    expect(alerts.Rules.Current()).toBe(store:GetData(NAME))
+end
+
+@test("a profile exported and imported keeps its rules")
+local function exported()
+    local store = EternityUI.store
+    local Rules = module().Rules
+    local mine = Rules.Add("slots", { name = "Travels with the profile" })
+    local text = store:ExportProfile()
+    if not text then
+        -- The emulator may not have the encoding API: the copy path is covered above.
+        Rules.Remove(mine)
+        return
+    end
+    expect(store:ImportProfile("AlertsImported", text)).toBe(true)
+    store:UseProfile("AlertsImported")
+    expect(names():find("Travels with the profile", 1, true) ~= nil).toBe(true)
+    store:UseProfile("Default")
+    Rules.Remove(mine)
+    backToDefault("AlertsImported")
+end
