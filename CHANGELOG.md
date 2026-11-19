@@ -16,6 +16,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 - Unit frames: each group member's target beside their frame (off by default): a small health bar with an icon (raid mark, class or portrait), name and percent, with its own size, place and colors. Click it to target that unit.
 - Unit frames: raid tanks in a frame of their own (main tanks and assists, or the tank role), each with their target, buffs on, and their own aura filters.
 - Alerts: a "Duplicate" button on each rule makes a copy right under it and opens it.
+- Auras: more orders for your buffs and the target's debuffs (ending soonest, by name or as they were cast, without putting yours first; important ones first) and a "Reverse order" switch. The game sorts them, so they also work in combat.
 
 ### Changed
 - Action Bars: the preview shows real buttons with your shape, border, backdrop, shadow and icons, and the bar's opacity.

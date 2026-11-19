@@ -166,7 +166,7 @@ function Module:OnConfigChanged(path)
                 if group == nil or group == key then
                     frame:ApplyFilters()
                 end
-                if group == nil or group ~= key or path == key .. ".sort" then
+                if group == nil or group ~= key or path == key .. ".sort" or path == key .. ".sortReverse" then
                     frame:ApplyLayout()
                 end
                 frame:UpdateVisibility()
