@@ -1,0 +1,68 @@
+-- A rule can be duplicated: an independent copy right under it, opened in the form.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Alerts"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function indexOf(list, rule)
+    for i, other in ipairs(list) do
+        if other == rule then
+            return i
+        end
+    end
+    return nil
+end
+
+@test("a duplicated rule is a copy under the original, with its own id and name")
+local function copies()
+    local Rules = module().Rules
+    local original = Rules.Add("buff", { name = "Food", spells = "Well Fed", lowTime = true, lowTimeSeconds = 120 })
+    local last = Rules.Add("slots", { name = "After" })
+    local copy = Rules.Duplicate(original)
+    local list = Rules.List()
+    expect(indexOf(list, copy)).toBe(indexOf(list, original) + 1)
+    expect(copy.id ~= original.id).toBe(true)
+    expect(copy.name:find("Food", 1, true) ~= nil).toBe(true)
+    expect(copy.name ~= original.name).toBe(true)
+    expect(copy.kind).toBe("buff")
+    expect(copy.spells).toBe("Well Fed")
+    expect(copy.lowTime).toBe(true)
+    expect(copy.lowTimeSeconds).toBe(120)
+    -- Changing the copy leaves the original alone.
+    copy.spells = "Other"
+    expect(original.spells).toBe("Well Fed")
+    -- Ids keep growing past the copy.
+    expect(Rules.Add("item").id > copy.id).toBe(true)
+    for _, rule in ipairs({ copy, original, last }) do
+        Rules.Remove(rule)
+    end
+    Rules.Remove(list[#list])
+end
+
+@test("a rule without a name is copied with its kind's name")
+local function unnamed()
+    local Rules = module().Rules
+    local original = Rules.Add("durability", { name = "" })
+    original.name = ""
+    local copy = Rules.Duplicate(original)
+    expect(copy.name ~= "").toBe(true)
+    Rules.Remove(copy)
+    Rules.Remove(original)
+end
+
+@test("the editor's duplicate opens the copy")
+local function editor()
+    local alerts = module()
+    local original = alerts.Rules.Add("slots", { name = "Bags" })
+    local before = #alerts.Rules.List()
+    alerts.Editor.Duplicate(original)
+    expect(#alerts.Rules.List()).toBe(before + 1)
+    local copy = alerts.Editor.current
+    expect(copy ~= nil and copy ~= original).toBe(true)
+    alerts.Editor.Select(nil)
+    alerts.Rules.Remove(copy)
+    alerts.Rules.Remove(original)
+end

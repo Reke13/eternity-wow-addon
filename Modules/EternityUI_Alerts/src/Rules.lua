@@ -208,6 +208,30 @@ function Rules.FitLevels(rule, changed)
     return true
 end
 
+--- Copies a rule right after it, with a new id and "(copy)" in its name. Returns the copy.
+---@param rule EternityUIAlertsRule
+---@return EternityUIAlertsRule
+function Rules.Duplicate(rule)
+    local db = Rules.Current()
+    local copy = {}
+    for key, value in pairs(rule) do
+        copy[key] = value
+    end
+    copy.id = db.nextId
+    db.nextId = db.nextId + 1
+    local name = rule.name ~= "" and rule.name or L["KIND_" .. rule.kind]
+    copy.name = L.COPY_NAME:format(name)
+    local at = #db.rules + 1
+    for i, other in ipairs(db.rules) do
+        if other == rule then
+            at = i + 1
+            break
+        end
+    end
+    table.insert(db.rules, at, fill(copy))
+    return copy
+end
+
 --- Removes a rule.
 ---@param rule EternityUIAlertsRule
 function Rules.Remove(rule)

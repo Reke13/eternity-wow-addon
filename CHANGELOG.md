@@ -15,6 +15,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 - Unit frames: threat (aggro) on every frame: a border or glow, yellow when the unit is about to pull aggro and orange or red once it has it (on enemies, your threat on them). Each frame can switch it off; the look, the colors and the early warning are in General.
 - Unit frames: each group member's target beside their frame (off by default): a small health bar with an icon (raid mark, class or portrait), name and percent, with its own size, place and colors. Click it to target that unit.
 - Unit frames: raid tanks in a frame of their own (main tanks and assists, or the tank role), each with their target, buffs on, and their own aura filters.
+- Alerts: a "Duplicate" button on each rule makes a copy right under it and opens it.
 
 ### Changed
 - Action Bars: the preview shows real buttons with your shape, border, backdrop, shadow and icons, and the bar's opacity.

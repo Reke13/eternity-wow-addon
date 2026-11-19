@@ -129,7 +129,7 @@ local function newRow(view)
     row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 10, 2)
     row.note = Widgets.Text(row, 12, "muted")
     row.note:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", 10, -2)
-    row.note:SetPoint("RIGHT", -70, 0)
+    row.note:SetPoint("RIGHT", -150, 0)
     row.note:SetJustifyH("LEFT")
     row.note:SetWordWrap(false)
 
@@ -153,6 +153,13 @@ local function newRow(view)
     end)
     row.delete:SetWidth(34)
     row.delete:SetPoint("RIGHT", -8, 0)
+
+    -- Beside the delete button (it widens to the left while it asks): a copy under the rule.
+    row.duplicate = Widgets.Button(row, L.DUPLICATE, "ghost", function()
+        Editor.Duplicate(row.rule)
+    end)
+    row.duplicate:SetWidth(96)
+    row.duplicate:SetPoint("RIGHT", row.delete, "LEFT", -6, 0)
 
     function row.Paint(self)
         local accent = Theme.accent
@@ -612,6 +619,17 @@ function Editor.Select(rule)
     if view then
         view:Refresh()
     end
+end
+
+--- Copies a rule under itself and opens the copy.
+---@param rule EternityUIAlertsRule
+function Editor.Duplicate(rule)
+    if not rule then
+        return
+    end
+    local copy = Rules.Duplicate(rule)
+    Rules.Changed()
+    Editor.Select(copy)
 end
 
 --- Deletes a rule.
