@@ -1,0 +1,95 @@
+-- The collector reads the minimap's children without trusting other addons. Zygor replaces
+-- Minimap:GetChildren with a Lua wrapper, and with thousands of route dots on the map the call
+-- overflowed the stack and the panel never opened. A replaced, recursive or failing GetChildren,
+-- too many children, or a child that errors must not break the scan.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Minimap"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function button(name)
+    local b = CreateFrame("Button", name, Minimap)
+    b:SetSize(31, 31)
+    return b
+end
+
+--- Runs `fn` with Minimap:GetChildren replaced by `replacement`, then puts it back.
+local function withGetChildren(replacement, fn)
+    local had = rawget(Minimap, "GetChildren")
+    Minimap.GetChildren = replacement
+    local ok, err = pcall(fn)
+    Minimap.GetChildren = had
+    if not ok then
+        error(err, 0)
+    end
+end
+
+@test("a recursive GetChildren on Minimap doesn't break the scan")
+local function recursive()
+    local m = module()
+    expect(m.active).toBe(true)
+    local b = button("LibDBIcon10_EternityTestRecursive")
+    local depth = 0
+    withGetChildren(function(self)
+        -- Calls itself, as two wrappers calling each other would, until the stack overflows (the
+        -- emulator has no stack limit, so the overflow is raised here).
+        depth = depth + 1
+        if depth > 200 then
+            error("stack overflow")
+        end
+        return self:GetChildren()
+    end, function()
+        expect(pcall(m.Scan, m)).toBe(true)
+    end)
+    expect(m.captured[b] ~= nil).toBe(true)
+end
+
+@test("a GetChildren that errors doesn't break the scan")
+local function failing()
+    local m = module()
+    local b = button("LibDBIcon10_EternityTestFailing")
+    withGetChildren(function()
+        error("stack overflow")
+    end, function()
+        expect(pcall(m.Scan, m)).toBe(true)
+        expect(pcall(m.TogglePanel, m)).toBe(true)
+        expect(pcall(m.TogglePanel, m)).toBe(true)
+    end)
+    expect(m.captured[b] ~= nil).toBe(true)
+end
+
+@test("with too many children the scan finds the named buttons another way")
+local function tooMany()
+    local m = module()
+    local b = button("LibDBIcon10_EternityTestTooMany")
+    local max = m.childLimit.max
+    m.childLimit.max = 0
+    local ok = pcall(m.Scan, m)
+    m.childLimit.max = max
+    expect(ok).toBe(true)
+    expect(m.captured[b] ~= nil).toBe(true)
+end
+
+@test("a child that errors is skipped and the rest are still collected")
+local function badChild()
+    local m = module()
+    local bad = button("LibDBIcon10_EternityTestBad")
+    bad.GetName = function()
+        error("broken")
+    end
+    local good = button("LibDBIcon10_EternityTestGood")
+    expect(pcall(m.Scan, m)).toBe(true)
+    expect(m.captured[bad] == nil).toBe(true)
+    expect(m.captured[good] ~= nil).toBe(true)
+end
+
+@test("Zygor's waypoints are not collected")
+local function zygor()
+    local m = module()
+    local marker = button("ZGVMarker1Mini")
+    expect(pcall(m.Scan, m)).toBe(true)
+    expect(m.captured[marker] == nil).toBe(true)
+end

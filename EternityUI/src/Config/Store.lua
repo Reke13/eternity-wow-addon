@@ -4,7 +4,11 @@
 -- raw.schemaVersion
 -- raw.stats             = { logins, reloads }
 -- raw.profiles[name]    = { values = { [module] = { ["group.option"] = value } },
---                           modules = { [module] = false }, layout = { [element] = entry } }
+--                           modules = { [module] = false }, layout = { [element] = entry },
+--                           data = { [module] = table } }
+--
+-- data holds what a module keeps per profile that isn't an option of its schema (the alert rules,
+-- say). It's copied, exported and imported with the profile, and Sanitize leaves it alone.
 -- raw.characters[guid]  = profile name
 --
 -- Characters are keyed by GUID: UnitName isn't unique on Forever and can answer "Unknown" while
@@ -43,7 +47,7 @@ Store.migrations[2] = function(raw)
 end
 
 local function newProfile()
-    return { values = {}, modules = {}, layout = {} }
+    return { values = {}, modules = {}, layout = {}, data = {} }
 end
 
 --- Runs the migrations a table still needs. The version only advances after one succeeds.
@@ -95,6 +99,26 @@ function Store:GetProfile()
     return self.raw.profiles[self:GetProfileName()]
 end
 
+--- What an option is worth while the profile sets none: the value of the option it inherits
+--- (`inherit = "group.option"`, same module) or else its own default. An inheriting option the
+--- player changed keeps its value; set back to what it inherits, it inherits again.
+---@param module string
+---@param path string
+---@return any
+function Store:GetDefault(module, path)
+    local option = Schema.GetOption(module, path)
+    if not option then
+        return nil
+    end
+    if option.inherit and option.inherit ~= path then
+        local inherited = self:Get(module, option.inherit)
+        if inherited ~= nil then
+            return inherited
+        end
+    end
+    return option.default
+end
+
 --- Effective value: the profile's or the default. Returns nil and the reason for an unknown path.
 ---@param module string
 ---@param path string
@@ -107,7 +131,7 @@ function Store:Get(module, path)
     local values = self:GetProfile().values[module]
     local value = values and values[path]
     if value == nil then
-        return option.default
+        return self:GetDefault(module, path)
     end
     return value
 end
@@ -128,7 +152,7 @@ function Store:Set(module, path, value)
     end
     local profile = self:GetProfile()
     local stored = normalized
-    if stored == option.default then
+    if stored == self:GetDefault(module, path) then
         stored = nil
     end
     local values = profile.values[module]
@@ -168,6 +192,41 @@ function Store:SetModuleEnabled(module, enabled)
         self:GetProfile().modules[module] = false
     end
     notify(self, module, "@enabled", enabled)
+end
+
+--- A module's own data in the active profile, or nil while it has none.
+---@param module string
+---@return table?
+function Store:GetData(module)
+    local data = self:GetProfile().data
+    return data and data[module]
+end
+
+--- Replaces a module's own data in the active profile (nil removes it). No notification: the
+--- module that owns it is the only one reading it.
+---@param module string
+---@param value table?
+function Store:SetData(module, value)
+    local profile = self:GetProfile()
+    profile.data = profile.data or {}
+    profile.data[module] = value
+end
+
+--- Gives every profile that has no data for a module a copy of value (moving data that used to be
+--- saved for the whole account into the profiles). Returns how many profiles got it.
+---@param module string
+---@param value table
+---@return integer
+function Store:SeedData(module, value)
+    local seeded = 0
+    for _, profile in pairs(self.raw.profiles) do
+        profile.data = profile.data or {}
+        if profile.data[module] == nil then
+            profile.data[module] = ns.DeepCopy(value)
+            seeded = seeded + 1
+        end
+    end
+    return seeded
 end
 
 --- A saved position of the Mover, or nil.
@@ -296,7 +355,7 @@ function Store:ImportProfile(name, text)
         return false, err
     end
     local profile = self.raw.profiles[name]
-    for _, key in ipairs({ "values", "modules", "layout" }) do
+    for _, key in ipairs({ "values", "modules", "layout", "data" }) do
         if type(data[key]) == "table" then
             profile[key] = data[key]
         end

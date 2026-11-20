@@ -145,8 +145,49 @@
                 "enUS": "Mine first, then by name",
                 "esES": "Los míos primero y luego por nombre"
               }
+            },
+            {
+              "value": "expirationOnly",
+              "label": {
+                "enUS": "The ones ending soonest, mine or not",
+                "esES": "Los que acaban antes, sean míos o no"
+              }
+            },
+            {
+              "value": "nameOnly",
+              "label": {
+                "enUS": "By name, mine or not",
+                "esES": "Por nombre, sean míos o no"
+              }
+            },
+            {
+              "value": "applied",
+              "label": {
+                "enUS": "As they were cast, mine or not",
+                "esES": "Según se pusieron, sean míos o no"
+              }
+            },
+            {
+              "value": "important",
+              "label": {
+                "enUS": "Important ones first",
+                "esES": "Los importantes primero"
+              }
             }
           ]
+        },
+        {
+          "id": "sortReverse",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Reverse order",
+            "esES": "Orden inverso"
+          },
+          "description": {
+            "enUS": "Turns the order around: the last ones come first.",
+            "esES": "Da la vuelta al orden: los últimos salen primero."
+          }
         },
         {
           "id": "max",
@@ -483,8 +524,49 @@
                 "enUS": "Mine first, then by name",
                 "esES": "Los míos primero y luego por nombre"
               }
+            },
+            {
+              "value": "expirationOnly",
+              "label": {
+                "enUS": "The ones ending soonest, mine or not",
+                "esES": "Los que acaban antes, sean míos o no"
+              }
+            },
+            {
+              "value": "nameOnly",
+              "label": {
+                "enUS": "By name, mine or not",
+                "esES": "Por nombre, sean míos o no"
+              }
+            },
+            {
+              "value": "applied",
+              "label": {
+                "enUS": "As they were cast, mine or not",
+                "esES": "Según se pusieron, sean míos o no"
+              }
+            },
+            {
+              "value": "important",
+              "label": {
+                "enUS": "Important ones first",
+                "esES": "Los importantes primero"
+              }
             }
           ]
+        },
+        {
+          "id": "sortReverse",
+          "type": "toggle",
+          "default": false,
+          "label": {
+            "enUS": "Reverse order",
+            "esES": "Orden inverso"
+          },
+          "description": {
+            "enUS": "Turns the order around: the last ones come first.",
+            "esES": "Da la vuelta al orden: los últimos salen primero."
+          }
         },
         {
           "id": "max",

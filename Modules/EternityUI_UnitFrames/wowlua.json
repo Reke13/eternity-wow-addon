@@ -33,6 +33,7 @@
       "src/Filters.lua",
       "src/AuraBox.lua",
       "src/Elements.lua",
+      "src/Targets.lua",
       "src/Frame.lua",
       "src/Groups.lua",
       "src/Blizzard.lua",

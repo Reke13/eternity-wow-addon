@@ -19,6 +19,12 @@ ns.CoreOptions = {
                 { id = "loadMessage", type = "toggle", default = true },
                 { id = "minimapEntry", type = "toggle", default = true },
                 { id = "optionsScale", type = "range", default = 1, min = 0.7, max = 1.5, step = 0.05 },
+                -- How the options window lays out the modules' options: v1 (rows) or v2 (cards).
+                { id = "optionsVersion", type = "select", default = "v1", values = values("v1", "v2") },
+                -- V2 only: "basic" hides the options a schema marks `advanced` (unless changed).
+                { id = "optionsLevel", type = "select", default = "basic", values = values("basic", "advanced") },
+                -- V2 only: how much lighter each option's field is than its card.
+                { id = "optionsFieldShade", type = "range", default = 0.05, min = 0, max = 0.2, step = 0.01 },
                 { id = "themeAccent", type = "toggle", default = true },
                 { id = "accentColor", type = "color", default = "#8B5CF6" },
                 { id = "profileNote", type = "text", default = "", maxLength = 80 },

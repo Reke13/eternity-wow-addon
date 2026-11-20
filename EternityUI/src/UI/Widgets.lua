@@ -12,6 +12,9 @@ ns.Widgets = Widgets
 EternityUI.Widgets = Widgets
 
 local painted = setmetatable({}, { __mode = "k" })
+-- A row as a V2 field: its block leaves this much above and below, and its content this much in.
+local ROW_FIELD_GAP = 3
+local ROW_FIELD_PAD = 12
 
 --- Repaints a widget now and on every theme change.
 ---@param widget table has a Paint method
@@ -22,6 +25,13 @@ function Widgets.Track(widget)
         widget:Paint()
     end
     return widget
+end
+
+--- Repaints every tracked widget now (a look option outside the theme changed).
+function Widgets.RepaintAll()
+    for widget in pairs(painted) do
+        widget:Paint()
+    end
 end
 
 Events.Listen(Theme.CHANGED, Widgets, function()
@@ -644,17 +654,46 @@ end
 function Widgets.Row(parent, label, control)
     local row = CreateFrame("Frame", nil, parent)
     row:SetHeight(40)
+    -- With the options window's V2 layout (general.optionsVersion), a field: a block in a lighter
+    -- tone (general.optionsFieldShade) a little shorter than the row, with the label and control
+    -- inside it, instead of a line under them. Same height either way.
+    row.field = Shape.New(row)
+    for _, texture in ipairs({ row.field.fill, row.field.border }) do
+        texture:ClearAllPoints()
+        texture:SetPoint("TOPLEFT", 0, -ROW_FIELD_GAP)
+        texture:SetPoint("BOTTOMRIGHT", 0, ROW_FIELD_GAP)
+    end
     row.label = Widgets.Text(row, 15, "text")
-    row.label:SetPoint("LEFT")
     row.label:SetText(label)
-    local line = Widgets.Rect(row, Theme.colors.line)
-    line:SetPoint("BOTTOMLEFT")
-    line:SetPoint("BOTTOMRIGHT")
-    line:SetHeight(ns.Pixel.Size(row))
+    row.line = Widgets.Rect(row, Theme.colors.line)
+    row.line:SetPoint("BOTTOMLEFT")
+    row.line:SetPoint("BOTTOMRIGHT")
+    row.line:SetHeight(ns.Pixel.Size(row))
     if control then
         control:SetParent(row)
-        control:ClearAllPoints()
-        control:SetPoint("RIGHT")
+        row.control = control
     end
-    return row
+
+    function row:Paint()
+        local store = ns.store
+        local field = store and store:Get("EternityUI", "general.optionsVersion") == "v2"
+        local inset = field and ROW_FIELD_PAD or 0
+        self.label:ClearAllPoints()
+        self.label:SetPoint("LEFT", inset, 0)
+        if self.control then
+            self.control:ClearAllPoints()
+            self.control:SetPoint("RIGHT", -inset, 0)
+        end
+        self.line:SetShown(not field)
+        local c = Theme.colors.line
+        self.line:SetColorTexture(c[1], c[2], c[3], c[4] or 1)
+        if field then
+            local tone = Theme.colors.text
+            local shade = store:Get("EternityUI", "general.optionsFieldShade") or 0
+            Shape.Paint(self.field, math.min(Theme.radius, 6), { tone[1], tone[2], tone[3], shade }, nil)
+        else
+            Shape.Paint(self.field, 0, nil, nil)
+        end
+    end
+    return Widgets.Track(row)
 end

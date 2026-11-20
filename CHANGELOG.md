@@ -2,6 +2,33 @@
 
 What changed in each release of the Eternity suite, newest first. Every addon shares the release's version.
 
+## Unreleased
+
+### Added
+- Options: a new layout for the modules' pages, picked in Personalization > General ("Options layout"): cards that fold, two columns, a lighter field per option whose tone you set, a mark and a reset button on the options you changed, and a Basic / Advanced level. The classic layout stays the default.
+- Options: in the new layout, a module's preview (Action Bars, Unit Frames) opens in a window beside the options from a button next to the close button.
+- Action Bars: "All bars" settings for size, spacing, scale, opacity and when the bars show. Every bar follows them until you change that setting in the bar itself.
+- Alerts: a missing buff rule can also warn when the buff has a few seconds left (1 to 600, off by default), with a countdown on its icon. Buffs that don't run out never count.
+- Alerts: in General, where the names go (below, above, beside or inside the icon) and their size, the size of the value, the icon border, and the countdown's position (inside or outside the icon), size, color and a border of its own color and size.
+- Alerts: each rule can set its own icon size, show or hide its name, glow in its own color, use an icon of its own and turn its countdown off.
+- Alerts: rules can have an "up to level" besides "from level": they show only between the two, both included (no limit by default).
+- Unit frames: threat (aggro) on every frame: a border or glow, yellow when the unit is about to pull aggro and orange or red once it has it (on enemies, your threat on them). Each frame can switch it off; the look, the colors and the early warning are in General.
+- Unit frames: each group member's target beside their frame (off by default): a small health bar with an icon (raid mark, class or portrait), name and percent, with its own size, place and colors. Click it to target that unit.
+- Unit frames: raid tanks in a frame of their own (main tanks and assists, or the tank role), each with their target, buffs on, and their own aura filters.
+- Alerts: a "Duplicate" button on each rule makes a copy right under it and opens it.
+- Auras: more orders for your buffs and the target's debuffs (ending soonest, by name or as they were cast, without putting yours first; important ones first) and a "Reverse order" switch. The game sorts them, so they also work in combat.
+
+### Changed
+- Action Bars: the preview shows real buttons with your shape, border, backdrop, shadow and icons, and the bar's opacity.
+- Options: sliders update the live preview while you drag them.
+- Alerts: the rules belong to the profile, like every other option: each profile has its own list, and a profile copied, exported or imported takes its rules. The rules saved for the whole account are copied into every profile the first time. Profiles keep a module's own data (`Store:GetData`/`SetData`).
+
+### Fixed
+- Map: with OpenMap (or MoveAny, Mapster, Leatrix Maps) the world map could no longer be dragged. Eternity now leaves the map's position and scale to that addon and says so once in the chat.
+- Minimap: the addon buttons panel opens again with Zygor Guides (it failed with "stack overflow"), and another addon's broken frames no longer stop it.
+- Unit frames: the level of NPCs and enemy players is shown in its difficulty color (gray to red) instead of always white.
+- Buffs: the messages pointed to `/editmode`, which Forever doesn't have; they now say game menu (Esc) > Edit Mode.
+
 ## 0.9.0 (2026-11-14)
 
 ### Added

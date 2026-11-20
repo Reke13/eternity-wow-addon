@@ -134,6 +134,7 @@
         },
         {
           "id": "gap",
+          "advanced": true,
           "type": "range",
           "default": 2,
           "min": 0,
@@ -157,7 +158,7 @@
             { "value": "up", "label": { "enUS": "Upwards", "esES": "Hacia arriba" } }
           ]
         },
-        { "id": "spacing", "type": "range", "default": 6, "min": 0, "max": 30, "step": 1, "label": { "enUS": "Spacing", "esES": "Separación" } }
+        { "id": "spacing", "advanced": true, "type": "range", "default": 6, "min": 0, "max": 30, "step": 1, "label": { "enUS": "Spacing", "esES": "Separación" } }
       ]
     },
     {
@@ -182,6 +183,7 @@
         },
         {
           "id": "tickList",
+          "advanced": true,
           "type": "text",
           "default": "234153=5, 15407=6, 5143=5, 47540=3, 257044=7, 113656=5, 117952=4, 356995=4, 740=4",
           "maxLength": 255,
@@ -232,6 +234,7 @@
         },
         {
           "id": "interruptedBy",
+          "advanced": true,
           "type": "toggle",
           "default": true,
           "label": { "enUS": "Show who interrupted", "esES": "Mostrar quién interrumpió" },
@@ -242,12 +245,14 @@
         },
         {
           "id": "tradeskill",
+          "advanced": true,
           "type": "toggle",
           "default": true,
           "label": { "enUS": "Show profession casts", "esES": "Mostrar lanzamientos de profesión" }
         },
         {
           "id": "hold",
+          "advanced": true,
           "type": "range",
           "default": 1,
           "min": 0,
@@ -257,6 +262,7 @@
         },
         {
           "id": "fade",
+          "advanced": true,
           "type": "range",
           "default": 0.3,
           "min": 0,
@@ -319,12 +325,14 @@
         },
         {
           "id": "spark",
+          "advanced": true,
           "type": "toggle",
           "default": true,
           "label": { "enUS": "Spark at the edge", "esES": "Chispa en el borde" }
         },
         {
           "id": "shield",
+          "advanced": true,
           "type": "toggle",
           "default": true,
           "label": { "enUS": "Border on uninterruptible casts", "esES": "Borde en lanzamientos no interrumpibles" }
@@ -342,6 +350,7 @@
         },
         {
           "id": "background",
+          "advanced": true,
           "type": "toggle",
           "default": true,
           "label": { "enUS": "Show the background", "esES": "Mostrar el fondo" }
@@ -360,15 +369,15 @@
           "label": { "enUS": "Cast", "esES": "Lanzamiento" }
         },
         { "id": "channel", "type": "color", "default": "@accent2", "label": { "enUS": "Channel", "esES": "Canalizado" } },
-        { "id": "empower", "type": "color", "default": "#F472B6", "label": { "enUS": "Empowered", "esES": "Potenciado" } },
-        { "id": "locked", "type": "color", "default": "#9CA3AF", "label": { "enUS": "Uninterruptible", "esES": "No interrumpible" } },
-        { "id": "success", "type": "color", "default": "#22C55E", "label": { "enUS": "Finished", "esES": "Terminado" } },
-        { "id": "failed", "type": "color", "default": "#EF4444", "label": { "enUS": "Failed or interrupted", "esES": "Fallido o interrumpido" } },
-        { "id": "latency", "type": "color", "default": "#EF444488", "label": { "enUS": "Latency", "esES": "Latencia" } },
-        { "id": "gcd", "type": "color", "default": "@accent", "label": { "enUS": "Global cooldown", "esES": "Reutilización global" } },
-        { "id": "breath", "type": "color", "default": "#3B82F6", "label": { "enUS": "Breath", "esES": "Respiración" } },
-        { "id": "fatigue", "type": "color", "default": "#F59E0B", "label": { "enUS": "Fatigue", "esES": "Fatiga" } },
-        { "id": "feign", "type": "color", "default": "#A78BFA", "label": { "enUS": "Feign death and others", "esES": "Fingir muerte y otros" } }
+        { "id": "empower", "advanced": true, "type": "color", "default": "#F472B6", "label": { "enUS": "Empowered", "esES": "Potenciado" } },
+        { "id": "locked", "advanced": true, "type": "color", "default": "#9CA3AF", "label": { "enUS": "Uninterruptible", "esES": "No interrumpible" } },
+        { "id": "success", "advanced": true, "type": "color", "default": "#22C55E", "label": { "enUS": "Finished", "esES": "Terminado" } },
+        { "id": "failed", "advanced": true, "type": "color", "default": "#EF4444", "label": { "enUS": "Failed or interrupted", "esES": "Fallido o interrumpido" } },
+        { "id": "latency", "advanced": true, "type": "color", "default": "#EF444488", "label": { "enUS": "Latency", "esES": "Latencia" } },
+        { "id": "gcd", "advanced": true, "type": "color", "default": "@accent", "label": { "enUS": "Global cooldown", "esES": "Reutilización global" } },
+        { "id": "breath", "advanced": true, "type": "color", "default": "#3B82F6", "label": { "enUS": "Breath", "esES": "Respiración" } },
+        { "id": "fatigue", "advanced": true, "type": "color", "default": "#F59E0B", "label": { "enUS": "Fatigue", "esES": "Fatiga" } },
+        { "id": "feign", "advanced": true, "type": "color", "default": "#A78BFA", "label": { "enUS": "Feign death and others", "esES": "Fingir muerte y otros" } }
       ]
     }
   ]

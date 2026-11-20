@@ -22,13 +22,13 @@ local L = E.NewLocale({
     BUFFS = "Buffs",
     DEBUFFS = "Debuffs",
     ARRANGE_SAVED = "Icon order saved in your Edit Mode layout: /reload to see it.",
-    ARRANGE_PRESET = "Your Edit Mode layout is a preset one, which can't be changed: make a layout of your own in Edit Mode (/editmode) and choose the order again.",
+    ARRANGE_PRESET = "Your Edit Mode layout is a preset one, which can't be changed: make a layout of your own in Edit Mode (game menu, Esc > Edit Mode) and choose the order again.",
     ARRANGE_FAILED = "The icon order couldn't be saved in your Edit Mode layout.",
 }, {
     BUFFS = "Bufos",
     DEBUFFS = "Perjuicios",
     ARRANGE_SAVED = "Orden de los iconos guardado en tu disposición del Modo Edición: /reload para verlo.",
-    ARRANGE_PRESET = "Tu disposición del Modo Edición es predefinida y no se puede cambiar: crea una propia en el Modo Edición (/editmode) y vuelve a elegir el orden.",
+    ARRANGE_PRESET = "Tu disposición del Modo Edición es predefinida y no se puede cambiar: crea una propia en el Modo Edición (menú del juego, Esc > Modo Edición) y vuelve a elegir el orden.",
     ARRANGE_FAILED = "No se pudo guardar el orden de los iconos en tu disposición del Modo Edición.",
 })
 

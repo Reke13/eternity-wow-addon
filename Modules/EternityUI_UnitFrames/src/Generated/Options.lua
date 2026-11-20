@@ -655,6 +655,19 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "levelColor",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Level in its difficulty color",
+                        esES = "Nivel en el color de su dificultad",
+                    },
+                    description = {
+                        enUS = "The level of NPCs and of players you can attack (the other faction, or flagged) in gray, green, yellow, orange or red by how hard they are for you, as Blizzard's target frame. Friendly players' stays in the text's color.",
+                        esES = "El nivel de los PNJ y de los jugadores a los que puedes atacar (la otra facción, o marcados) en gris, verde, amarillo, naranja o rojo según lo difíciles que son para ti, como en el marco de objetivo de Blizzard. El de los jugadores aliados queda en el color del texto.",
+                    },
+                },
+                {
                     id = "tapped",
                     type = "color",
                     default = "#7C7C7C",
@@ -740,6 +753,91 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Target and mouseover highlight",
                         esES = "Resalte del objetivo y del ratón",
+                    },
+                },
+            },
+        },
+        {
+            id = "threat",
+            label = {
+                enUS = "Threat",
+                esES = "Amenaza",
+            },
+            options = {
+                {
+                    id = "style",
+                    type = "select",
+                    default = "border",
+                    label = {
+                        enUS = "Threat look",
+                        esES = "Aspecto de la amenaza",
+                    },
+                    description = {
+                        enUS = "How frames show threat (each frame turns it on or off in its icons and effects).",
+                        esES = "Cómo muestran los marcos la amenaza (cada marco la activa o desactiva en sus iconos y efectos).",
+                    },
+                    values = {
+                        {
+                            value = "border",
+                            label = {
+                                enUS = "Border around the frame",
+                                esES = "Borde alrededor del marco",
+                            },
+                        },
+                        {
+                            value = "glow",
+                            label = {
+                                enUS = "Glow on the frame's edges",
+                                esES = "Brillo en los bordes del marco",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "warning",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Also warn of high threat",
+                        esES = "Avisar también de amenaza alta",
+                    },
+                    description = {
+                        enUS = "Also shows it before the aggro is taken, when the unit is about to pull it. Off: only once it has it.",
+                        esES = "La muestra también antes de quitar el agro, cuando la unidad está a punto de quitarlo. Apagado: solo cuando ya lo tiene.",
+                    },
+                },
+                {
+                    id = "high",
+                    type = "color",
+                    default = "#FACC15",
+                    label = {
+                        enUS = "About to pull aggro",
+                        esES = "A punto de quitar el agro",
+                    },
+                    visibleWhen = {
+                        ["threat.warning"] = true,
+                    },
+                },
+                {
+                    id = "insecure",
+                    type = "color",
+                    default = "#F97316",
+                    label = {
+                        enUS = "Has aggro, others close behind",
+                        esES = "Tiene el agro, otros muy cerca",
+                    },
+                    description = {
+                        enUS = "Tanking, but someone else's threat is higher or close: it may lose it.",
+                        esES = "Tanqueando, pero otro tiene más amenaza o está cerca: puede perderlo.",
+                    },
+                },
+                {
+                    id = "tanking",
+                    type = "color",
+                    default = "#EF4444",
+                    label = {
+                        enUS = "Has aggro",
+                        esES = "Tiene el agro",
                     },
                 },
             },
@@ -2290,6 +2388,19 @@ ns.OptionsSchema = {
                     },
                     visibleWhen = {
                         ["playerIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "threat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Threat (aggro)",
+                        esES = "Amenaza (agro)",
+                    },
+                    description = {
+                        enUS = "A border or glow in the threat color when the unit is about to pull an enemy, or has its aggro. The look and colors are in General.",
+                        esES = "Un borde o brillo del color de la amenaza cuando la unidad está a punto de quitarle el agro a un enemigo o ya lo tiene. El aspecto y los colores están en General.",
                     },
                 },
                 {
@@ -3861,6 +3972,19 @@ ns.OptionsSchema = {
                     },
                     visibleWhen = {
                         ["petIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "threat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Threat (aggro)",
+                        esES = "Amenaza (agro)",
+                    },
+                    description = {
+                        enUS = "A border or glow in the threat color when the unit is about to pull an enemy, or has its aggro. The look and colors are in General.",
+                        esES = "Un borde o brillo del color de la amenaza cuando la unidad está a punto de quitarle el agro a un enemigo o ya lo tiene. El aspecto y los colores están en General.",
                     },
                 },
                 {
@@ -5445,6 +5569,19 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "threat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Threat (aggro)",
+                        esES = "Amenaza (agro)",
+                    },
+                    description = {
+                        enUS = "A border or glow in the threat color: an enemy's color is your threat on it (about to pull it, tanking it loosely or for sure); a friend's, its own highest threat on any enemy.",
+                        esES = "Un borde o brillo del color de la amenaza: en un enemigo, tu amenaza sobre él (a punto de quitarle el agro, tanqueándolo sin asegurar o seguro); en un aliado, su mayor amenaza sobre cualquier enemigo.",
+                    },
+                },
+                {
                     id = "rangeFade",
                     type = "toggle",
                     default = false,
@@ -6987,6 +7124,19 @@ ns.OptionsSchema = {
                     },
                     visibleWhen = {
                         ["targettargetIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "threat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Threat (aggro)",
+                        esES = "Amenaza (agro)",
+                    },
+                    description = {
+                        enUS = "A border or glow in the threat color: an enemy's color is your threat on it (about to pull it, tanking it loosely or for sure); a friend's, its own highest threat on any enemy.",
+                        esES = "Un borde o brillo del color de la amenaza: en un enemigo, tu amenaza sobre él (a punto de quitarle el agro, tanqueándolo sin asegurar o seguro); en un aliado, su mayor amenaza sobre cualquier enemigo.",
                     },
                 },
                 {
@@ -8571,6 +8721,19 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "threat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Threat (aggro)",
+                        esES = "Amenaza (agro)",
+                    },
+                    description = {
+                        enUS = "A border or glow in the threat color: an enemy's color is your threat on it (about to pull it, tanking it loosely or for sure); a friend's, its own highest threat on any enemy.",
+                        esES = "Un borde o brillo del color de la amenaza: en un enemigo, tu amenaza sobre él (a punto de quitarle el agro, tanqueándolo sin asegurar o seguro); en un aliado, su mayor amenaza sobre cualquier enemigo.",
+                    },
+                },
+                {
                     id = "rangeFade",
                     type = "toggle",
                     default = false,
@@ -10151,6 +10314,19 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "threat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Threat (aggro)",
+                        esES = "Amenaza (agro)",
+                    },
+                    description = {
+                        enUS = "A border or glow in the threat color when the unit is about to pull an enemy, or has its aggro. The look and colors are in General.",
+                        esES = "Un borde o brillo del color de la amenaza cuando la unidad está a punto de quitarle el agro a un enemigo o ya lo tiene. El aspecto y los colores están en General.",
+                    },
+                },
+                {
                     id = "readyCheck",
                     type = "toggle",
                     default = true,
@@ -10213,6 +10389,276 @@ ns.OptionsSchema = {
                     },
                     visibleWhen = {
                         ["partyIndicators.rangeFade"] = true,
+                    },
+                },
+            },
+        },
+        {
+            id = "partyTargets",
+            label = {
+                enUS = "Targets",
+                esES = "Objetivos",
+            },
+            options = {
+                {
+                    id = "enabled",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Show each one's target",
+                        esES = "Mostrar el objetivo de cada uno",
+                    },
+                    description = {
+                        enUS = "A small bar beside each frame with its target's health and an icon. Click it to target that unit. It follows the frame's unit in combat too.",
+                        esES = "Una barra pequeña al lado de cada marco con la vida de su objetivo y un icono. Haz clic en ella para seleccionar esa unidad. Sigue a la unidad del marco también en combate.",
+                    },
+                },
+                {
+                    id = "anchor",
+                    type = "select",
+                    default = "right",
+                    label = {
+                        enUS = "Position",
+                        esES = "Posición",
+                    },
+                    values = {
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "above",
+                            label = {
+                                enUS = "Above",
+                                esES = "Encima",
+                            },
+                        },
+                        {
+                            value = "below",
+                            label = {
+                                enUS = "Below",
+                                esES = "Debajo",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["partyTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "width",
+                    type = "range",
+                    default = 70,
+                    label = {
+                        enUS = "Width",
+                        esES = "Ancho",
+                    },
+                    min = 30,
+                    max = 200,
+                    step = 1,
+                    visibleWhen = {
+                        ["partyTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "height",
+                    type = "range",
+                    default = 16,
+                    label = {
+                        enUS = "Height",
+                        esES = "Alto",
+                    },
+                    min = 8,
+                    max = 40,
+                    step = 1,
+                    visibleWhen = {
+                        ["partyTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "gap",
+                    type = "range",
+                    default = 2,
+                    label = {
+                        enUS = "Space from the frame",
+                        esES = "Separación del marco",
+                    },
+                    min = 0,
+                    max = 30,
+                    step = 1,
+                    visibleWhen = {
+                        ["partyTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "icon",
+                    type = "select",
+                    default = "raidTarget",
+                    label = {
+                        enUS = "Icon",
+                        esES = "Icono",
+                    },
+                    description = {
+                        enUS = "Raid target: its mark, if it has one. Class: the class of a player (the portrait for NPCs).",
+                        esES = "Objetivo de banda: su marca, si tiene. Clase: la clase de un jugador (el retrato para los PNJ).",
+                    },
+                    values = {
+                        {
+                            value = "raidTarget",
+                            label = {
+                                enUS = "Raid target",
+                                esES = "Objetivo de banda",
+                            },
+                        },
+                        {
+                            value = "class",
+                            label = {
+                                enUS = "Class",
+                                esES = "Clase",
+                            },
+                        },
+                        {
+                            value = "portrait",
+                            label = {
+                                enUS = "Portrait",
+                                esES = "Retrato",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "None",
+                                esES = "Ninguno",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["partyTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "iconSide",
+                    type = "select",
+                    default = "left",
+                    label = {
+                        enUS = "Icon side",
+                        esES = "Lado del icono",
+                    },
+                    values = {
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["partyTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "name",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Name",
+                        esES = "Nombre",
+                    },
+                    visibleWhen = {
+                        ["partyTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "health",
+                    type = "select",
+                    default = "percent",
+                    label = {
+                        enUS = "Health text",
+                        esES = "Texto de la vida",
+                    },
+                    values = {
+                        {
+                            value = "percent",
+                            label = {
+                                enUS = "Percent",
+                                esES = "Porcentaje",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "None",
+                                esES = "Ninguno",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["partyTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "colorBy",
+                    type = "select",
+                    default = "unit",
+                    label = {
+                        enUS = "Bar color",
+                        esES = "Color de la barra",
+                    },
+                    description = {
+                        enUS = "As the frames: class for players, reaction for NPCs (General's colors).",
+                        esES = "Como los marcos: clase para los jugadores, reacción para los PNJ (colores de General).",
+                    },
+                    values = {
+                        {
+                            value = "unit",
+                            label = {
+                                enUS = "As the frames",
+                                esES = "Como los marcos",
+                            },
+                        },
+                        {
+                            value = "health",
+                            label = {
+                                enUS = "Health color",
+                                esES = "Color de la vida",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["partyTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "textSize",
+                    type = "range",
+                    default = 9,
+                    label = {
+                        enUS = "Text size",
+                        esES = "Tamaño del texto",
+                    },
+                    min = 6,
+                    max = 16,
+                    step = 1,
+                    visibleWhen = {
+                        ["partyTargets.enabled"] = true,
                     },
                 },
             },
@@ -11808,6 +12254,19 @@ ns.OptionsSchema = {
                     },
                     visibleWhen = {
                         ["raidIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "threat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Threat (aggro)",
+                        esES = "Amenaza (agro)",
+                    },
+                    description = {
+                        enUS = "A border or glow in the threat color when the unit is about to pull an enemy, or has its aggro. The look and colors are in General.",
+                        esES = "Un borde o brillo del color de la amenaza cuando la unidad está a punto de quitarle el agro a un enemigo o ya lo tiene. El aspecto y los colores están en General.",
                     },
                 },
                 {
@@ -13457,6 +13916,19 @@ ns.OptionsSchema = {
                     },
                 },
                 {
+                    id = "threat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Threat (aggro)",
+                        esES = "Amenaza (agro)",
+                    },
+                    description = {
+                        enUS = "A border or glow in the threat color when the unit is about to pull an enemy, or has its aggro. The look and colors are in General.",
+                        esES = "Un borde o brillo del color de la amenaza cuando la unidad está a punto de quitarle el agro a un enemigo o ya lo tiene. El aspecto y los colores están en General.",
+                    },
+                },
+                {
                     id = "readyCheck",
                     type = "toggle",
                     default = true,
@@ -13519,6 +13991,1898 @@ ns.OptionsSchema = {
                     },
                     visibleWhen = {
                         ["grouppetsIndicators.rangeFade"] = true,
+                    },
+                },
+            },
+        },
+        {
+            id = "tanks",
+            label = {
+                enUS = "Frame",
+                esES = "Marco",
+            },
+            options = {
+                {
+                    id = "enabled",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Show this frame",
+                        esES = "Mostrar este marco",
+                    },
+                },
+                {
+                    id = "width",
+                    type = "range",
+                    default = 140,
+                    min = 40,
+                    max = 400,
+                    step = 1,
+                    label = {
+                        enUS = "Width",
+                        esES = "Ancho",
+                    },
+                },
+                {
+                    id = "height",
+                    type = "range",
+                    default = 34,
+                    min = 12,
+                    max = 120,
+                    step = 1,
+                    label = {
+                        enUS = "Height",
+                        esES = "Alto",
+                    },
+                },
+                {
+                    id = "scale",
+                    type = "range",
+                    default = 1,
+                    min = 0.5,
+                    max = 2,
+                    step = 0.05,
+                    label = {
+                        enUS = "Scale",
+                        esES = "Escala",
+                    },
+                },
+                {
+                    id = "portrait",
+                    type = "select",
+                    default = "off",
+                    label = {
+                        enUS = "Portrait",
+                        esES = "Retrato",
+                    },
+                    values = {
+                        {
+                            value = "off",
+                            label = {
+                                enUS = "None",
+                                esES = "Ninguno",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "roles",
+                    type = "select",
+                    default = "marked",
+                    label = {
+                        enUS = "Who counts as a tank",
+                        esES = "Quién cuenta como tanque",
+                    },
+                    description = {
+                        enUS = "Marked: the raid's main tanks and main assists (the raid window's right click). Role: those who chose the tank role.",
+                        esES = "Marcados: los tanques principales y asistentes principales de la banda (clic derecho en la ventana de banda). Rol: los que eligieron el rol de tanque.",
+                    },
+                    values = {
+                        {
+                            value = "marked",
+                            label = {
+                                enUS = "Main tanks and assists",
+                                esES = "Tanques y asistentes principales",
+                            },
+                        },
+                        {
+                            value = "mainTanks",
+                            label = {
+                                enUS = "Main tanks only",
+                                esES = "Solo tanques principales",
+                            },
+                        },
+                        {
+                            value = "role",
+                            label = {
+                                enUS = "Tank role",
+                                esES = "Rol de tanque",
+                            },
+                        },
+                        {
+                            value = "all",
+                            label = {
+                                enUS = "Marked or tank role",
+                                esES = "Marcados o con rol de tanque",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "growth",
+                    type = "select",
+                    default = "down",
+                    label = {
+                        enUS = "Grow",
+                        esES = "Crecer",
+                    },
+                    values = {
+                        {
+                            value = "down",
+                            label = {
+                                enUS = "Down",
+                                esES = "Hacia abajo",
+                            },
+                        },
+                        {
+                            value = "up",
+                            label = {
+                                enUS = "Up",
+                                esES = "Hacia arriba",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "gap",
+                    type = "range",
+                    default = 3,
+                    min = 0,
+                    max = 20,
+                    step = 1,
+                    label = {
+                        enUS = "Space between frames",
+                        esES = "Espacio entre marcos",
+                    },
+                },
+                {
+                    id = "showSolo",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Show outside a raid",
+                        esES = "Mostrar fuera de banda",
+                    },
+                    description = {
+                        enUS = "In a group: those whose role is tank, if the option below counts them.",
+                        esES = "En un grupo: los que tengan el rol de tanque, si la opción de abajo los cuenta.",
+                    },
+                },
+            },
+        },
+        {
+            id = "tanksBars",
+            label = {
+                enUS = "Bars",
+                esES = "Barras",
+            },
+            options = {
+                {
+                    id = "incomingHeals",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Incoming heals",
+                        esES = "Curación entrante",
+                    },
+                    description = {
+                        enUS = "A lighter bar after the health with the heals on their way.",
+                        esES = "Una barra más clara tras la vida con las curaciones que vienen de camino.",
+                    },
+                },
+                {
+                    id = "overheal",
+                    type = "range",
+                    default = 15,
+                    min = 0,
+                    max = 100,
+                    step = 5,
+                    label = {
+                        enUS = "Heals past full health (% of the bar)",
+                        esES = "Curación por encima de la vida máxima (% de la barra)",
+                    },
+                    description = {
+                        enUS = "How far a heal that would go over full health is still drawn past the end of the bar, even out of the frame. 0: cut at the end of the bar.",
+                        esES = "Hasta dónde se sigue viendo una curación que pasaría de la vida máxima, más allá del final de la barra, aunque salga del marco. 0: se corta al final de la barra.",
+                    },
+                    visibleWhen = {
+                        ["tanksBars.incomingHeals"] = true,
+                    },
+                },
+                {
+                    id = "absorbs",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Shields (absorbs)",
+                        esES = "Escudos (absorción)",
+                    },
+                    description = {
+                        enUS = "A bar after the health (and the incoming heals) with the damage the unit's shields still absorb.",
+                        esES = "Una barra tras la vida (y la curación entrante) con el daño que aún absorben los escudos de la unidad.",
+                    },
+                },
+                {
+                    id = "power",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Power bar",
+                        esES = "Barra de poder",
+                    },
+                },
+                {
+                    id = "powerHeight",
+                    type = "range",
+                    default = 25,
+                    min = 10,
+                    max = 50,
+                    step = 1,
+                    label = {
+                        enUS = "Power bar height (% of the frame)",
+                        esES = "Alto de la barra de poder (% del marco)",
+                    },
+                    visibleWhen = {
+                        ["tanksBars.power"] = true,
+                    },
+                },
+            },
+        },
+        {
+            id = "tanksText",
+            label = {
+                enUS = "Texts",
+                esES = "Textos",
+            },
+            options = {
+                {
+                    id = "healthLeft",
+                    type = "select",
+                    default = "name",
+                    label = {
+                        enUS = "Name and level (health bar, left)",
+                        esES = "Nombre y nivel (barra de vida, izquierda)",
+                    },
+                    values = {
+                        {
+                            value = "name",
+                            label = {
+                                enUS = "Name",
+                                esES = "Nombre",
+                            },
+                        },
+                        {
+                            value = "nameLevel",
+                            label = {
+                                enUS = "Level and name",
+                                esES = "Nivel y nombre",
+                            },
+                        },
+                        {
+                            value = "level",
+                            label = {
+                                enUS = "Level",
+                                esES = "Nivel",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "Nothing",
+                                esES = "Nada",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "healthRight",
+                    type = "select",
+                    default = "inherit",
+                    label = {
+                        enUS = "Health value (health bar, right)",
+                        esES = "Valor de la vida (barra de vida, derecha)",
+                    },
+                    values = {
+                        {
+                            value = "inherit",
+                            label = {
+                                enUS = "Like General",
+                                esES = "Como en General",
+                            },
+                        },
+                        {
+                            value = "current",
+                            label = {
+                                enUS = "Current",
+                                esES = "Actual",
+                            },
+                        },
+                        {
+                            value = "currentMax",
+                            label = {
+                                enUS = "Current / maximum",
+                                esES = "Actual / máximo",
+                            },
+                        },
+                        {
+                            value = "percent",
+                            label = {
+                                enUS = "Percent",
+                                esES = "Porcentaje",
+                            },
+                        },
+                        {
+                            value = "currentPercent",
+                            label = {
+                                enUS = "Current and percent",
+                                esES = "Actual y porcentaje",
+                            },
+                        },
+                        {
+                            value = "missing",
+                            label = {
+                                enUS = "Missing",
+                                esES = "Lo que falta",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "Nothing",
+                                esES = "Nada",
+                            },
+                        },
+                    },
+                    description = {
+                        enUS = "\"Like General\" uses General > Look > Health value.",
+                        esES = "«Como en General» usa General > Aspecto > Valor de la vida.",
+                    },
+                },
+                {
+                    id = "powerText",
+                    type = "select",
+                    default = "inherit",
+                    label = {
+                        enUS = "Power value (power bar)",
+                        esES = "Valor del poder (barra de poder)",
+                    },
+                    values = {
+                        {
+                            value = "inherit",
+                            label = {
+                                enUS = "Like General",
+                                esES = "Como en General",
+                            },
+                        },
+                        {
+                            value = "current",
+                            label = {
+                                enUS = "Current",
+                                esES = "Actual",
+                            },
+                        },
+                        {
+                            value = "currentMax",
+                            label = {
+                                enUS = "Current / maximum",
+                                esES = "Actual / máximo",
+                            },
+                        },
+                        {
+                            value = "percent",
+                            label = {
+                                enUS = "Percent",
+                                esES = "Porcentaje",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "Nothing",
+                                esES = "Nada",
+                            },
+                        },
+                    },
+                    description = {
+                        enUS = "Shows while this frame's power bar is on (Bars). \"Like General\" uses General > Look > Power value.",
+                        esES = "Se ve si la barra de poder de este marco está activa (Barras). «Como en General» usa General > Aspecto > Valor del poder.",
+                    },
+                },
+                {
+                    id = "numbers",
+                    type = "select",
+                    default = "inherit",
+                    label = {
+                        enUS = "Number format",
+                        esES = "Formato de los números",
+                    },
+                    values = {
+                        {
+                            value = "inherit",
+                            label = {
+                                enUS = "Like General",
+                                esES = "Como en General",
+                            },
+                        },
+                        {
+                            value = "short",
+                            label = {
+                                enUS = "Short (1.8K)",
+                                esES = "Abreviado (1,8 mil)",
+                            },
+                        },
+                        {
+                            value = "full",
+                            label = {
+                                enUS = "Full (1800)",
+                                esES = "Completo (1800)",
+                            },
+                        },
+                        {
+                            value = "separated",
+                            label = {
+                                enUS = "Full with separator (1,800)",
+                                esES = "Completo con separador (1.800)",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "No numbers",
+                                esES = "Sin números",
+                            },
+                        },
+                    },
+                    description = {
+                        enUS = "This frame's own, or the one in General > Look.",
+                        esES = "El propio de este marco, o el de General > Aspecto.",
+                    },
+                },
+                {
+                    id = "leftV",
+                    type = "select",
+                    default = "bar",
+                    label = {
+                        enUS = "Health left text: height",
+                        esES = "Texto izquierdo de la vida: altura",
+                    },
+                    values = {
+                        {
+                            value = "bar",
+                            label = {
+                                enUS = "On its bar",
+                                esES = "En su barra",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top of the frame",
+                                esES = "Arriba del marco",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Middle of the frame",
+                                esES = "Centro del marco",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom of the frame",
+                                esES = "Abajo del marco",
+                            },
+                        },
+                        {
+                            value = "above",
+                            label = {
+                                enUS = "Above the frame",
+                                esES = "Encima del marco",
+                            },
+                        },
+                        {
+                            value = "below",
+                            label = {
+                                enUS = "Below the frame",
+                                esES = "Debajo del marco",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "leftH",
+                    type = "select",
+                    default = "left",
+                    label = {
+                        enUS = "Health left text: side",
+                        esES = "Texto izquierdo de la vida: lado",
+                    },
+                    values = {
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "rightV",
+                    type = "select",
+                    default = "bar",
+                    label = {
+                        enUS = "Health right text: height",
+                        esES = "Texto derecho de la vida: altura",
+                    },
+                    values = {
+                        {
+                            value = "bar",
+                            label = {
+                                enUS = "On its bar",
+                                esES = "En su barra",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top of the frame",
+                                esES = "Arriba del marco",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Middle of the frame",
+                                esES = "Centro del marco",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom of the frame",
+                                esES = "Abajo del marco",
+                            },
+                        },
+                        {
+                            value = "above",
+                            label = {
+                                enUS = "Above the frame",
+                                esES = "Encima del marco",
+                            },
+                        },
+                        {
+                            value = "below",
+                            label = {
+                                enUS = "Below the frame",
+                                esES = "Debajo del marco",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "rightH",
+                    type = "select",
+                    default = "right",
+                    label = {
+                        enUS = "Health right text: side",
+                        esES = "Texto derecho de la vida: lado",
+                    },
+                    values = {
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "powerV",
+                    type = "select",
+                    default = "bar",
+                    label = {
+                        enUS = "Power text: height",
+                        esES = "Texto del poder: altura",
+                    },
+                    values = {
+                        {
+                            value = "bar",
+                            label = {
+                                enUS = "On its bar",
+                                esES = "En su barra",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top of the frame",
+                                esES = "Arriba del marco",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Middle of the frame",
+                                esES = "Centro del marco",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom of the frame",
+                                esES = "Abajo del marco",
+                            },
+                        },
+                        {
+                            value = "above",
+                            label = {
+                                enUS = "Above the frame",
+                                esES = "Encima del marco",
+                            },
+                        },
+                        {
+                            value = "below",
+                            label = {
+                                enUS = "Below the frame",
+                                esES = "Debajo del marco",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksBars.power"] = true,
+                    },
+                },
+                {
+                    id = "powerH",
+                    type = "select",
+                    default = "center",
+                    label = {
+                        enUS = "Power text: side",
+                        esES = "Texto del poder: lado",
+                    },
+                    values = {
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksBars.power"] = true,
+                    },
+                },
+                {
+                    id = "textSize",
+                    type = "range",
+                    default = 11,
+                    min = 8,
+                    max = 20,
+                    step = 1,
+                    label = {
+                        enUS = "Text size",
+                        esES = "Tamaño del texto",
+                    },
+                },
+            },
+        },
+        {
+            id = "tanksAuras",
+            label = {
+                enUS = "Auras: look",
+                esES = "Auras: aspecto",
+            },
+            options = {
+                {
+                    id = "debuffPosition",
+                    type = "select",
+                    default = "insideRight",
+                    label = {
+                        enUS = "Debuffs: where",
+                        esES = "Perjuicios: dónde",
+                    },
+                    values = {
+                        {
+                            value = "below",
+                            label = {
+                                enUS = "Below the frame",
+                                esES = "Debajo del marco",
+                            },
+                        },
+                        {
+                            value = "above",
+                            label = {
+                                enUS = "Above the frame",
+                                esES = "Encima del marco",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left of the frame",
+                                esES = "A la izquierda del marco",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right of the frame",
+                                esES = "A la derecha del marco",
+                            },
+                        },
+                        {
+                            value = "insideLeft",
+                            label = {
+                                enUS = "Inside, bottom left",
+                                esES = "Dentro, abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "insideRight",
+                            label = {
+                                enUS = "Inside, bottom right",
+                                esES = "Dentro, abajo a la derecha",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "buffPosition",
+                    type = "select",
+                    default = "insideLeft",
+                    label = {
+                        enUS = "Buffs: where",
+                        esES = "Bufos: dónde",
+                    },
+                    values = {
+                        {
+                            value = "below",
+                            label = {
+                                enUS = "Below the frame",
+                                esES = "Debajo del marco",
+                            },
+                        },
+                        {
+                            value = "above",
+                            label = {
+                                enUS = "Above the frame",
+                                esES = "Encima del marco",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left of the frame",
+                                esES = "A la izquierda del marco",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right of the frame",
+                                esES = "A la derecha del marco",
+                            },
+                        },
+                        {
+                            value = "insideLeft",
+                            label = {
+                                enUS = "Inside, bottom left",
+                                esES = "Dentro, abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "insideRight",
+                            label = {
+                                enUS = "Inside, bottom right",
+                                esES = "Dentro, abajo a la derecha",
+                            },
+                        },
+                    },
+                    description = {
+                        enUS = "If both go to the same place, the buffs go after the debuffs.",
+                        esES = "Si los dos van al mismo sitio, los bufos van detrás de los perjuicios.",
+                    },
+                },
+                {
+                    id = "size",
+                    type = "range",
+                    default = 16,
+                    min = 10,
+                    max = 48,
+                    step = 1,
+                    label = {
+                        enUS = "Icon size",
+                        esES = "Tamaño de los iconos",
+                    },
+                },
+                {
+                    id = "perRow",
+                    type = "range",
+                    default = 4,
+                    min = 1,
+                    max = 16,
+                    step = 1,
+                    label = {
+                        enUS = "Icons per row",
+                        esES = "Iconos por fila",
+                    },
+                },
+                {
+                    id = "sort",
+                    type = "select",
+                    default = "time",
+                    label = {
+                        enUS = "Order",
+                        esES = "Orden",
+                    },
+                    values = {
+                        {
+                            value = "time",
+                            label = {
+                                enUS = "Time left",
+                                esES = "Tiempo restante",
+                            },
+                        },
+                        {
+                            value = "name",
+                            label = {
+                                enUS = "Name",
+                                esES = "Nombre",
+                            },
+                        },
+                        {
+                            value = "default",
+                            label = {
+                                enUS = "As the game gives them",
+                                esES = "Como las da el juego",
+                            },
+                        },
+                    },
+                },
+                {
+                    id = "swipe",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Time as a shadow",
+                        esES = "Tiempo como sombra",
+                    },
+                },
+                {
+                    id = "dispelBorder",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Debuff border in its type's color",
+                        esES = "Borde de los perjuicios del color de su tipo",
+                    },
+                    description = {
+                        enUS = "Magic blue, curse purple, disease brown, poison green; red without a type.",
+                        esES = "Magia azul, maldición morada, enfermedad marrón, veneno verde; rojo sin tipo.",
+                    },
+                },
+            },
+        },
+        {
+            id = "tanksBuffs",
+            label = {
+                enUS = "Buffs",
+                esES = "Bufos",
+            },
+            options = {
+                {
+                    id = "enabled",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Show buffs",
+                        esES = "Mostrar bufos",
+                    },
+                },
+                {
+                    id = "origin",
+                    type = "select",
+                    default = "all",
+                    label = {
+                        enUS = "Cast by",
+                        esES = "Puestos por",
+                    },
+                    values = {
+                        {
+                            value = "all",
+                            label = {
+                                enUS = "Anyone's",
+                                esES = "De cualquiera",
+                            },
+                        },
+                        {
+                            value = "mine",
+                            label = {
+                                enUS = "Only mine",
+                                esES = "Solo los míos",
+                            },
+                        },
+                        {
+                            value = "others",
+                            label = {
+                                enUS = "Only others'",
+                                esES = "Solo de otros",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksBuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "duration",
+                    type = "select",
+                    default = "all",
+                    label = {
+                        enUS = "Duration",
+                        esES = "Duración",
+                    },
+                    values = {
+                        {
+                            value = "all",
+                            label = {
+                                enUS = "Any",
+                                esES = "Cualquiera",
+                            },
+                        },
+                        {
+                            value = "timed",
+                            label = {
+                                enUS = "Only the ones that run out",
+                                esES = "Solo los que se acaban",
+                            },
+                        },
+                        {
+                            value = "short",
+                            label = {
+                                enUS = "Only short ones",
+                                esES = "Solo los cortos",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksBuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "maxMinutes",
+                    type = "range",
+                    default = 5,
+                    min = 1,
+                    max = 60,
+                    step = 1,
+                    label = {
+                        enUS = "Short: up to (minutes)",
+                        esES = "Cortos: hasta (minutos)",
+                    },
+                    visibleWhen = {
+                        ["tanksBuffs.duration"] = "short",
+                    },
+                },
+                {
+                    id = "stealable",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Only the ones you can steal or purge",
+                        esES = "Solo los que puedes robar o purgar",
+                    },
+                    visibleWhen = {
+                        ["tanksBuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "onlyList",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Only the ones of the filters",
+                        esES = "Solo los de los filtros",
+                    },
+                    description = {
+                        enUS = "The spells of the filters applied to this frame (Filters tab), and nothing else.",
+                        esES = "Las habilidades de los filtros aplicados a este marco (pestaña Filtros), y nada más.",
+                    },
+                    visibleWhen = {
+                        ["tanksBuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "hide",
+                    type = "text",
+                    default = "",
+                    maxLength = 400,
+                    label = {
+                        enUS = "Never show",
+                        esES = "No mostrar nunca",
+                    },
+                    description = {
+                        enUS = "Spell IDs separated by commas. Works on you, your group and other friendly units.",
+                        esES = "Números de hechizo separados por comas. Funciona en ti, tu grupo y otras unidades amistosas.",
+                    },
+                    visibleWhen = {
+                        ["tanksBuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "max",
+                    type = "range",
+                    default = 4,
+                    min = 1,
+                    max = 40,
+                    step = 1,
+                    label = {
+                        enUS = "Most buffs",
+                        esES = "Máximo de bufos",
+                    },
+                    visibleWhen = {
+                        ["tanksBuffs.enabled"] = true,
+                    },
+                },
+            },
+        },
+        {
+            id = "tanksDebuffs",
+            label = {
+                enUS = "Debuffs",
+                esES = "Perjuicios",
+            },
+            options = {
+                {
+                    id = "enabled",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Show debuffs",
+                        esES = "Mostrar perjuicios",
+                    },
+                },
+                {
+                    id = "origin",
+                    type = "select",
+                    default = "all",
+                    label = {
+                        enUS = "Cast by",
+                        esES = "Puestos por",
+                    },
+                    values = {
+                        {
+                            value = "all",
+                            label = {
+                                enUS = "Anyone's",
+                                esES = "De cualquiera",
+                            },
+                        },
+                        {
+                            value = "mine",
+                            label = {
+                                enUS = "Only mine",
+                                esES = "Solo los míos",
+                            },
+                        },
+                        {
+                            value = "others",
+                            label = {
+                                enUS = "Only others'",
+                                esES = "Solo de otros",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksDebuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "dispellable",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Only the ones you can dispel",
+                        esES = "Solo los que puedes disipar",
+                    },
+                    visibleWhen = {
+                        ["tanksDebuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "magic",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Magic",
+                        esES = "Magia",
+                    },
+                    visibleWhen = {
+                        ["tanksDebuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "curse",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Curse",
+                        esES = "Maldición",
+                    },
+                    visibleWhen = {
+                        ["tanksDebuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "disease",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Disease",
+                        esES = "Enfermedad",
+                    },
+                    visibleWhen = {
+                        ["tanksDebuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "poison",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Poison",
+                        esES = "Veneno",
+                    },
+                    visibleWhen = {
+                        ["tanksDebuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "untyped",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Without a type",
+                        esES = "Sin tipo",
+                    },
+                    visibleWhen = {
+                        ["tanksDebuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "crowdControl",
+                    type = "select",
+                    default = "show",
+                    label = {
+                        enUS = "Crowd control",
+                        esES = "Control de masas",
+                    },
+                    values = {
+                        {
+                            value = "show",
+                            label = {
+                                enUS = "Show",
+                                esES = "Mostrar",
+                            },
+                        },
+                        {
+                            value = "hide",
+                            label = {
+                                enUS = "Hide",
+                                esES = "Ocultar",
+                            },
+                        },
+                        {
+                            value = "only",
+                            label = {
+                                enUS = "Only those",
+                                esES = "Solo esos",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksDebuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "bossOnly",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Only boss debuffs",
+                        esES = "Solo perjuicios de jefe",
+                    },
+                    visibleWhen = {
+                        ["tanksDebuffs.enabled"] = true,
+                    },
+                },
+                {
+                    id = "max",
+                    type = "range",
+                    default = 4,
+                    min = 1,
+                    max = 40,
+                    step = 1,
+                    label = {
+                        enUS = "Most debuffs",
+                        esES = "Máximo de perjuicios",
+                    },
+                    visibleWhen = {
+                        ["tanksDebuffs.enabled"] = true,
+                    },
+                },
+            },
+        },
+        {
+            id = "tanksIndicators",
+            label = {
+                enUS = "Icons and effects",
+                esES = "Iconos y efectos",
+            },
+            options = {
+                {
+                    id = "raidTarget",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Raid target icon",
+                        esES = "Icono de objetivo de banda",
+                    },
+                },
+                {
+                    id = "leader",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Group leader",
+                        esES = "Líder del grupo",
+                    },
+                },
+                {
+                    id = "status",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Dead, ghost or offline",
+                        esES = "Muerto, fantasma o desconectado",
+                    },
+                },
+                {
+                    id = "highlight",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Highlight on mouseover",
+                        esES = "Resaltar al pasar el ratón",
+                    },
+                },
+                {
+                    id = "pvp",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "PvP icon",
+                        esES = "Icono JcJ",
+                    },
+                    description = {
+                        enUS = "The faction's icon while the unit is flagged for PvP; another one in free-for-all PvP.",
+                        esES = "El icono de la facción mientras la unidad está marcada JcJ; otro distinto en JcJ todos contra todos.",
+                    },
+                },
+                {
+                    id = "pvpAnchor",
+                    type = "select",
+                    default = "topright",
+                    label = {
+                        enUS = "PvP icon position",
+                        esES = "Posición del icono JcJ",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "pvpSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "PvP icon size (%)",
+                        esES = "Tamaño del icono JcJ (%)",
+                    },
+                    visibleWhen = {
+                        ["tanksIndicators.pvp"] = true,
+                    },
+                },
+                {
+                    id = "combat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Combat icon",
+                        esES = "Icono de combate",
+                    },
+                    description = {
+                        enUS = "Crossed swords while the unit is in combat.",
+                        esES = "Espadas cruzadas mientras la unidad está en combate.",
+                    },
+                },
+                {
+                    id = "combatAnchor",
+                    type = "select",
+                    default = "bottomleft",
+                    label = {
+                        enUS = "Combat icon position",
+                        esES = "Posición del icono de combate",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "top",
+                            label = {
+                                enUS = "Top",
+                                esES = "Arriba",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "center",
+                            label = {
+                                enUS = "Center",
+                                esES = "Centro",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottom",
+                            label = {
+                                enUS = "Bottom",
+                                esES = "Abajo",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "combatSize",
+                    type = "range",
+                    default = 100,
+                    min = 50,
+                    max = 200,
+                    step = 5,
+                    label = {
+                        enUS = "Combat icon size (%)",
+                        esES = "Tamaño del icono de combate (%)",
+                    },
+                    visibleWhen = {
+                        ["tanksIndicators.combat"] = true,
+                    },
+                },
+                {
+                    id = "threat",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Threat (aggro)",
+                        esES = "Amenaza (agro)",
+                    },
+                    description = {
+                        enUS = "A border or glow in the threat color when the unit is about to pull an enemy, or has its aggro. The look and colors are in General.",
+                        esES = "Un borde o brillo del color de la amenaza cuando la unidad está a punto de quitarle el agro a un enemigo o ya lo tiene. El aspecto y los colores están en General.",
+                    },
+                },
+                {
+                    id = "readyCheck",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Ready check",
+                        esES = "Comprobación de listos",
+                    },
+                },
+                {
+                    id = "targetHighlight",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Highlight your target",
+                        esES = "Resaltar tu objetivo",
+                    },
+                },
+                {
+                    id = "rangeFade",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Fade out of range",
+                        esES = "Atenuar fuera de alcance",
+                    },
+                    description = {
+                        enUS = "Group members by their distance or the game's group range; anyone else by the range of one of your class's spells: an attack on enemies, a heal or buff on friends.",
+                        esES = "Los del grupo por su distancia o el alcance de grupo del juego; cualquier otro por el alcance de un hechizo de tu clase: un ataque contra enemigos, una cura o bufo con aliados.",
+                    },
+                },
+                {
+                    id = "rangeAlpha",
+                    type = "range",
+                    default = 0.45,
+                    min = 0.1,
+                    max = 1,
+                    step = 0.05,
+                    label = {
+                        enUS = "Opacity out of range",
+                        esES = "Opacidad fuera de alcance",
+                    },
+                    visibleWhen = {
+                        ["tanksIndicators.rangeFade"] = true,
+                    },
+                },
+                {
+                    id = "rangeYards",
+                    type = "range",
+                    default = 40,
+                    min = 5,
+                    max = 100,
+                    step = 1,
+                    label = {
+                        enUS = "Distance (yards)",
+                        esES = "Distancia (metros)",
+                    },
+                    description = {
+                        enUS = "Farther than this, faded. The game gives the real distance only for your group and raid outside instances; inside, they go by the game's group range (about 40 yards), and anyone else by the spell of your class whose reach is nearest this distance (without one, out of combat, about 28 yards).",
+                        esES = "Más lejos de esto, atenuado. El juego da la distancia real solo de tu grupo y banda fuera de mazmorras; dentro se usa el alcance de grupo del juego (unos 40 metros), y con cualquier otro, el hechizo de tu clase cuyo alcance se acerque más a esta distancia (sin él, fuera de combate, unos 28 metros).",
+                    },
+                    visibleWhen = {
+                        ["tanksIndicators.rangeFade"] = true,
+                    },
+                },
+            },
+        },
+        {
+            id = "tanksTargets",
+            label = {
+                enUS = "Targets",
+                esES = "Objetivos",
+            },
+            options = {
+                {
+                    id = "enabled",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Show each one's target",
+                        esES = "Mostrar el objetivo de cada uno",
+                    },
+                    description = {
+                        enUS = "A small bar beside each frame with its target's health and an icon. Click it to target that unit. It follows the frame's unit in combat too.",
+                        esES = "Una barra pequeña al lado de cada marco con la vida de su objetivo y un icono. Haz clic en ella para seleccionar esa unidad. Sigue a la unidad del marco también en combate.",
+                    },
+                },
+                {
+                    id = "anchor",
+                    type = "select",
+                    default = "right",
+                    label = {
+                        enUS = "Position",
+                        esES = "Posición",
+                    },
+                    values = {
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "above",
+                            label = {
+                                enUS = "Above",
+                                esES = "Encima",
+                            },
+                        },
+                        {
+                            value = "below",
+                            label = {
+                                enUS = "Below",
+                                esES = "Debajo",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "width",
+                    type = "range",
+                    default = 70,
+                    label = {
+                        enUS = "Width",
+                        esES = "Ancho",
+                    },
+                    min = 30,
+                    max = 200,
+                    step = 1,
+                    visibleWhen = {
+                        ["tanksTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "height",
+                    type = "range",
+                    default = 16,
+                    label = {
+                        enUS = "Height",
+                        esES = "Alto",
+                    },
+                    min = 8,
+                    max = 40,
+                    step = 1,
+                    visibleWhen = {
+                        ["tanksTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "gap",
+                    type = "range",
+                    default = 2,
+                    label = {
+                        enUS = "Space from the frame",
+                        esES = "Separación del marco",
+                    },
+                    min = 0,
+                    max = 30,
+                    step = 1,
+                    visibleWhen = {
+                        ["tanksTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "icon",
+                    type = "select",
+                    default = "raidTarget",
+                    label = {
+                        enUS = "Icon",
+                        esES = "Icono",
+                    },
+                    description = {
+                        enUS = "Raid target: its mark, if it has one. Class: the class of a player (the portrait for NPCs).",
+                        esES = "Objetivo de banda: su marca, si tiene. Clase: la clase de un jugador (el retrato para los PNJ).",
+                    },
+                    values = {
+                        {
+                            value = "raidTarget",
+                            label = {
+                                enUS = "Raid target",
+                                esES = "Objetivo de banda",
+                            },
+                        },
+                        {
+                            value = "class",
+                            label = {
+                                enUS = "Class",
+                                esES = "Clase",
+                            },
+                        },
+                        {
+                            value = "portrait",
+                            label = {
+                                enUS = "Portrait",
+                                esES = "Retrato",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "None",
+                                esES = "Ninguno",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "iconSide",
+                    type = "select",
+                    default = "left",
+                    label = {
+                        enUS = "Icon side",
+                        esES = "Lado del icono",
+                    },
+                    values = {
+                        {
+                            value = "left",
+                            label = {
+                                enUS = "Left",
+                                esES = "Izquierda",
+                            },
+                        },
+                        {
+                            value = "right",
+                            label = {
+                                enUS = "Right",
+                                esES = "Derecha",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "name",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Name",
+                        esES = "Nombre",
+                    },
+                    visibleWhen = {
+                        ["tanksTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "health",
+                    type = "select",
+                    default = "percent",
+                    label = {
+                        enUS = "Health text",
+                        esES = "Texto de la vida",
+                    },
+                    values = {
+                        {
+                            value = "percent",
+                            label = {
+                                enUS = "Percent",
+                                esES = "Porcentaje",
+                            },
+                        },
+                        {
+                            value = "none",
+                            label = {
+                                enUS = "None",
+                                esES = "Ninguno",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "colorBy",
+                    type = "select",
+                    default = "unit",
+                    label = {
+                        enUS = "Bar color",
+                        esES = "Color de la barra",
+                    },
+                    description = {
+                        enUS = "As the frames: class for players, reaction for NPCs (General's colors).",
+                        esES = "Como los marcos: clase para los jugadores, reacción para los PNJ (colores de General).",
+                    },
+                    values = {
+                        {
+                            value = "unit",
+                            label = {
+                                enUS = "As the frames",
+                                esES = "Como los marcos",
+                            },
+                        },
+                        {
+                            value = "health",
+                            label = {
+                                enUS = "Health color",
+                                esES = "Color de la vida",
+                            },
+                        },
+                    },
+                    visibleWhen = {
+                        ["tanksTargets.enabled"] = true,
+                    },
+                },
+                {
+                    id = "textSize",
+                    type = "range",
+                    default = 9,
+                    label = {
+                        enUS = "Text size",
+                        esES = "Tamaño del texto",
+                    },
+                    min = 6,
+                    max = 16,
+                    step = 1,
+                    visibleWhen = {
+                        ["tanksTargets.enabled"] = true,
                     },
                 },
             },

@@ -215,6 +215,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "gap",
+                    advanced = true,
                     type = "range",
                     default = 2,
                     min = 0,
@@ -261,6 +262,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    advanced = true,
                     type = "range",
                     default = 6,
                     min = 0,
@@ -304,6 +306,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "tickList",
+                    advanced = true,
                     type = "text",
                     default = "234153=5, 15407=6, 5143=5, 47540=3, 257044=7, 113656=5, 117952=4, 356995=4, 740=4",
                     maxLength = 255,
@@ -390,6 +393,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "interruptedBy",
+                    advanced = true,
                     type = "toggle",
                     default = true,
                     label = {
@@ -403,6 +407,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "tradeskill",
+                    advanced = true,
                     type = "toggle",
                     default = true,
                     label = {
@@ -412,6 +417,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "hold",
+                    advanced = true,
                     type = "range",
                     default = 1,
                     min = 0,
@@ -424,6 +430,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fade",
+                    advanced = true,
                     type = "range",
                     default = 0.3,
                     min = 0,
@@ -727,6 +734,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spark",
+                    advanced = true,
                     type = "toggle",
                     default = true,
                     label = {
@@ -736,6 +744,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "shield",
+                    advanced = true,
                     type = "toggle",
                     default = true,
                     label = {
@@ -777,6 +786,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "background",
+                    advanced = true,
                     type = "toggle",
                     default = true,
                     label = {
@@ -814,6 +824,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "empower",
+                    advanced = true,
                     type = "color",
                     default = "#F472B6",
                     label = {
@@ -823,6 +834,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "locked",
+                    advanced = true,
                     type = "color",
                     default = "#9CA3AF",
                     label = {
@@ -832,6 +844,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "success",
+                    advanced = true,
                     type = "color",
                     default = "#22C55E",
                     label = {
@@ -841,6 +854,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "failed",
+                    advanced = true,
                     type = "color",
                     default = "#EF4444",
                     label = {
@@ -850,6 +864,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "latency",
+                    advanced = true,
                     type = "color",
                     default = "#EF444488",
                     label = {
@@ -859,6 +874,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "gcd",
+                    advanced = true,
                     type = "color",
                     default = "@accent",
                     label = {
@@ -868,6 +884,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "breath",
+                    advanced = true,
                     type = "color",
                     default = "#3B82F6",
                     label = {
@@ -877,6 +894,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fatigue",
+                    advanced = true,
                     type = "color",
                     default = "#F59E0B",
                     label = {
@@ -886,6 +904,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "feign",
+                    advanced = true,
                     type = "color",
                     default = "#A78BFA",
                     label = {

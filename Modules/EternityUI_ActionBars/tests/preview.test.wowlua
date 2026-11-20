@@ -1,0 +1,54 @@
+-- The Bars tab's preview draws the bar with buttons skinned like the real ones.
+import test, expect from "wowlua:test"
+
+local E = EternityUI
+local NAME = "EternityUI_ActionBars"
+
+local function preview()
+    local module = E:GetModule(NAME)
+    local frame = module.tabs[1].preview(UIParent)
+    frame:SetWidth(400)
+    return frame
+end
+
+@test("the preview's buttons are skinned by Style, with the border and backdrop the options ask for")
+local function skinned()
+    local frame = preview()
+    E.store:Set(NAME, "buttons.border", true)
+    E.store:Set(NAME, "buttons.backdrop", true)
+    frame:Refresh("bar1")
+    local button = frame.buttons[1]
+    expect(button.eternitySkin ~= nil).toBe(true)
+    expect(button.eternitySkin.border:IsShown()).toBe(true)
+    expect(button.eternitySkin.backdrop:IsShown()).toBe(true)
+    E.store:Set(NAME, "buttons.border", false)
+    frame:Refresh("bar1")
+    expect(button.eternitySkin.border:IsShown()).toBe(false)
+    E.store:Reset(NAME)
+end
+
+@test("the preview follows the bar's size, spacing and count")
+local function grid()
+    local frame = preview()
+    E.store:Set(NAME, "bar1.buttons", 6)
+    E.store:Set(NAME, "bar1.size", 30)
+    E.store:Set(NAME, "bar1.spacing", 20)
+    frame:Refresh("bar1")
+    expect(frame.buttons[6]:IsShown()).toBe(true)
+    expect(frame.buttons[7]:IsShown()).toBe(false)
+    local _, _, _, x = frame.buttons[2]:GetPoint(1)
+    expect(x).toBe(50)
+    expect(math.floor(frame.buttons[1]:GetWidth() + 0.5)).toBe(30)
+    E.store:Reset(NAME)
+end
+
+@test("the preview shows the bar's opacity")
+local function opacity()
+    local frame = preview()
+    E.store:Set(NAME, "bar1.alpha", 0.3)
+    frame:Refresh("bar1")
+    expect(math.abs(frame.grid:GetAlpha() - 0.3) < 0.01).toBe(true)
+    E.store:Reset(NAME)
+    frame:Refresh("bar1")
+    expect(math.abs(frame.grid:GetAlpha() - 1) < 0.01).toBe(true)
+end

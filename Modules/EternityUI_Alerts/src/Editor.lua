@@ -15,6 +15,22 @@ local HEADER = 44
 local MAX_PICKS = 14
 local MAX_AURAS = 40
 local DELETE_SECONDS = 4
+-- The options window's V2 layout (the core's general.optionsVersion): the form in two columns, like
+-- the option lists. Every field has its control beside its label and the same height, so they pair
+-- in order with no gaps; only a section's last field can be alone. Headings take the whole line.
+local FIELD_X = 12
+local LINE_GAP = 8
+local COLUMN_GAP = 24
+local RANGE_SHARE = 0.48
+local TEXT_SHARE = 0.55 -- a text box takes about this much of its field
+local DROPDOWN_SHARE = 0.5
+local SPELLS_SHARE = 0.62 -- the buff list and "My buffs" together
+local PICK_ROOM = 124 -- "My buffs" and its gap
+local SLIDER = 230 -- the core's slider: its width and its readout's room
+local SLIDER_READOUT = 50
+local DROPDOWN = 240
+local FALLBACK_WIDTH = 756 -- the form before it has a size
+local FORM_MARGIN = 12 -- the form inside the tab, on each side
 
 ---@class EternityUIAlertsEditor
 ---@field view table? the tab's frame while it exists
@@ -23,7 +39,11 @@ ns.Editor = Editor
 
 local function summary(rule)
     if rule.kind == "buff" then
-        return rule.spells ~= "" and L.SUMMARY_buff:format(rule.spells) or L.SUMMARY_buff_EMPTY
+        if rule.spells == "" then
+            return L.SUMMARY_buff_EMPTY
+        end
+        local text = L.SUMMARY_buff:format(rule.spells)
+        return rule.lowTime and (text .. L.SUMMARY_buff_LOW:format(rule.lowTimeSeconds)) or text
     elseif rule.kind == "enchant" then
         return rule.threshold > 0 and L.SUMMARY_enchant:format(rule.threshold) or L.SUMMARY_enchant_NONE
     elseif rule.kind == "durability" then
@@ -84,6 +104,12 @@ local function currentBuffs()
     return list
 end
 
+--- True while the options window uses its V2 layout. A core without the setting answers nil.
+---@return boolean
+function Editor.TwoColumns()
+    return E.store:Get("EternityUI", "general.optionsVersion") == "v2"
+end
+
 -- List ---------------------------------------------------------------------------------------------
 
 local function newRow(view)
@@ -103,7 +129,7 @@ local function newRow(view)
     row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 10, 2)
     row.note = Widgets.Text(row, 12, "muted")
     row.note:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", 10, -2)
-    row.note:SetPoint("RIGHT", -70, 0)
+    row.note:SetPoint("RIGHT", -150, 0)
     row.note:SetJustifyH("LEFT")
     row.note:SetWordWrap(false)
 
@@ -127,6 +153,13 @@ local function newRow(view)
     end)
     row.delete:SetWidth(34)
     row.delete:SetPoint("RIGHT", -8, 0)
+
+    -- Beside the delete button (it widens to the left while it asks): a copy under the rule.
+    row.duplicate = Widgets.Button(row, L.DUPLICATE, "ghost", function()
+        Editor.Duplicate(row.rule)
+    end)
+    row.duplicate:SetWidth(96)
+    row.duplicate:SetPoint("RIGHT", row.delete, "LEFT", -6, 0)
 
     function row.Paint(self)
         local accent = Theme.accent
@@ -161,11 +194,15 @@ local function buildForm(view)
         end
     end
 
-    -- field: { frame, kinds = { kind = true } or nil, load = fun(rule), when = fun(rule): boolean }
+    -- field: { frame, kinds = { kind = true } or nil, load = fun(rule), when = fun(rule): boolean,
+    -- shape = "inline" (a field) or nil (a heading, on its own line), fit = fun(width?) }
     -- when: shown only if it returns true (fields that make no sense with another field's value).
-    local function add(frame, kinds, load, when)
+    -- fit: sizes the control for a column of that width, or back to its own size without one.
+    local function add(frame, kinds, load, when, shape, fit)
         frame:SetParent(form)
-        form.fields[#form.fields + 1] = { frame = frame, kinds = kinds, load = load, when = when }
+        local field = { frame = frame, kinds = kinds, load = load, when = when, shape = shape, fit = fit }
+        form.fields[#form.fields + 1] = field
+        return field
     end
 
     local function heading(text)
@@ -191,9 +228,18 @@ local function buildForm(view)
 
     local function textField(label, key, placeholder, kinds, when)
         local box = input(key, placeholder)
-        add(Widgets.Row(form, label, box), kinds, function(rule)
-            box:SetText(rule[key])
-        end, when)
+        add(
+            Widgets.Row(form, label, box),
+            kinds,
+            function(rule)
+                box:SetText(rule[key])
+            end,
+            when,
+            "inline",
+            function(width)
+                box:SetWidth(width and math.max(120, math.floor(width * TEXT_SHARE)) or FIELD_WIDTH)
+            end
+        )
     end
 
     local function dropdown(label, key, list, kinds, after)
@@ -204,9 +250,20 @@ local function buildForm(view)
             end
         end)
         local row = Widgets.Row(form, label, control)
-        add(row, kinds, function(rule)
-            control:SetValue(rule[key])
-        end)
+        add(
+            row,
+            kinds,
+            function(rule)
+                control:SetValue(rule[key])
+            end,
+            nil,
+            "inline",
+            function(width)
+                control:SetWidth(
+                    width and math.max(140, math.min(DROPDOWN, math.floor(width * DROPDOWN_SHARE))) or DROPDOWN
+                )
+            end
+        )
         return row
     end
 
@@ -217,13 +274,29 @@ local function buildForm(view)
         return row.info
     end
 
-    local function toggle(label, key, kinds, when)
+    local function toggle(label, key, kinds, when, after)
         local control = Widgets.Toggle(form, function(value)
             set(key, value)
+            if after then
+                after(value)
+            end
         end)
-        add(Widgets.Row(form, label, control), kinds, function(rule)
+        local row = Widgets.Row(form, label, control)
+        add(row, kinds, function(rule)
             control:SetValue(rule[key])
-        end, when)
+        end, when, "inline")
+        return row
+    end
+
+    local function color(label, key, kinds, when)
+        local control = Widgets.Color(form, function(value)
+            set(key, value)
+        end)
+        local row = Widgets.Row(form, label, control)
+        add(row, kinds, function(rule)
+            control:SetValue(rule[key])
+        end, when, "inline")
+        return row
     end
 
     -- The icons can't be clicked in combat (they're secure buttons): no click fields then.
@@ -231,13 +304,33 @@ local function buildForm(view)
         return rule.combat ~= "in"
     end
 
-    local function slider(label, key, min, max, format, kinds)
+    local function slider(label, key, min, max, format, kinds, when, after)
         local control = Widgets.Slider(form, min, max, 1, format, function(value)
             set(key, value)
+            if after then
+                after(value)
+            end
         end)
-        add(Widgets.Row(form, label, control), kinds, function(rule)
-            control:SetValue(rule[key])
-        end)
+        local row = Widgets.Row(form, label, control)
+        -- In a column it takes about half of it, less its readout.
+        local bar = control.bar and control.bar:GetParent()
+        add(
+            row,
+            kinds,
+            function(rule)
+                control:SetValue(rule[key])
+            end,
+            when,
+            "inline",
+            function(width)
+                local room = width and math.max(140, math.min(SLIDER, math.floor(width * RANGE_SHARE))) or SLIDER
+                control:SetWidth(room)
+                if bar then
+                    bar:SetWidth(room - SLIDER_READOUT)
+                end
+            end
+        )
+        return row
     end
 
     textField(L.FIELD_NAME, "name")
@@ -245,7 +338,7 @@ local function buildForm(view)
     -- The buff list, with a button that picks from what's on the player now.
     local spells = input("spells", L.SPELLS_HINT)
     local holder = CreateFrame("Frame", nil, form)
-    holder:SetSize(FIELD_WIDTH + 124, 30)
+    holder:SetSize(FIELD_WIDTH + PICK_ROOM, 30)
     spells:SetParent(holder)
     spells:SetPoint("LEFT")
     local pick
@@ -275,9 +368,40 @@ local function buildForm(view)
     pick:SetPoint("RIGHT")
     local spellsRow = Widgets.Row(form, L.FIELD_SPELLS, holder)
     form.spellsInfo = info(spellsRow, L.BUFF_REMINDER)
-    add(spellsRow, { buff = true }, function(rule)
-        spells:SetText(rule.spells)
+    add(
+        spellsRow,
+        { buff = true },
+        function(rule)
+            spells:SetText(rule.spells)
+        end,
+        nil,
+        "inline",
+        function(width)
+            local room = width and math.max(PICK_ROOM + 120, math.floor(width * SPELLS_SHARE))
+                or (FIELD_WIDTH + PICK_ROOM)
+            holder:SetWidth(room)
+            spells:SetWidth(room - PICK_ROOM)
+        end
+    )
+
+    -- "Seconds left": a buff about to run out counts as missing. The seconds only with it on.
+    local lowTimeRow = toggle(L.FIELD_LOW_TIME, "lowTime", { buff = true }, nil, function()
+        view:Refresh()
     end)
+    form.lowTimeRow, form.lowTimeInfo = lowTimeRow, info(lowTimeRow, L.LOW_TIME_HINT)
+    form.lowTimeSecondsRow = slider(
+        L.FIELD_LOW_TIME_SECONDS,
+        "lowTimeSeconds",
+        Rules.LOW_TIME_MIN,
+        Rules.LOW_TIME_MAX,
+        function(value)
+            return L.SECONDS:format(value)
+        end,
+        { buff = true },
+        function(rule)
+            return rule.lowTime
+        end
+    )
 
     toggle(L.FIELD_CLICK, "click", { buff = true }, clickable)
     textField(L.FIELD_CLICK_USE, "clickUse", L.CLICK_USE_HINT, { buff = true }, clickable)
@@ -296,10 +420,25 @@ local function buildForm(view)
     slider(L.FIELD_COUNT, "threshold", 1, 200, tostring, { item = true })
 
     heading(L.WHEN)
-    dropdown(L.FIELD_CLASS, "class", Editor.ClassChoices())
-    slider(L.FIELD_LEVEL, "minLevel", 0, GetMaxPlayerLevel(), function(value)
+    -- From and up to level, one after the other so the two columns pair them. Moving one past the
+    -- other drags the other along.
+    local function levels(changed)
+        return function()
+            local rule = Editor.current
+            if rule and Rules.FitLevels(rule, changed) then
+                view:Refresh()
+            end
+        end
+    end
+    local maxLevel = GetMaxPlayerLevel()
+    form.minLevelRow = slider(L.FIELD_LEVEL, "minLevel", 0, maxLevel, function(value)
         return value == 0 and L.ANY_LEVEL or tostring(value)
-    end)
+    end, nil, nil, levels("minLevel"))
+    form.maxLevelRow = slider(L.FIELD_MAX_LEVEL, "maxLevel", 0, maxLevel, function(value)
+        return value == 0 and L.NO_MAX_LEVEL or tostring(value)
+    end, nil, nil, levels("maxLevel"))
+    form.levelInfo = info(form.maxLevelRow, L.LEVEL_HINT)
+    dropdown(L.FIELD_CLASS, "class", Editor.ClassChoices())
     dropdown(L.FIELD_GROUP, "group", choices("GROUP_", { "any", "solo", "group", "raid" }))
     dropdown(L.FIELD_PLACE, "place", choices("PLACE_", { "any", "instance", "world" }))
     local combatRow = dropdown(L.FIELD_COMBAT, "combat", choices("COMBAT_", { "out", "any", "in" }), nil, function()
@@ -316,8 +455,24 @@ local function buildForm(view)
     toggle(L.HIDE_RESTING, "hideResting")
     toggle(L.HIDE_MOUNTED, "hideMounted")
 
+    -- This rule's icon: its own size, name, glow color and icon, over the General tab's look.
     heading(L.LOOK)
-    toggle(L.FIELD_GLOW, "glow")
+    local function refresh()
+        view:Refresh()
+    end
+    toggle(L.FIELD_GLOW, "glow", nil, nil, refresh)
+    toggle(L.FIELD_CUSTOM_GLOW, "customGlow", nil, function(rule)
+        return rule.glow
+    end, refresh)
+    form.glowColorRow = color(L.FIELD_GLOW_COLOR, "glowColor", nil, function(rule)
+        return rule.glow and rule.customGlow
+    end)
+    form.scaleRow = slider(L.FIELD_SCALE, "scale", Rules.SCALE_MIN, Rules.SCALE_MAX, percent)
+    form.showNameRow = dropdown(L.FIELD_SHOW_NAME, "showName", choices("SHOW_NAME_", Rules.SHOW_NAME))
+    textField(L.FIELD_ICON, "iconOverride", L.ICON_HINT)
+    form.countdownRow = toggle(L.FIELD_COUNTDOWN, "countdown", { buff = true }, function(rule)
+        return rule.lowTime
+    end)
     dropdown(L.FIELD_SOUND, "sound", choices("SOUND_", Rules.SOUND_ORDER), nil, function(value)
         local sound = Rules.SOUNDS[value]
         if sound and SOUNDKIT[sound] then
@@ -325,25 +480,125 @@ local function buildForm(view)
         end
     end)
 
+    form.dividers = {}
+
+    -- The line between the columns, for each run of lines one under the other.
+    local function drawDividers(runs)
+        local c = Theme.colors.line
+        for i, run in ipairs(runs) do
+            local divider = form.dividers[i]
+            if not divider then
+                divider = form:CreateTexture(nil, "ARTWORK")
+                divider:SetWidth(E.Pixel.Size(form))
+                form.dividers[i] = divider
+            end
+            divider:SetColorTexture(c[1], c[2], c[3], c[4] or 1)
+            divider:ClearAllPoints()
+            divider:SetPoint("TOPLEFT", form, "TOPLEFT", run.x, -run.top)
+            divider:SetPoint("BOTTOMLEFT", form, "TOPLEFT", run.x, -run.bottom)
+            divider:Show()
+        end
+        for i = #runs + 1, #form.dividers do
+            form.dividers[i]:Hide()
+        end
+    end
+
+    -- A row sized for its column, or back to its own size, then repainted (the core's V2 field).
+    local function shapeRow(field, columns)
+        local frame = field.frame
+        if field.fit then
+            field.fit(columns and form.columnWidth or nil)
+        end
+        if frame.label then
+            frame.label:SetWordWrap(not columns)
+            frame.label:SetWidth(0)
+        end
+        if frame.Paint then
+            frame:Paint()
+        end
+    end
+
+    -- Cuts a label with "..." when it would run into the control beside it.
+    local function fitLabel(field, width)
+        local row = field.frame
+        if not row.label then
+            return
+        end
+        local beside = row.control and row.control:GetWidth() or 0
+        local room = width - FIELD_X * 2 - beside - 16 - (row.info and 22 or 0)
+        local natural = row.label:GetStringWidth()
+        row.label:SetWidth(math.max(math.min(natural, room), 40))
+    end
+
     --- Shows the fields of a rule's kind and returns the form's height.
     function form.Load(rule)
+        local columns = Editor.TwoColumns()
+        -- The first time the form has no anchors yet: the tab's width, less the form's margins.
+        local width = form:GetWidth()
+        if not width or width < 200 then
+            width = (view:GetWidth() or 0) - FORM_MARGIN * 2
+        end
+        if width < 200 then
+            width = FALLBACK_WIDTH
+        end
+        local half = (width - COLUMN_GAP) / 2
+        form.columnWidth, form.laidWidth = half, width
         local y = 0
+        local open, started = nil, false -- the top of a line with its right column free; a line was set
+        local runs, run = {}, nil
         for _, field in ipairs(form.fields) do
             local shown = (not field.kinds or field.kinds[rule.kind]) and (not field.when or field.when(rule))
-            field.frame:SetShown(shown and true or false)
+            local frame = field.frame
+            frame:SetShown(shown and true or false)
             if shown then
                 if field.load then
                     field.load(rule)
                 end
-                field.frame:ClearAllPoints()
-                field.frame:SetPoint("TOPLEFT", 0, -y)
-                field.frame:SetPoint("TOPRIGHT", 0, -y)
-                y = y + field.frame:GetHeight()
+                shapeRow(field, columns)
+                frame:ClearAllPoints()
+                if not columns or not field.shape then
+                    -- The whole line: every field in V1, headings in V2 (they start a new run).
+                    open, run, started = nil, nil, false
+                    frame:SetPoint("TOPLEFT", 0, -y)
+                    frame:SetPoint("TOPRIGHT", 0, -y)
+                    y = y + frame:GetHeight()
+                else
+                    local height = frame:GetHeight()
+                    local x, top
+                    if open then
+                        x, top, open = half + COLUMN_GAP, open, nil
+                    else
+                        if started then
+                            y = y + LINE_GAP
+                        end
+                        started = true
+                        x, top = 0, y
+                        open = y
+                        if run and run.bottom + LINE_GAP == y then
+                            run.bottom = y + height
+                        else
+                            run = { x = half + COLUMN_GAP / 2, top = y, bottom = y + height }
+                            runs[#runs + 1] = run
+                        end
+                        y = y + height
+                    end
+                    frame:SetPoint("TOPLEFT", x, -top)
+                    frame:SetWidth(half)
+                    fitLabel(field, half)
+                end
             end
         end
+        drawDividers(columns and runs or {})
         form:SetHeight(y)
         return y
     end
+
+    -- The columns follow the window's width: laid out again when it changes.
+    form:SetScript("OnSizeChanged", function(self, width)
+        if Editor.TwoColumns() and Editor.current and self.laidWidth and math.abs(width - self.laidWidth) > 1 then
+            view:Refresh()
+        end
+    end)
 
     return form
 end
@@ -364,6 +619,17 @@ function Editor.Select(rule)
     if view then
         view:Refresh()
     end
+end
+
+--- Copies a rule under itself and opens the copy.
+---@param rule EternityUIAlertsRule
+function Editor.Duplicate(rule)
+    if not rule then
+        return
+    end
+    local copy = Rules.Duplicate(rule)
+    Rules.Changed()
+    Editor.Select(copy)
 end
 
 --- Deletes a rule.
@@ -448,8 +714,8 @@ function Editor.Build(parent, setHeight)
                 -- The form opens under its own rule.
                 height = view.form.Load(rules[i])
                 view.form:ClearAllPoints()
-                view.form:SetPoint("TOPLEFT", 12, -y)
-                view.form:SetPoint("TOPRIGHT", -12, -y)
+                view.form:SetPoint("TOPLEFT", FORM_MARGIN, -y)
+                view.form:SetPoint("TOPRIGHT", -FORM_MARGIN, -y)
                 y = y + height + 12
             end
         end

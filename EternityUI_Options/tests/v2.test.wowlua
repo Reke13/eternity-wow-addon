@@ -1,0 +1,657 @@
+-- The V2 layout (general.optionsVersion = "v2"): cards from the same schema, switching layouts
+-- keeps every value, and changed options can be reset one by one or by group.
+import test, expect from "wowlua:test"
+
+local E = EternityUI
+local NAME = "EternityUI_V2Test"
+
+local function label(text)
+    return { enUS = text, esES = text }
+end
+
+E:RegisterModule(NAME, {
+    schema = {
+        format = 1,
+        module = NAME,
+        title = label("V2 test"),
+        groups = {
+            {
+                id = "main",
+                label = label("Main"),
+                options = {
+                    { id = "one", type = "toggle", default = true, label = label("One") },
+                    { id = "two", type = "toggle", default = false, label = label("Two") },
+                    {
+                        id = "size",
+                        type = "range",
+                        default = 10,
+                        min = 0,
+                        max = 20,
+                        step = 1,
+                        label = label("Size"),
+                    },
+                    {
+                        id = "extra",
+                        type = "toggle",
+                        default = false,
+                        label = label("Extra"),
+                        visibleWhen = { ["main.two"] = true },
+                    },
+                },
+            },
+            {
+                id = "look",
+                label = label("Look"),
+                options = {
+                    {
+                        id = "mode",
+                        type = "select",
+                        default = "a",
+                        label = label("Mode"),
+                        values = { { value = "a", label = label("A") }, { value = "b", label = label("B") } },
+                    },
+                    { id = "fine", type = "toggle", default = false, advanced = true, label = label("Fine") },
+                    {
+                        id = "tone",
+                        type = "range",
+                        default = 10,
+                        min = 0,
+                        max = 20,
+                        step = 1,
+                        inherit = "main.size",
+                        label = label("Tone"),
+                    },
+                },
+            },
+            {
+                id = "deep",
+                advanced = true,
+                label = label("Deep"),
+                options = {
+                    { id = "knob", type = "toggle", default = false, label = label("Knob") },
+                },
+            },
+        },
+    },
+})
+
+local function pageOf(key)
+    for _, page in ipairs(E.OptionsWindow.pages) do
+        if page.key == key then
+            return page
+        end
+    end
+end
+
+local function itemsOf(page)
+    local items = {}
+    for _, list in ipairs(page.lists) do
+        for _, item in ipairs(list.items) do
+            if item.path then
+                items[item.path] = item
+            end
+        end
+    end
+    return items
+end
+
+local function setVersion(version)
+    E.store:Set("EternityUI", "general.optionsVersion", version)
+end
+
+local function open()
+    if not E.OptionsWindow.frame or not E.OptionsWindow.frame:IsShown() then
+        E:ToggleOptions()
+    end
+    local page = pageOf(NAME)
+    E.OptionsWindow.Show(page)
+    return page
+end
+
+@test("V1 is the default layout")
+local function defaultV1()
+    expect(E.store:Get("EternityUI", "general.optionsVersion")).toBe("v1")
+    local page = open()
+    expect(page.lists[1].version).toBe("v1")
+    expect(page.lists[1].cards).toBe(nil)
+end
+
+@test("switching to V2 lays the open page out in cards, one per group")
+local function cards()
+    local page = open()
+    setVersion("v2")
+    local list = page.lists[1]
+    expect(list.version).toBe("v2")
+    expect(#list.cards).toBe(3)
+    expect(list.cards[1]:IsShown()).toBe(true)
+    setVersion("v1")
+end
+
+@test("two switches share a line and a dependent option is indented under its parent")
+local function columns()
+    setVersion("v2")
+    local page = open()
+    E.store:Set(NAME, "main.two", true)
+    local items = itemsOf(page)
+    local _, _, _, x1, y1 = items["main.one"].row:GetPoint(1)
+    local _, _, _, x2, y2 = items["main.two"].row:GetPoint(1)
+    expect(y1).toBe(y2)
+    expect(x2 > x1).toBe(true)
+    expect(items["main.extra"].indented).toBe(true)
+    expect(items["main.size"].indented).toBe(false)
+    E.store:Set(NAME, "main.two", false)
+    expect(items["main.extra"].row:IsShown()).toBe(false)
+    setVersion("v1")
+end
+
+@test("switching layouts keeps every value")
+local function keepsValues()
+    E.store:Set(NAME, "main.size", 15)
+    E.store:Set(NAME, "look.mode", "b")
+    open()
+    setVersion("v2")
+    expect(E.store:Get(NAME, "main.size")).toBe(15)
+    expect(E.store:Get(NAME, "look.mode")).toBe("b")
+    setVersion("v1")
+    expect(E.store:Get(NAME, "main.size")).toBe(15)
+    expect(E.store:Get(NAME, "look.mode")).toBe("b")
+    E.store:Reset(NAME)
+end
+
+@test("a changed option shows its accent border and reset, and the reset puts the default back")
+local function resetOne()
+    setVersion("v2")
+    local page = open()
+    local item = itemsOf(page)["main.size"]
+    expect(item.reset:IsShown()).toBe(false)
+    E.store:Set(NAME, "main.size", 3)
+    page.Refresh()
+    expect(item.reset:IsShown()).toBe(true)
+    expect(item.row.field.border:IsShown()).toBe(true)
+    item.reset:GetScript("OnClick")(item.reset)
+    expect(E.store:Get(NAME, "main.size")).toBe(10)
+    expect(item.reset:IsShown()).toBe(false)
+    expect(item.row.field.border:IsShown()).toBe(false)
+    setVersion("v1")
+end
+
+@test("a group's reset asks first, then resets only that group")
+local function resetGroup()
+    setVersion("v2")
+    local page = open()
+    E.store:Set(NAME, "main.one", false)
+    E.store:Set(NAME, "main.size", 4)
+    E.store:Set(NAME, "look.mode", "b")
+    page.Refresh()
+    local card = page.lists[1].cards[1]
+    expect(card.reset:IsShown()).toBe(true)
+    expect(card.changed:GetText()).toBe("2 changed")
+    local click = card.reset:GetScript("OnClick")
+    click(card.reset)
+    expect(E.store:Get(NAME, "main.size")).toBe(4)
+    click(card.reset)
+    expect(E.store:Get(NAME, "main.one")).toBe(true)
+    expect(E.store:Get(NAME, "main.size")).toBe(10)
+    expect(E.store:Get(NAME, "look.mode")).toBe("b")
+    expect(card.reset:IsShown()).toBe(false)
+    E.store:Reset(NAME)
+    setVersion("v1")
+end
+
+@test("the search still reveals an option laid out in V2")
+local function reveal()
+    setVersion("v2")
+    local page = open()
+    local item = itemsOf(page)["look.mode"]
+    page.Reveal("look.mode")
+    expect(item.row:IsVisible()).toBe(true)
+    setVersion("v1")
+    E.OptionsWindow.Toggle()
+end
+
+local function setLevel(level)
+    E.store:Set("EternityUI", "general.optionsLevel", level)
+end
+
+@test("Basic hides advanced options and groups, and says how many")
+local function basicHides()
+    setVersion("v2")
+    local page = open()
+    expect(E.store:Get("EternityUI", "general.optionsLevel")).toBe("basic")
+    local list = page.lists[1]
+    local items = itemsOf(page)
+    expect(items["look.fine"].row:IsShown()).toBe(false)
+    expect(items["look.mode"].row:IsShown()).toBe(true)
+    expect(list.cards[3]:IsShown()).toBe(false)
+    expect(list.cards[2].more:IsShown()).toBe(true)
+    expect(list.levelBar.hidden:GetText()).toBe("2 advanced options hidden")
+    setLevel("advanced")
+    expect(items["look.fine"].row:IsShown()).toBe(true)
+    expect(list.cards[3]:IsShown()).toBe(true)
+    expect(list.cards[2].more:IsShown()).toBe(false)
+    expect(list.levelBar.hidden:GetText()).toBe("")
+    setLevel("basic")
+    setVersion("v1")
+end
+
+@test("a card's Show more turns on the Advanced level")
+local function showMore()
+    setVersion("v2")
+    local page = open()
+    local card = page.lists[1].cards[2]
+    card.more:GetScript("OnClick")(card.more)
+    expect(E.store:Get("EternityUI", "general.optionsLevel")).toBe("advanced")
+    expect(itemsOf(page)["look.fine"].row:IsShown()).toBe(true)
+    setLevel("basic")
+    setVersion("v1")
+end
+
+@test("a changed advanced option stays in sight at the Basic level")
+local function changedStays()
+    setVersion("v2")
+    local page = open()
+    -- The control refreshes the page itself when it changes the value.
+    E.store:Set(NAME, "look.fine", true)
+    page.Refresh()
+    expect(itemsOf(page)["look.fine"].row:IsShown()).toBe(true)
+    E.store:Reset(NAME)
+    page.Refresh()
+    expect(itemsOf(page)["look.fine"].row:IsShown()).toBe(false)
+    setVersion("v1")
+end
+
+@test("V1 shows advanced options as always")
+local function v1Ignores()
+    setVersion("v1")
+    local page = open()
+    page.Refresh()
+    expect(itemsOf(page)["look.fine"].row:IsShown()).toBe(true)
+end
+
+@test("the search reveals an advanced option by turning on the Advanced level")
+local function revealAdvanced()
+    setVersion("v2")
+    local page = open()
+    page.Reveal("look.fine")
+    expect(E.store:Get("EternityUI", "general.optionsLevel")).toBe("advanced")
+    expect(itemsOf(page)["look.fine"].row:IsVisible()).toBe(true)
+    setLevel("basic")
+    setVersion("v1")
+    E.OptionsWindow.Toggle()
+end
+
+local function topOf(frame)
+    for i = 1, frame:GetNumPoints() do
+        local point, _, _, _, y = frame:GetPoint(i)
+        if point == "TOPLEFT" then
+            return y
+        end
+    end
+end
+
+@test("V2 shows the tabs instead of the segmented buttons, and V1 brings them back")
+local function tabs()
+    setVersion("v2")
+    local page = open()
+    expect(page.tabBar:IsShown()).toBe(true)
+    expect(page.selector:IsShown()).toBe(false)
+    expect(page.tabBar.value).toBe(page.current)
+    expect(topOf(page.tabs[page.current].frame)).toBe(-54)
+    setVersion("v1")
+    expect(page.tabBar:IsShown()).toBe(false)
+    expect(page.selector:IsShown()).toBe(true)
+    expect(topOf(page.tabs[page.current].frame)).toBe(-42)
+end
+
+@test("a line runs between two columns of switches, and leaves with them")
+local function divider()
+    setVersion("v2")
+    local page = open()
+    local card = page.lists[1].cards[1]
+    expect(#card.dividers).toBe(1)
+    expect(card.dividers[1]:IsShown()).toBe(true)
+    -- "Extra" (indented, under "Two") keeps the same columns: one line runs down the whole card, and
+    -- the indented field ends where the others do.
+    E.store:Set(NAME, "main.two", true)
+    page.Refresh()
+    expect(card.dividers[2] == nil or not card.dividers[2]:IsShown()).toBe(true)
+    local items = itemsOf(page)
+    local extra, one = items["main.extra"].row, items["main.one"].row
+    expect(extra:GetLeft() > one:GetLeft()).toBe(true)
+    expect(math.floor(extra:GetRight() + 0.5)).toBe(math.floor(one:GetRight() + 0.5))
+    E.store:Reset(NAME)
+    page.Refresh()
+    setVersion("v1")
+    E.OptionsWindow.Toggle()
+end
+
+@test("a dropdown goes under its label, as wide as its field; a slider stays on the label's line")
+local function stacked()
+    setVersion("v2")
+    E.store:Set("EternityUI", "general.optionsLevel", "advanced")
+    local page = open()
+    local items = itemsOf(page)
+    local size, mode = items["main.size"], items["look.mode"]
+    expect(mode.kind).toBe("stacked")
+    expect(size.kind).toBe("inline")
+    expect(items["main.one"].kind).toBe("inline")
+    local width = mode.row:GetWidth()
+    expect(math.floor(mode.control:GetWidth() + 0.5)).toBe(math.floor(width - 24 + 0.5))
+    expect(mode.control:GetTop() < mode.row.label:GetBottom()).toBe(true)
+    expect(size.control:GetWidth() < width / 2 + 1).toBe(true)
+    E.store:Set("EternityUI", "general.optionsLevel", "basic")
+    setVersion("v1")
+    E.OptionsWindow.Toggle()
+end
+
+@test("a card's title is bold and folds the card, which stays folded")
+local function folds()
+    setVersion("v2")
+    local page = open()
+    local card = page.lists[1].cards[1]
+    local items = itemsOf(page)
+    local x = card.title:GetShadowOffset()
+    expect(x).toBe(1)
+    local open = card:GetHeight()
+    expect(card.fold.open).toBe(true)
+    card.header:GetScript("OnClick")(card.header)
+    expect(card.fold.open).toBe(false)
+    expect(items["main.one"].row:IsShown()).toBe(false)
+    expect(card:GetHeight() < open).toBe(true)
+    expect(E.store.raw.optionsCollapsed[card.key]).toBe(true)
+    -- Laid out again (another page, a reload): still folded.
+    page.Refresh()
+    expect(items["main.one"].row:IsShown()).toBe(false)
+    card.header:GetScript("OnClick")(card.header)
+    expect(items["main.one"].row:IsShown()).toBe(true)
+    expect(E.store.raw.optionsCollapsed[card.key]).toBe(nil)
+    setVersion("v1")
+end
+
+@test("the search unfolds the card of the option it reveals")
+local function revealFolded()
+    setVersion("v2")
+    local page = open()
+    local card = page.lists[1].cards[2]
+    card.header:GetScript("OnClick")(card.header)
+    expect(itemsOf(page)["look.mode"].row:IsShown()).toBe(false)
+    page.Reveal("look.mode")
+    expect(itemsOf(page)["look.mode"].row:IsVisible()).toBe(true)
+    expect(E.store.raw.optionsCollapsed[card.key]).toBe(nil)
+    setVersion("v1")
+    E.OptionsWindow.Toggle()
+end
+
+@test("lines of options keep the same gap, whatever their height")
+local function rhythm()
+    setVersion("v2")
+    local page = open()
+    local items = itemsOf(page)
+    -- One and Two share the first line; Size (a slider) starts the next one.
+    local first, second = items["main.one"].row, items["main.size"].row
+    local gap = first:GetBottom() - second:GetTop()
+    expect(math.floor(gap + 0.5)).toBe(8)
+    expect(math.floor(first:GetHeight() + 0.5)).toBe(math.floor(second:GetHeight() + 0.5))
+    setVersion("v1")
+    E.OptionsWindow.Toggle()
+end
+
+@test("each option is a field in a tone the player sets, and the title lines up with the fields")
+local function fields()
+    setVersion("v2")
+    local page = open()
+    local card = page.lists[1].cards[1]
+    local row = itemsOf(page)["main.one"].row
+    expect(row.field.fill:IsShown()).toBe(true)
+    expect(math.floor(card.title:GetLeft() + 0.5)).toBe(math.floor(row:GetLeft() + 0.5))
+    E.store:Set("EternityUI", "general.optionsFieldShade", 0)
+    page.Refresh()
+    local _, _, _, alpha = row.field.fill:GetVertexColor()
+    expect(alpha == nil or alpha < 0.01).toBe(true)
+    E.store:Set("EternityUI", "general.optionsFieldShade", 0.05)
+    setVersion("v1")
+    E.OptionsWindow.Toggle()
+end
+
+-- A module with a picker tab and a preview that draws itself, like the action bars'.
+local PICK = "EternityUI_V2PickTest"
+E:RegisterModule(PICK, {
+    schema = {
+        format = 1,
+        module = PICK,
+        title = label("Pick test"),
+        groups = {
+            {
+                id = "g1",
+                label = label("First"),
+                options = {
+                    { id = "a", type = "toggle", default = true, label = label("A") },
+                    { id = "gap", type = "range", default = 2, min = 0, max = 10, step = 1, label = label("Gap") },
+                },
+            },
+            { id = "g2", label = label("Second"), options = { { id = "b", type = "toggle", default = true, label = label("B") } } },
+        },
+    },
+    tabs = {
+        {
+            key = "bars",
+            text = "Bars",
+            groups = { "g1", "g2" },
+            preview = function(parent)
+                local frame = CreateFrame("Frame", nil, parent)
+                frame:SetHeight(120)
+                frame.drawn = 0
+                frame.Refresh = function(self)
+                    self.drawn = self.drawn + 1
+                end
+                return frame
+            end,
+        },
+    },
+})
+
+local function openPick()
+    if not E.OptionsWindow.frame or not E.OptionsWindow.frame:IsShown() then
+        E:ToggleOptions()
+    end
+    local page = pageOf(PICK)
+    E.OptionsWindow.Show(page)
+    page.ShowTab("bars")
+    return page
+end
+
+local function pointOf(frame)
+    local _, _, _, x, y = frame:GetPoint(1)
+    return x, y
+end
+
+@test("V1 keeps the preview above the options and the picker in two columns")
+local function pickV1()
+    setVersion("v1")
+    local page = openPick()
+    expect(page.preview:GetParent()).toBe(page.tabs.bars.frame)
+    local x = pointOf(page.pickButtons.g2)
+    expect(x).toBe(90)
+end
+
+@test("V2 moves the preview to a window beside the options and the picker to one column")
+local function pickV2()
+    setVersion("v2")
+    local page = openPick()
+    local x, y = pointOf(page.pickButtons.g2)
+    expect(x).toBe(0)
+    expect(y).toBe(-36)
+    local w = page.previewWindows.bars
+    expect(page.preview:GetParent()).toBe(w.body)
+    expect(w:IsShown()).toBe(false)
+    -- The options start right of the one column, and at the top (no preview above them).
+    local list = page.pickLists.g1
+    local _, _, _, left, top = list.parent:GetPoint(1)
+    expect(top).toBe(0)
+    expect(left < 186).toBe(true)
+    -- The button left of the window's close button opens it; another tab closes it.
+    local button = E.OptionsWindow.chrome.action
+    expect(button:IsShown()).toBe(true)
+    expect(button.label:GetText()).toBe("Show preview")
+    button:GetScript("OnClick")(button)
+    expect(w:IsShown()).toBe(true)
+    expect(button.label:GetText()).toBe("Hide preview")
+    page.tabs.bars.frame:Hide()
+    expect(w:IsShown()).toBe(false)
+    page.ShowTab("bars")
+    setVersion("v1")
+    expect(page.preview:GetParent()).toBe(page.tabs.bars.frame)
+    expect(E.OptionsWindow.chrome.action:IsShown()).toBe(false)
+    E.OptionsWindow.Toggle()
+end
+
+-- A module whose preview is a strip with its own button that opens its own window (UnitFrames').
+local STRIP = "EternityUI_V2StripTest"
+local stripClicks = 0
+E:RegisterModule(STRIP, {
+    schema = {
+        format = 1,
+        module = STRIP,
+        title = label("Strip test"),
+        groups = {
+            { id = "g1", label = label("First"), options = { { id = "a", type = "toggle", default = true, label = label("A") } } },
+        },
+    },
+    tabs = {
+        {
+            key = "frames",
+            text = "Frames",
+            groups = { "g1" },
+            picker = "top",
+            preview = function(parent)
+                local strip = CreateFrame("Frame", nil, parent)
+                strip:SetHeight(34)
+                strip.button = E.Widgets.Button(strip, "Show it", "ghost", function()
+                    stripClicks = stripClicks + 1
+                    strip.button.label:SetText(stripClicks % 2 == 1 and "Hide it" or "Show it")
+                end)
+                strip.Refresh = function() end
+                return strip
+            end,
+        },
+    },
+})
+
+@test("V2 puts a strip's own preview button in the header, and V1 keeps the strip")
+local function stripHeader()
+    setVersion("v2")
+    if not E.OptionsWindow.frame or not E.OptionsWindow.frame:IsShown() then
+        E:ToggleOptions()
+    end
+    local page = pageOf(STRIP)
+    E.OptionsWindow.Show(page)
+    page.ShowTab("frames")
+    local action = E.OptionsWindow.chrome.action
+    expect(action:IsShown()).toBe(true)
+    expect(action.label:GetText()).toBe("Show it")
+    expect(page.preview:GetAlpha()).toBe(0)
+    expect(page.preview.button:IsMouseEnabled()).toBe(false)
+    action:GetScript("OnClick")(action)
+    expect(stripClicks).toBe(1)
+    expect(action.label:GetText()).toBe("Hide it")
+    setVersion("v1")
+    expect(action:IsShown()).toBe(false)
+    expect(page.preview:GetAlpha()).toBe(1)
+    expect(page.preview.button:IsMouseEnabled()).toBe(true)
+    E.OptionsWindow.Toggle()
+end
+
+@test("a slider redraws the live preview on every step, and the preview window looks like the options")
+local function liveSlider()
+    setVersion("v2")
+    local page = openPick()
+    local item
+    for _, entry in ipairs(page.pickLists.g1.items) do
+        if entry.path == "g1.gap" then
+            item = entry
+        end
+    end
+    local before = page.preview.drawn
+    -- As a drag does: the slider's own handler, moved by the player.
+    local slider = item.control.bar:GetParent()
+    slider:GetScript("OnValueChanged")(slider, 9, true)
+    expect(EternityUI.store:Get(PICK, "g1.gap")).toBe(9)
+    expect(page.preview.drawn > before).toBe(true)
+    local action = E.OptionsWindow.chrome.action
+    action:GetScript("OnClick")(action)
+    local w = page.previewWindows.bars
+    expect(w.wallpaper ~= nil).toBe(true)
+    expect(w:GetScale()).toBe(E.store:Get("EternityUI", "general.optionsScale"))
+    w:Hide()
+    E.store:Reset(PICK)
+    setVersion("v1")
+    E.OptionsWindow.Toggle()
+end
+
+@test("an inheriting option shows what it inherits, and its reset goes back to inheriting")
+local function inheritReset()
+    setVersion("v2")
+    local page = open()
+    E.store:Set(NAME, "main.size", 15)
+    page.Refresh()
+    local item = itemsOf(page)["look.tone"]
+    expect(item.reset:IsShown()).toBe(false)
+    E.store:Set(NAME, "look.tone", 3)
+    page.Refresh()
+    expect(item.reset:IsShown()).toBe(true)
+    item.reset:GetScript("OnClick")(item.reset)
+    expect(E.store:Get(NAME, "look.tone")).toBe(15)
+    E.store:Set(NAME, "main.size", 12)
+    expect(E.store:Get(NAME, "look.tone")).toBe(12)
+    E.store:Reset(NAME)
+    setVersion("v1")
+    E.OptionsWindow.Toggle()
+end
+
+@test("the core's rows (pages and tabs a module draws) become V2 fields, and lines again in V1")
+local function coreRows()
+    local control = E.Widgets.Toggle(UIParent, function() end)
+    local row = E.Widgets.Row(UIParent, "Row", control)
+    row:SetSize(400, 40)
+    setVersion("v1")
+    expect(row.line:IsShown()).toBe(true)
+    expect(row.field.fill:IsShown()).toBe(false)
+    setVersion("v2")
+    expect(row.line:IsShown()).toBe(false)
+    expect(row.field.fill:IsShown()).toBe(true)
+    local _, _, _, x = row.label:GetPoint(1)
+    expect(x).toBe(12)
+    local _, _, _, cx = control:GetPoint(1)
+    expect(cx).toBe(-12)
+    setVersion("v1")
+    _, _, _, x = row.label:GetPoint(1)
+    expect(x).toBe(0)
+end
+
+@test("the Modules page lists two per line in V2, one per line in V1")
+local function modulesPage()
+    if not E.OptionsWindow.frame or not E.OptionsWindow.frame:IsShown() then
+        E:ToggleOptions()
+    end
+    local page = pageOf("modules")
+    setVersion("v2")
+    E.OptionsWindow.Show(page)
+    -- The test modules registered above give it at least two entries.
+    local first, second
+    for _, child in ipairs({ page.frame:GetChildren() }) do
+        if child.child then
+            local rows = { child.child:GetChildren() }
+            first, second = rows[1], rows[2]
+        end
+    end
+    local _, _, _, x1, y1 = first:GetPoint(1)
+    local _, _, _, x2, y2 = second:GetPoint(1)
+    expect(y1).toBe(y2)
+    expect(x2 > x1).toBe(true)
+    setVersion("v1")
+    E.OptionsWindow.Show(page)
+    _, _, _, x2, y2 = second:GetPoint(1)
+    expect(x2).toBe(0)
+    expect(y2 < y1).toBe(true)
+    E.OptionsWindow.Toggle()
+end

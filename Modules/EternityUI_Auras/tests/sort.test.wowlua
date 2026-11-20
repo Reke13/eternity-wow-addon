@@ -1,0 +1,51 @@
+-- Each "Order" choice goes to the container as one of Blizzard's sort methods, and "Reverse order"
+-- flips the direction. The container sorts in secure code, so nothing is compared by the addon.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Auras"
+
+local function frame()
+    return EternityUI:GetModule(NAME).frames.player
+end
+
+@test("every order maps to its Blizzard sort method")
+local function methods()
+    local sortMethod = frame().SortMethod
+    local methods = AuraContainerSortMethod or {}
+    local expected = {
+        expiration = methods.Expiration or 4,
+        default = methods.Default or 0,
+        name = methods.Name or 6,
+        expirationOnly = methods.ExpirationOnly or 5,
+        nameOnly = methods.NameOnly or 7,
+        applied = methods.AuraInstanceIDOnly or 8,
+        important = methods.ImportantOnly or 3,
+    }
+    for key, method in pairs(expected) do
+        expect(sortMethod(key)).toBe(method)
+    end
+    -- An unknown saved value falls back to the default order.
+    expect(sortMethod("gone")).toBe(expected.expiration)
+end
+
+@test("reverse order flips the direction")
+local function direction()
+    local sortDirection = frame().SortDirection
+    local directions = AuraContainerSortDirection or {}
+    expect(sortDirection(false)).toBe(directions.Normal or 0)
+    expect(sortDirection(true)).toBe(directions.Reverse or 1)
+end
+
+@test("the new orders and reverse are options of both frames")
+local function options()
+    local store = EternityUI.store
+    for _, key in ipairs({ "player", "target" }) do
+        expect(store:Set(NAME, key .. ".sort", "applied")).toBe(true)
+        expect(store:Set(NAME, key .. ".sortReverse", true)).toBe(true)
+        expect(store:Get(NAME, key .. ".sort")).toBe("applied")
+        expect(store:Get(NAME, key .. ".sortReverse")).toBe(true)
+    end
+    store:Reset(NAME)
+    expect(store:Get(NAME, "player.sort")).toBe("expiration")
+    expect(store:Get(NAME, "player.sortReverse")).toBe(false)
+end

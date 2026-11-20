@@ -163,15 +163,54 @@ function kinds.buff(rule)
     if not buffs then
         return nil
     end
-    local now = GetTime()
-    for _, entry in ipairs(entries) do
-        local expires = find(buffs, entry)
-        if expires and (expires == 0 or expires > now) then
-            return false
+    local found = {}
+    for i, entry in ipairs(entries) do
+        found[i] = find(buffs, entry) or false
+    end
+    local firing, wake, ends = Checks.BuffFiring(found, rule.lowTime and rule.lowTimeSeconds or 0, GetTime())
+    if wake and (not Checks.nextWake or wake < Checks.nextWake) then
+        Checks.nextWake = wake
+    end
+    return firing, nil, nil, ends
+end
+
+--- Whether a buff rule fires, from when each of its buffs runs out (nil: not on, 0: no end; plain
+--- numbers only, the reads above drop secrets). A buff counts while it has more than margin seconds
+--- left, so a buff without an end never fires by time. With a margin, also returns when the answer
+--- may change with nothing else happening (a buff going under it), or nil. A buff that ends sends
+--- UNIT_AURA, so without a margin there's nothing to wait for. When it fires with a buff still on
+--- (under the margin), the last of those runs out at ends: the icon counts down to it.
+---@param expirations (number|false)[] one per buff of the rule, false when it's not on
+---@param margin number seconds; 0 means only a missing buff fires
+---@param now number
+---@return boolean firing
+---@return number? wake
+---@return number? ends
+function Checks.BuffFiring(expirations, margin, now)
+    local firing, wake, ends = true, nil, nil
+    for _, expires in ipairs(expirations) do
+        if expires == 0 then
+            return false, nil, nil
+        end
+        if expires and expires - margin > now then
+            firing = false
+            if margin > 0 then
+                local at = expires - margin
+                wake = wake and math.min(wake, at) or at
+            end
+        elseif expires and expires > now then
+            ends = ends and math.max(ends, expires) or expires
         end
     end
-    return true
+    if not firing then
+        ends = nil
+    end
+    return firing, wake, ends
 end
+
+-- The soonest moment a buff rule changes on its own (see Checks.BuffFiring), gathered while the
+-- rules run. The module resets it before each round and sets a timer for it.
+Checks.nextWake = nil
 
 -- The enchant on a weapon slot: true if it's fine, false if it fires, nil if it can't tell.
 local function enchantFine(weaponSlot, threshold)
@@ -288,10 +327,32 @@ local function lookup(fn, entry)
     return ok and icon or nil
 end
 
+--- The icon a rule's player picked (its iconOverride), or nil: a spell or item ID, a spell's name
+--- or a texture path.
+---@param rule EternityUIAlertsRule
+---@return number|string?
+function Checks.OverrideIcon(rule)
+    local entry = Rules.Entries(rule.iconOverride or "")[1]
+    if entry == nil then
+        return nil
+    end
+    if type(entry) == "number" then
+        return lookup(C_Spell.GetSpellTexture, entry) or lookup(C_Item.GetItemIconByID, entry)
+    end
+    if entry:find("[/\\]") then
+        return entry
+    end
+    return lookup(C_Spell.GetSpellTexture, entry)
+end
+
 --- The icon a rule shows when its check gives none.
 ---@param rule EternityUIAlertsRule
 ---@return number|string
 function Checks.Icon(rule)
+    local override = Checks.OverrideIcon(rule)
+    if override then
+        return override
+    end
     if rule.icon then
         return rule.icon
     end
@@ -337,14 +398,15 @@ end
 ---@return boolean? firing
 ---@return string? value
 ---@return number|string? icon
+---@return number? ends GetTime() when a buff under its "seconds left" runs out
 function Checks.Run(rule)
     local check = kinds[rule.kind]
     if not check then
         return false
     end
-    local ok, firing, value, icon = pcall(check, rule)
+    local ok, firing, value, icon, ends = pcall(check, rule)
     if not ok then
         return nil
     end
-    return firing, value, icon or Checks.Icon(rule)
+    return firing, value, icon or Checks.Icon(rule), ends
 end

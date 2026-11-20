@@ -1,0 +1,257 @@
+-- Group members' targets and the raid's tanks: the small target button beside a frame (secure,
+-- its unit its parent's plus "target"), the tanks' header and its role filter, and the level in
+-- its difficulty color.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_UnitFrames"
+
+-- A value that plays a secret: nothing may compare it.
+local SECRET = {}
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function set(path, value)
+    EternityUI.store:Set(NAME, path, value)
+end
+
+-- Runs `body` with some globals replaced, restoring them afterwards.
+local function with(globals, body)
+    local saved = {}
+    for name, value in pairs(globals) do
+        saved[name] = _G[name]
+        _G[name] = value
+    end
+    local ok, err = pcall(body, module())
+    for name in pairs(globals) do
+        _G[name] = saved[name]
+    end
+    if not ok then
+        error(err)
+    end
+end
+
+-- A plain frame shown in UIParent, as the party's (not secure: a preview's).
+local function fakeFrame(m, key)
+    local f = CreateFrame("Button", nil, UIParent)
+    f:SetSize(100, 30)
+    f:SetPoint("CENTER")
+    f.previewOnly = true
+    f.uf = m.holders[key].header.def
+    f.unit = "party1"
+    return f
+end
+
+@test("party targets are off by default, the tanks' on; the tanks have their own frames")
+local function defaults()
+    local m = module()
+    local opt = m.Style.Opt
+    expect(opt("partyTargets.enabled")).toBe(false)
+    expect(opt("tanksTargets.enabled")).toBe(true)
+    expect(opt("tanks.enabled")).toBe(true)
+    expect(opt("tanksBuffs.enabled")).toBe(true)
+    expect(m.holders.tanks ~= nil).toBe(true)
+    expect(EternityUI.Mover.elements[NAME .. ".tanks"] ~= nil).toBe(true)
+end
+
+@test("the tanks' header lists the raid's marked tanks, or those the option says")
+local function tankRoles()
+    local m = module()
+    local header = m.holders.tanks.header
+    expect(header:GetAttribute("roleFilter")).toBe("MAINTANK,MAINASSIST")
+    expect(header:GetAttribute("groupFilter")).toBe(nil)
+    expect(header:GetAttribute("showRaid")).toBe(true)
+    set("tanks.roles", "all")
+    expect(header:GetAttribute("roleFilter")).toBe("MAINTANK,MAINASSIST,TANK")
+    set("tanks.roles", "role")
+    expect(header:GetAttribute("roleFilter")).toBe("TANK")
+    set("tanks.roles", "marked")
+    expect(header:GetAttribute("roleFilter")).toBe("MAINTANK,MAINASSIST")
+end
+
+@test("a group button gets a secure target button that takes its parent's unit plus target")
+local function secureButton()
+    local m = module()
+    m.Groups.FinishBuilding()
+    local f = m.holders.party.header:GetAttribute("child1")
+    expect(f ~= nil).toBe(true)
+    expect(f.targetButton).toBe(nil)
+    set("partyTargets.enabled", true)
+    local t = f.targetButton
+    expect(t ~= nil).toBe(true)
+    expect(t:GetAttribute("useparent-unit")).toBe(true)
+    expect(t:GetAttribute("unitsuffix")).toBe("target")
+    expect(t:GetAttribute("*type1")).toBe("target")
+    expect(math.floor(t:GetWidth() + 0.5)).toBe(70)
+    expect(math.floor(t:GetHeight() + 0.5)).toBe(16)
+    set("partyTargets.width", 90)
+    expect(math.floor(t:GetWidth() + 0.5)).toBe(90)
+    set("partyTargets.width", 70)
+    set("partyTargets.enabled", false)
+    expect(t:IsShown()).toBe(false)
+end
+
+@test("the target button shows its unit's health, name and percent, never comparing them")
+local function draws()
+    local m = module()
+    local f = fakeFrame(m, "party")
+    set("partyTargets.enabled", true)
+    m.Targets.Layout(f)
+    local t = f.targetButton
+    expect(t:IsShown()).toBe(true)
+    local asked
+    with({
+        issecretvalue = function(value)
+            return value == SECRET
+        end,
+        UnitExists = function(unit)
+            asked = unit
+            return true
+        end,
+        UnitHealth = function()
+            return 40
+        end,
+        UnitHealthMax = function()
+            return 80
+        end,
+        UnitHealthPercent = function()
+            return 50
+        end,
+        CurveConstants = { ScaleTo100 = {} },
+        UnitName = function()
+            return "Ogre"
+        end,
+        GetRaidTargetIndex = function()
+            return nil
+        end,
+    }, function()
+        m.Targets.Update(f)
+    end)
+    expect(asked).toBe("party1target")
+    expect(t.healthBar:GetValue()).toBe(40)
+    local _, max = t.healthBar:GetMinMaxValues()
+    expect(max).toBe(80)
+    expect(t.name:GetText()).toBe("Ogre")
+    expect(t.value:GetText()).toBe("50%")
+    -- Secret health goes straight to the bar.
+    with({
+        issecretvalue = function(value)
+            return value == SECRET
+        end,
+        UnitExists = function()
+            return true
+        end,
+        UnitHealthPercent = function()
+            return nil
+        end,
+        UnitHealth = function()
+            return SECRET
+        end,
+        UnitHealthMax = function()
+            return SECRET
+        end,
+        GetRaidTargetIndex = function()
+            return nil
+        end,
+    }, function()
+        local bar = t.healthBar
+        local set1, set2 = bar.SetMinMaxValues, bar.SetValue
+        local got = {}
+        bar.SetMinMaxValues = function(_, _, value)
+            got.max = value
+        end
+        bar.SetValue = function(_, value)
+            got.value = value
+        end
+        local ok = pcall(m.Targets.Update, f)
+        bar.SetMinMaxValues, bar.SetValue = set1, set2
+        expect(ok).toBe(true)
+        expect(got.value == SECRET).toBe(true)
+        expect(got.max == SECRET).toBe(true)
+    end)
+    set("partyTargets.enabled", false)
+    m.Targets.Layout(f)
+    expect(t:IsShown()).toBe(false)
+end
+
+@test("its options: no name, no percent, no icon, placed on the left")
+local function options()
+    local m = module()
+    local f = fakeFrame(m, "tanks")
+    set("tanksTargets.name", false)
+    set("tanksTargets.health", "none")
+    set("tanksTargets.icon", "none")
+    set("tanksTargets.anchor", "left")
+    m.Targets.Layout(f)
+    local t = f.targetButton
+    expect(t.name:IsShown()).toBe(false)
+    expect(t.value:IsShown()).toBe(false)
+    expect(t.icon:IsShown()).toBe(false)
+    local point, relative, relativePoint = t:GetPoint(1)
+    expect(point).toBe("RIGHT")
+    expect(relative == f).toBe(true)
+    expect(relativePoint).toBe("LEFT")
+    set("tanksTargets.name", true)
+    set("tanksTargets.health", "percent")
+    set("tanksTargets.icon", "raidTarget")
+    set("tanksTargets.anchor", "right")
+    m.Targets.Layout(f)
+    expect(t.name:IsShown()).toBe(true)
+    expect(t.icon:IsShown()).toBe(true)
+end
+
+-- The game's answers about a unit's level and who it is.
+local function levelGame(level, player, canAttack)
+    return {
+        issecretvalue = function(value)
+            return value == SECRET
+        end,
+        UnitLevel = function()
+            return level
+        end,
+        UnitClassification = function()
+            return "normal"
+        end,
+        UnitIsPlayer = function()
+            return player
+        end,
+        UnitCanAttack = function()
+            return canAttack
+        end,
+        GetCreatureDifficultyColor = function()
+            return { r = 1, g = 0.5, b = 0.25 }
+        end,
+    }
+end
+
+@test("NPCs' and attackable players' levels take their difficulty color; friends' stay plain")
+local function levelColor()
+    local m = module()
+    with(levelGame(62, false, true), function()
+        expect(m.Elements.LevelText("target")).toBe("|cffff8040" .. "62|r")
+    end)
+    -- A friendly NPC too: its level still tells how hard it is.
+    with(levelGame(62, false, false), function()
+        expect(m.Elements.LevelText("target")).toBe("|cffff8040" .. "62|r")
+    end)
+    with(levelGame(60, true, true), function()
+        expect(m.Elements.LevelText("target")).toBe("|cffff8040" .. "60|r")
+    end)
+    with(levelGame(60, true, false), function()
+        expect(m.Elements.LevelText("target")).toBe("60")
+    end)
+    -- A secret answer about who it is: plain, nothing compared.
+    with(levelGame(60, SECRET, SECRET), function()
+        expect(m.Elements.LevelText("target")).toBe("60")
+    end)
+    -- A skull: red.
+    with(levelGame(-1, false, true), function()
+        expect(m.Elements.LevelText("target"):sub(1, 10)).toBe("|cffff1a1a")
+    end)
+    set("colors.levelColor", false)
+    with(levelGame(62, false, true), function()
+        expect(m.Elements.LevelText("target")).toBe("62")
+    end)
+    set("colors.levelColor", true)
+end

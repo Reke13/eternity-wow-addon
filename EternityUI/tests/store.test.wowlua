@@ -15,6 +15,7 @@ local function fresh()
                 options = {
                     { id = "on", type = "toggle", default = true },
                     { id = "size", type = "range", default = 1, min = 0, max = 2, step = 0.5 },
+                    { id = "own", type = "range", default = 1, min = 0, max = 2, step = 0.5, inherit = "g.size" },
                 },
             },
         },
@@ -104,4 +105,45 @@ local function textDefault()
         groups = { { id = "g", options = { { id = "note", type = "text" } } } },
     })
     expect(store:Get("TextTest", "g.note")).toBe("")
+end
+
+@test("an inheriting option follows the one it inherits until it is changed, and again once set back")
+local function inherits()
+    expect(store:Get("StoreTest", "g.own")).toBe(1)
+    store:Set("StoreTest", "g.size", 2)
+    expect(store:Get("StoreTest", "g.own")).toBe(2)
+    expect(store:GetDefault("StoreTest", "g.own")).toBe(2)
+    -- Its own value, even one equal to its schema default, overrides.
+    store:Set("StoreTest", "g.own", 1)
+    expect(store:Get("StoreTest", "g.own")).toBe(1)
+    store:Set("StoreTest", "g.size", 0.5)
+    expect(store:Get("StoreTest", "g.own")).toBe(1)
+    -- Set to what it inherits: not stored, it follows again.
+    store:Set("StoreTest", "g.own", 0.5)
+    store:Set("StoreTest", "g.size", 1.5)
+    expect(store:Get("StoreTest", "g.own")).toBe(1.5)
+end
+
+@test("a module's own data lives in the profile, is copied with it and seeded once")
+local function data()
+    expect(store:GetData("StoreTest")).toBe(nil)
+    store:SetData("StoreTest", { list = { "a" } })
+    store:CreateProfile("Copy", "Default")
+    store:CreateProfile("Blank")
+    store:UseProfile("Copy")
+    expect(store:GetData("StoreTest").list[1]).toBe("a")
+    store:GetData("StoreTest").list[1] = "b"
+    store:UseProfile("Default")
+    expect(store:GetData("StoreTest").list[1]).toBe("a")
+    -- Seeding only fills the profiles without data, each with its own copy.
+    expect(store:SeedData("StoreTest", { list = { "old" } })).toBe(1)
+    store:UseProfile("Blank")
+    expect(store:GetData("StoreTest").list[1]).toBe("old")
+    -- Profiles saved before data existed still answer.
+    store.raw.profiles.Blank.data = nil
+    expect(store:GetData("StoreTest")).toBe(nil)
+    -- Sanitize leaves it alone.
+    store:UseProfile("Default")
+    store:Sanitize("StoreTest")
+    expect(store:GetData("StoreTest").list[1]).toBe("a")
 end

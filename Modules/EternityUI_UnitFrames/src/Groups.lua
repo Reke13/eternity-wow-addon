@@ -13,13 +13,21 @@ local addonName, ns = ...
 local Style, Frame = ns.Style, ns.Frame
 local U = Style.U
 
-local MAX = { party = 5, raid = 40, grouppets = 40 }
+local MAX = { party = 5, raid = 40, grouppets = 40, tanks = 10 }
 local BUDGET_MS = 6 -- time spent making buttons in one frame (at least one button)
 local SLOW_GAP = 0.3 -- seconds between buttons of a header not in use yet
 
 ---@class EternityUIUnitFramesGroups
 local Groups = { headers = {} }
 ns.Groups = Groups
+
+-- The "Who counts as a tank" option -> the header's role filter.
+Groups.TANK_ROLES = {
+    marked = "MAINTANK,MAINASSIST",
+    mainTanks = "MAINTANK",
+    role = "TANK",
+    all = "MAINTANK,MAINASSIST,TANK",
+}
 
 local POINTS = {
     down = { point = "TOP", x = 0, y = -1 },
@@ -51,11 +59,17 @@ function Groups.New(def)
     header.def = def
     function header.etInitialConfig(_, name)
         local button = _G[name]
+        if button and InCombatLockdown() then
+            -- Made in combat: this runs inside the header's secure update, which goes on to set
+            -- the buttons' units; our code here would taint it and get those calls blocked. Its
+            -- inside waits for the end of combat.
+            EternityUI.Combat.Run("EternityUI_UnitFrames.build:" .. name, function()
+                header.etInitialConfig(header, name)
+            end)
+            return
+        end
         if button then
-            -- Clicks can't be registered from restricted code; buttons are made out of combat.
-            if not InCombatLockdown() then
-                button:RegisterForClicks("AnyUp")
-            end
+            button:RegisterForClicks("AnyUp")
             -- Timed apart in the startup report (/et startup) when the metrics are on.
             local startup = EternityUI.Startup
             if startup and startup.Measure then
@@ -101,6 +115,21 @@ local function configure(holder)
         header:SetAttribute("maxColumns", columns)
         header:SetAttribute("columnSpacing", gap)
         header:SetAttribute("columnAnchorPoint", U(key, "", "columnGrowth") == "left" and "RIGHT" or "LEFT")
+    elseif def.tanks then
+        -- The raid's tanks, by the header's role filter: main tanks and assists as the raid marks
+        -- them, and those whose group role is tank.
+        header:SetAttribute("showRaid", true)
+        header:SetAttribute("showParty", U(key, "", "showSolo"))
+        header:SetAttribute("showPlayer", true)
+        header:SetAttribute("showSolo", false)
+        header:SetAttribute("groupBy", nil)
+        header:SetAttribute("groupingOrder", nil)
+        header:SetAttribute("groupFilter", nil)
+        header:SetAttribute("roleFilter", Groups.TANK_ROLES[U(key, "", "roles")] or Groups.TANK_ROLES.marked)
+        header:SetAttribute("strictFiltering", false)
+        header:SetAttribute("unitsPerColumn", MAX[key])
+        header:SetAttribute("maxColumns", 1)
+        perColumn = 4 -- the Mover's block: room for a few (the header lists up to MAX)
     elseif key == "party" then
         header:SetAttribute("showParty", true)
         header:SetAttribute("showPlayer", U(key, "", "showPlayer"))
@@ -184,7 +213,7 @@ end
 function Groups.InUse(key)
     if key == "party" then
         return true
-    elseif key == "raid" then
+    elseif key == "raid" or key == "tanks" then
         return IsInRaid() and true or false
     end
     return IsInGroup() and true or false -- the group's pets

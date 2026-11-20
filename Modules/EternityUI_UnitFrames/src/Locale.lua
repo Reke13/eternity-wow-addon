@@ -30,6 +30,8 @@ ns.L = EternityUI.NewLocale({
     PARTY = "Group",
     RAID = "Raid",
     GROUP_PETS = "Group pets",
+    TANKS = "Raid tanks",
+    SAMPLE_TARGET = "Target",
     MOVER = "Unit frames: %s",
     DEAD = "Dead",
     GHOST = "Ghost",
@@ -90,6 +92,8 @@ ns.L = EternityUI.NewLocale({
     PARTY = "Grupo",
     RAID = "Banda",
     GROUP_PETS = "Mascotas del grupo",
+    TANKS = "Tanques de banda",
+    SAMPLE_TARGET = "Objetivo",
     MOVER = "Marcos de unidad: %s",
     DEAD = "Muerto",
     GHOST = "Fantasma",
@@ -154,6 +158,8 @@ local L = ns.L
 ---@field player boolean? the player's frame (combat, resting, fade)
 ---@field range boolean? faded out of range (group frames)
 ---@field pets boolean? the group's and raid's pets (SecureGroupPetHeaderTemplate)
+---@field tanks boolean? the raid's tanks (a group header filtered by role)
+---@field targets boolean? each button can show its unit's target beside it (Targets.lua)
 ---@field x number default position
 ---@field y number
 
@@ -163,9 +169,20 @@ ns.UNITS = {
     { key = "target", unit = "target", label = L.TARGET, cast = true, x = 260, y = -180 },
     { key = "targettarget", unit = "targettarget", label = L.TARGETTARGET, poll = true, x = 310, y = -235 },
     { key = "focus", unit = "focus", label = L.FOCUS, cast = true, x = -480, y = 40 },
-    { key = "party", unit = "party1", label = L.PARTY, group = true, range = true, x = -760, y = 120 },
+    { key = "party", unit = "party1", label = L.PARTY, group = true, range = true, targets = true, x = -760, y = 120 },
     { key = "raid", unit = "raid1", label = L.RAID, group = true, range = true, x = -760, y = 260 },
     { key = "grouppets", unit = "partypet1", label = L.GROUP_PETS, group = true, pets = true, range = true, x = -560, y = 120 },
+    {
+        key = "tanks",
+        unit = "raid1",
+        label = L.TANKS,
+        group = true,
+        tanks = true,
+        range = true,
+        targets = true,
+        x = -560,
+        y = 320,
+    },
 }
 ns.ByKey = {}
 for _, def in ipairs(ns.UNITS) do

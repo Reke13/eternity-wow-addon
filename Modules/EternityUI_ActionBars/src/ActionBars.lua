@@ -14,7 +14,8 @@ local addonName, ns = ...
 local E = EternityUI
 local Bars, Blizzard, Keybind, Mover, Style, L = ns.Bars, ns.Blizzard, ns.Keybind, ns.Mover, ns.Style, ns.L
 
-local BAR_GROUPS = {}
+-- "All bars" first: what every bar that follows it uses.
+local BAR_GROUPS = { "all" }
 for _, bar in ipairs(Bars.LIST) do
     BAR_GROUPS[#BAR_GROUPS + 1] = bar.id
 end
@@ -33,6 +34,7 @@ local Module = {
             text = L.TAB,
             groups = BAR_GROUPS,
             short = {
+                all = L.SHORT_ALL,
                 bar1 = "1",
                 bar2 = "2",
                 bar3 = "3",

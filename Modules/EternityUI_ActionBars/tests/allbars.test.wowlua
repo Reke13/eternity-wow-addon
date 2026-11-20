@@ -1,0 +1,43 @@
+-- "All bars": every bar takes its shared options from it, until the player changes one in a bar.
+import test, expect from "wowlua:test"
+
+local E = EternityUI
+local NAME = "EternityUI_ActionBars"
+
+local function module()
+    return E:GetModule(NAME)
+end
+
+local function near(a, b)
+    return math.abs(a - b) < 0.01
+end
+
+@test("an All bars option reaches every bar that hasn't changed it, and the bar's own wins")
+local function inherits()
+    E.store:Reset(NAME)
+    E.store:Set(NAME, "bar2.alpha", 0.8)
+    E.store:Set(NAME, "all.alpha", 0.5)
+    module():Apply(true)
+    expect(near(_G.EternityActionBar_bar1:GetAlpha(), 0.5)).toBe(true)
+    expect(near(_G.EternityActionBar_bar3:GetAlpha(), 0.5)).toBe(true)
+    expect(near(_G.EternityActionBar_bar2:GetAlpha(), 0.8)).toBe(true)
+    -- Every bar with the option inherits, the pet bar too.
+    E.store:Set(NAME, "all.size", 40)
+    expect(E.store:Get(NAME, "bar1.size")).toBe(40)
+    expect(E.store:Get(NAME, "pet.size")).toBe(40)
+    -- Options All bars doesn't have stay the bar's own.
+    expect(E.store:Get(NAME, "bar4.perRow")).toBe(1)
+    E.store:Reset(NAME)
+end
+
+@test("a bar set back to what All bars has follows it again")
+local function followsAgain()
+    E.store:Reset(NAME)
+    E.store:Set(NAME, "bar1.spacing", 10)
+    E.store:Set(NAME, "all.spacing", 6)
+    expect(E.store:Get(NAME, "bar1.spacing")).toBe(10)
+    E.store:Set(NAME, "bar1.spacing", 6)
+    E.store:Set(NAME, "all.spacing", 8)
+    expect(E.store:Get(NAME, "bar1.spacing")).toBe(8)
+    E.store:Reset(NAME)
+end

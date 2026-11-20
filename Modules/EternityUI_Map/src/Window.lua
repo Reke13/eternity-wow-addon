@@ -8,6 +8,10 @@
 -- dragged, with our scale. The map has no secure frames, so this is allowed in combat (seen in
 -- NaowhForever's MapSize, to be checked in Forever: E161). The maximized map always keeps scale
 -- 1 and Blizzard's spot. Everything stands down while the gamepad UI owns the panels.
+--
+-- Another map mover (Core.MapMover: OpenMap, MoveAny...) gets the map's spot and scale: two
+-- movers on one frame freeze it. Then we only keep the margin and the maximized backdrop, and say
+-- so once in the chat.
 
 ---@type string, EternityUIMapNamespace
 local _, ns = ...
@@ -26,6 +30,7 @@ local KEEP_ON_SCREEN = 60
 ---@field handle table? drag handle over the header
 ---@field dragging table? { cursorX, cursorY, left, top } while dragging
 ---@field blackout table? { mouse, alpha } of Blizzard's backdrop while we change it
+---@field noted string? the other map mover already named in the chat
 local Window = {}
 ns.Window = Window
 
@@ -33,9 +38,23 @@ local function windowed(map)
     return map:IsShown() and not (map.IsMaximized and map:IsMaximized())
 end
 
---- Whether the module positions and scales the map now.
-function Window:Wanted()
+--- Whether the module is on and may touch the map at all (margin, backdrop).
+function Window:Active()
     return Core.running == true and not Core.Gamepad()
+end
+
+--- Whether the module positions and scales the map now: not while another addon moves it.
+function Window:Wanted()
+    return self:Active() and not Core.MapMover()
+end
+
+--- Says once in the chat which addon moves the map, so the player knows which mover to use.
+function Window:NoteMover()
+    local mover = self:Active() and Core.MapMover()
+    if mover and self.noted ~= mover then
+        self.noted = mover
+        Core.Print(L.MOVER_OWNED:format(mover, mover))
+    end
 end
 
 -- Scale and position ----------------------------------------------------------------------------
@@ -95,12 +114,13 @@ function Window:Layout()
         return
     end
     if not (self:Wanted() and windowed(map)) then
-        -- Maximized (or off): Blizzard's scale. Its spot comes from MaximizeUIPanel.
+        -- Maximized, off or another mover's: our scale goes. The spot is Blizzard's or that mover's.
         if self.scaled then
             self.scaled = false
             map:SetScale(1)
         end
-        ns.Skin:SetPadding(0)
+        local margin = self:Active() and windowed(map) and tonumber(opt("window.margin")) or 0
+        ns.Skin:SetPadding(margin)
         self:UpdateHandle()
         return
     end
@@ -127,7 +147,7 @@ function Window:Reset()
     Core.DB().position = nil
     self.moved = false
     local map = Core.Map()
-    if map and windowed(map) then
+    if map and windowed(map) and self:Wanted() then
         goHome(map)
         self:Layout()
     end
@@ -222,7 +242,7 @@ function Window:ApplyBlackout()
         return
     end
     local texture = frame.Blackout
-    if self:Wanted() then
+    if self:Active() then
         if not self.blackout then
             self.blackout = { mouse = frame:IsMouseEnabled(), alpha = texture and texture:GetAlpha() or 1 }
         end
@@ -268,7 +288,13 @@ function Window:InstallHooks(map)
         hooksecurefunc(map, "Minimize", relayout)
     end
     map:HookScript("OnShow", function()
+        if not self:Active() then
+            return
+        end
+        self:NoteMover()
         if not self:Wanted() then
+            self:ApplyBlackout()
+            self:Layout()
             return
         end
         -- In case Blizzard placed it before showing it (the hook above skips hidden maps).
@@ -291,7 +317,14 @@ function Window:Apply()
     end
     self:InstallHooks(map)
     self:ApplyBlackout()
+    self:NoteMover()
     if self:Wanted() then
+        self:Layout()
+        return
+    end
+    if self:Active() then
+        -- Another addon moves the map: our scale and spot go, its own stay.
+        self.dragging = nil
         self:Layout()
         return
     end

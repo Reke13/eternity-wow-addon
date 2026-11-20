@@ -3,13 +3,15 @@
 --     unit's menu), so it works in combat. Its size, place and whether it's shown are protected:
 --     they change only out of combat (the module queues them). What's drawn inside isn't.
 --   * One event frame serves every unit button: unit events go to the buttons showing that unit.
---     Units without events of their own (target of target), the range fade and the combat and
---     PvP icons are refreshed on a short timer.
+--     Units without events of their own (target of target, group members' targets), the range
+--     fade and the combat and PvP icons are refreshed on a short timer. Threat follows its own
+--     events (only the units the timer redraws whole, like the target of target, get it there
+--     too).
 --   * While the Mover is open the single frames show you, so they can be placed.
 
 ---@type string, EternityUIUnitFramesNamespace
 local addonName, ns = ...
-local L, Style, Elements = ns.L, ns.Style, ns.Elements
+local L, Style, Elements, Targets = ns.L, ns.Style, ns.Elements, ns.Targets
 local U = Style.U
 
 local POLL = 0.2
@@ -45,6 +47,7 @@ local UNIT_EVENTS = {
     UNIT_SPELLCAST_FAILED = "stop",
     UNIT_SPELLCAST_INTERRUPTED = "stop",
     UNIT_SPELLCAST_CHANNEL_STOP = "stop",
+    UNIT_TARGET = "target", -- the member's target button (Targets.lua)
 }
 local GLOBAL_EVENTS = {
     "PLAYER_ENTERING_WORLD",
@@ -62,7 +65,31 @@ local GLOBAL_EVENTS = {
     "UNIT_PET",
     "PLAYER_FLAGS_CHANGED",
     "SPELLS_CHANGED",
+    "UNIT_THREAT_SITUATION_UPDATE",
+    "UNIT_THREAT_LIST_UPDATE",
 }
+
+-- Threat changed for `unit` (its own state, or an enemy's list): its frames, and the frames that
+-- show the player's threat on an enemy (whose answer also changes when the player's does).
+local function threatChanged(unit)
+    if type(unit) == "string" then
+        local list = Frame.byUnit[unit]
+        if list then
+            for f in pairs(list) do
+                if f:IsVisible() then
+                    Elements.UpdateThreat(f)
+                end
+            end
+        end
+    end
+    for key in pairs(Elements.THREAT_ENEMY_FRAMES) do
+        local holder = Frame.singles[key]
+        local f = holder and holder.button
+        if f and f.unit ~= unit and f:IsVisible() and f.unit then
+            Elements.UpdateThreat(f)
+        end
+    end
+end
 
 local function run(f, what)
     if not f:IsVisible() or not f.unit then
@@ -87,6 +114,8 @@ local function run(f, what)
         Elements.StopCast(f)
     elseif what == "indicators" then
         Elements.UpdateIndicators(f)
+    elseif what == "target" then
+        Targets.Update(f)
     end
 end
 
@@ -139,11 +168,14 @@ events:SetScript("OnEvent", function(_, event, unit, ...)
         end
     elseif event == "SPELLS_CHANGED" then
         Elements.ResetRangeSpells()
+    elseif event == "UNIT_THREAT_SITUATION_UPDATE" or event == "UNIT_THREAT_LIST_UPDATE" then
+        threatChanged(unit)
     elseif event == "RAID_TARGET_UPDATE" or event == "PARTY_LEADER_CHANGED" or event == "PLAYER_FLAGS_CHANGED" then
         each(Elements.UpdateIndicators)
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" or event == "PLAYER_UPDATE_RESTING" then
         eachUnit("player", Elements.UpdateIndicators)
         each(Elements.UpdateStatus)
+        each(Elements.UpdateThreat)
         each(Elements.UpdateFade)
     elseif event == "READY_CHECK" or event == "READY_CHECK_CONFIRM" then
         each(function(f)
@@ -161,6 +193,9 @@ events:SetScript("OnEvent", function(_, event, unit, ...)
             end)
         end)
     else -- entering the world, the group changed
+        for _, f in ipairs(Frame.all) do
+            Frame.Sync(f)
+        end
         each(Elements.UpdateAll)
     end
 end)
@@ -174,6 +209,7 @@ events:SetScript("OnUpdate", function(_, delta)
     end
     elapsed = 0
     for _, f in ipairs(Frame.all) do
+        Frame.Sync(f)
         if f:IsVisible() and f.unit then
             if f.uf.poll then
                 Elements.UpdateAll(f)
@@ -183,6 +219,9 @@ events:SetScript("OnUpdate", function(_, delta)
                 Elements.UpdateStatus(f)
             end
             Elements.UpdateRange(f)
+            if f.targetButton then
+                Targets.Update(f)
+            end
         end
     end
 end)
@@ -215,6 +254,7 @@ function Frame.SetUnit(f, unit)
         Frame.byUnit[unit] = Frame.byUnit[unit] or {}
         Frame.byUnit[unit][f] = true
         Elements.UpdateAll(f)
+        Targets.Update(f)
     end
 end
 
@@ -227,18 +267,28 @@ function Frame.Build(f, def)
     end
     f.uf = def
     Elements.Create(f)
-    f:HookScript("OnAttributeChanged", function(self, name, value)
-        if name == "unit" and not self.previewing then
-            Frame.SetUnit(self, value)
-        end
-    end)
-    f:HookScript("OnShow", function(self)
-        if Frame.running and self.unit then
-            Elements.UpdateAll(self)
-        end
-    end)
+    -- No OnAttributeChanged or OnShow hooks: the group headers set "unit" and the unit watch
+    -- shows the button from Blizzard's secure code, which goes on to set more attributes
+    -- ("unit" on the next buttons, "statehidden"). Our code run in the middle of that taints
+    -- the rest, and in combat every one of those calls is blocked ("Button:SetAttribute()").
+    -- Frame.Sync picks the changes up from our own events and timer instead.
     Frame.all[#Frame.all + 1] = f
-    Frame.SetUnit(f, f:GetAttribute("unit"))
+    Frame.Sync(f)
+end
+
+--- Follows a button's unit attribute and redraws it when it comes into view: from our own
+--- events and timer, never from inside Blizzard's secure code (see Frame.Build).
+---@param f table
+function Frame.Sync(f)
+    if not f.previewing then
+        Frame.SetUnit(f, f:GetAttribute("unit"))
+    end
+    local visible = f:IsVisible() and true or false
+    if visible and not f.wasVisible and Frame.running and f.unit then
+        Elements.UpdateAll(f)
+        Targets.Update(f)
+    end
+    f.wasVisible = visible
 end
 
 --- Size and inside of a button from its options (out of combat).
@@ -250,6 +300,7 @@ function Frame.Style(f)
         f:SetSize(width, height)
     end
     Elements.Layout(f, width, height)
+    Targets.Layout(f)
     if f.unit then
         Elements.UpdateAll(f)
     end

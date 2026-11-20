@@ -20,6 +20,7 @@ local _, ns = ...
 local strings = {
     enUS = {
         TAB = "Bars",
+        SHORT_ALL = "All",
         SHORT_STANCE = "Stance",
         SHORT_PET = "Pet",
         SHORT_MICRO = "Menu",
@@ -38,6 +39,7 @@ local strings = {
     },
     esES = {
         TAB = "Barras",
+        SHORT_ALL = "Todas",
         SHORT_STANCE = "Postura",
         SHORT_PET = "Mascota",
         SHORT_MICRO = "Menú",

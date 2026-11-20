@@ -1,0 +1,85 @@
+-- The rule form in two columns with the options window's V2 layout, and as before with V1.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Alerts"
+local CORE = "EternityUI"
+
+local function editor()
+    local module = EternityUI:GetModule(NAME)
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 900)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    local view = module.Editor.Build(child, function() end)
+    return module, view
+end
+
+local function top(frame)
+    local _, _, _, _, y = frame:GetPoint(1)
+    return y
+end
+
+local function left(frame)
+    local _, _, _, x = frame:GetPoint(1)
+    return x
+end
+
+@test("with V1 every field takes the whole line, as before")
+local function v1()
+    local module, view = editor()
+    local Editor, Rules = module.Editor, module.Rules
+    expect(Editor.TwoColumns()).toBe(false)
+    local buff = Rules.Add("buff", { spells = "Thorns" })
+    Editor.Select(buff)
+    local form = view.form
+    expect(top(form.lowTimeRow) ~= top(form.spellsInfo:GetParent())).toBe(true)
+    expect(form.lowTimeRow:GetNumPoints()).toBe(2)
+    expect(form.lowTimeRow:GetHeight()).toBe(40)
+    for _, divider in ipairs(form.dividers) do
+        expect(divider:IsShown()).toBe(false)
+    end
+    Editor.Delete(buff)
+end
+
+@test("with V2 fields of one kind go two per line, with a line between the columns")
+local function v2()
+    -- A core without the V2 layout has nothing to test here.
+    if not EternityUI.store:Set(CORE, "general.optionsVersion", "v2") then
+        return
+    end
+    local module, view = editor()
+    local Editor, Rules = module.Editor, module.Rules
+    expect(Editor.TwoColumns()).toBe(true)
+    local buff = Rules.Add("buff", { spells = "Thorns", lowTime = true })
+    Editor.Select(buff)
+    local form = view.form
+    local spellsRow = form.spellsInfo:GetParent()
+    local combatRow = form.combatInfo:GetParent()
+    local nameRow = form.fields[1].frame
+    -- Every field sits beside its label, all of one height: they pair in order, with no gaps.
+    -- The name and the buffs share the first line.
+    expect(top(nameRow)).toBe(top(spellsRow))
+    expect(left(nameRow)).toBe(0)
+    expect(left(spellsRow) > 0).toBe(true)
+    expect(nameRow:GetHeight()).toBe(40)
+    expect(spellsRow:GetHeight()).toBe(40)
+    expect(nameRow:GetWidth()).toBe(form.columnWidth)
+    expect(nameRow.control:GetWidth() < form.columnWidth).toBe(true)
+    expect(spellsRow.control:GetWidth() < form.columnWidth).toBe(true)
+    -- The switch and its seconds share the next line.
+    expect(top(form.lowTimeRow)).toBe(top(form.lowTimeSecondsRow))
+    expect(form.lowTimeRow:GetWidth()).toBe(form.columnWidth)
+    expect(form.columnWidth < form.laidWidth / 2).toBe(true)
+    expect(form.dividers[1] ~= nil and form.dividers[1]:IsShown()).toBe(true)
+    -- A dropdown too, beside its label.
+    expect(combatRow:GetHeight()).toBe(40)
+    expect((combatRow.label:GetPoint(1))).toBe("LEFT")
+
+    -- Back to V1: the whole line again.
+    EternityUI.store:Set(CORE, "general.optionsVersion", "v1")
+    Editor.Select(buff)
+    expect(combatRow:GetNumPoints()).toBe(2)
+    expect(nameRow:GetNumPoints()).toBe(2)
+    expect(spellsRow:GetNumPoints()).toBe(2)
+    Editor.Delete(buff)
+end

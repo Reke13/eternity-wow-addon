@@ -870,49 +870,12 @@ ns.OptionsSchema = {
             },
         },
         {
-            id = "bar1",
+            id = "all",
             label = {
-                enUS = "Bar 1 (main)",
-                esES = "Barra 1 (principal)",
+                enUS = "All bars",
+                esES = "Todas las barras",
             },
             options = {
-                {
-                    id = "enabled",
-                    type = "toggle",
-                    default = true,
-                    label = {
-                        enUS = "Show this bar",
-                        esES = "Mostrar esta barra",
-                    },
-                },
-                {
-                    id = "buttons",
-                    type = "range",
-                    default = 12,
-                    min = 1,
-                    max = 12,
-                    step = 1,
-                    label = {
-                        enUS = "Buttons",
-                        esES = "Botones",
-                    },
-                },
-                {
-                    id = "perRow",
-                    type = "range",
-                    default = 12,
-                    min = 1,
-                    max = 12,
-                    step = 1,
-                    label = {
-                        enUS = "Buttons per row",
-                        esES = "Botones por fila",
-                    },
-                    description = {
-                        enUS = "1 = a vertical bar.",
-                        esES = "1 = una barra vertical.",
-                    },
-                },
                 {
                     id = "size",
                     type = "range",
@@ -935,49 +898,6 @@ ns.OptionsSchema = {
                     label = {
                         enUS = "Spacing",
                         esES = "Separación",
-                    },
-                },
-                {
-                    id = "start",
-                    type = "select",
-                    default = "topleft",
-                    label = {
-                        enUS = "First button",
-                        esES = "Primer botón",
-                    },
-                    values = {
-                        {
-                            value = "topleft",
-                            label = {
-                                enUS = "Top left",
-                                esES = "Arriba a la izquierda",
-                            },
-                        },
-                        {
-                            value = "topright",
-                            label = {
-                                enUS = "Top right",
-                                esES = "Arriba a la derecha",
-                            },
-                        },
-                        {
-                            value = "bottomleft",
-                            label = {
-                                enUS = "Bottom left",
-                                esES = "Abajo a la izquierda",
-                            },
-                        },
-                        {
-                            value = "bottomright",
-                            label = {
-                                enUS = "Bottom right",
-                                esES = "Abajo a la derecha",
-                            },
-                        },
-                    },
-                    description = {
-                        enUS = "The corner the bar grows from.",
-                        esES = "La esquina desde la que crece la barra.",
                     },
                 },
                 {
@@ -1079,6 +999,246 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    type = "text",
+                    default = "[combat] show; hide",
+                    maxLength = 200,
+                    label = {
+                        enUS = "Custom conditions",
+                        esES = "Condiciones propias",
+                    },
+                    description = {
+                        enUS = "Macro conditions ending in show or hide, e.g. [mod:shift][combat] show; hide.",
+                        esES = "Condiciones de macro que acaban en show o hide, p. ej. [mod:shift][combat] show; hide.",
+                    },
+                },
+                {
+                    id = "showGrid",
+                    type = "toggle",
+                    default = false,
+                    label = {
+                        enUS = "Show empty slots",
+                        esES = "Mostrar las ranuras vacías",
+                    },
+                },
+            },
+        },
+        {
+            id = "bar1",
+            label = {
+                enUS = "Bar 1 (main)",
+                esES = "Barra 1 (principal)",
+            },
+            options = {
+                {
+                    id = "enabled",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Show this bar",
+                        esES = "Mostrar esta barra",
+                    },
+                },
+                {
+                    id = "buttons",
+                    type = "range",
+                    default = 12,
+                    min = 1,
+                    max = 12,
+                    step = 1,
+                    label = {
+                        enUS = "Buttons",
+                        esES = "Botones",
+                    },
+                },
+                {
+                    id = "perRow",
+                    type = "range",
+                    default = 12,
+                    min = 1,
+                    max = 12,
+                    step = 1,
+                    label = {
+                        enUS = "Buttons per row",
+                        esES = "Botones por fila",
+                    },
+                    description = {
+                        enUS = "1 = a vertical bar.",
+                        esES = "1 = una barra vertical.",
+                    },
+                },
+                {
+                    id = "size",
+                    inherit = "all.size",
+                    type = "range",
+                    default = 36,
+                    min = 16,
+                    max = 64,
+                    step = 1,
+                    label = {
+                        enUS = "Button size",
+                        esES = "Tamaño de los botones",
+                    },
+                },
+                {
+                    id = "spacing",
+                    inherit = "all.spacing",
+                    type = "range",
+                    default = 4,
+                    min = 0,
+                    max = 20,
+                    step = 1,
+                    label = {
+                        enUS = "Spacing",
+                        esES = "Separación",
+                    },
+                },
+                {
+                    id = "start",
+                    type = "select",
+                    default = "topleft",
+                    label = {
+                        enUS = "First button",
+                        esES = "Primer botón",
+                    },
+                    values = {
+                        {
+                            value = "topleft",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "topright",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "bottomleft",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "bottomright",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                    description = {
+                        enUS = "The corner the bar grows from.",
+                        esES = "La esquina desde la que crece la barra.",
+                    },
+                },
+                {
+                    id = "scale",
+                    inherit = "all.scale",
+                    type = "range",
+                    default = 1,
+                    min = 0.5,
+                    max = 2,
+                    step = 0.05,
+                    label = {
+                        enUS = "Scale",
+                        esES = "Escala",
+                    },
+                },
+                {
+                    id = "alpha",
+                    inherit = "all.alpha",
+                    type = "range",
+                    default = 1,
+                    min = 0,
+                    max = 1,
+                    step = 0.05,
+                    label = {
+                        enUS = "Opacity",
+                        esES = "Opacidad",
+                    },
+                },
+                {
+                    id = "visibility",
+                    inherit = "all.visibility",
+                    type = "select",
+                    default = "always",
+                    label = {
+                        enUS = "Show",
+                        esES = "Mostrar",
+                    },
+                    values = {
+                        {
+                            value = "always",
+                            label = {
+                                enUS = "Always",
+                                esES = "Siempre",
+                            },
+                        },
+                        {
+                            value = "combat",
+                            label = {
+                                enUS = "In combat",
+                                esES = "En combate",
+                            },
+                        },
+                        {
+                            value = "nocombat",
+                            label = {
+                                enUS = "Out of combat",
+                                esES = "Fuera de combate",
+                            },
+                        },
+                        {
+                            value = "target",
+                            label = {
+                                enUS = "With a target",
+                                esES = "Con objetivo",
+                            },
+                        },
+                        {
+                            value = "mouseover",
+                            label = {
+                                enUS = "On mouseover",
+                                esES = "Al pasar el ratón",
+                            },
+                        },
+                        {
+                            value = "custom",
+                            label = {
+                                enUS = "Custom conditions",
+                                esES = "Condiciones propias",
+                            },
+                        },
+                    },
+                    description = {
+                        enUS = "Always hidden in pet battles.",
+                        esES = "Siempre oculta en duelos de mascotas.",
+                    },
+                },
+                {
+                    id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
+                    type = "range",
+                    default = 0,
+                    min = 0,
+                    max = 1,
+                    step = 0.05,
+                    label = {
+                        enUS = "Opacity without the mouse",
+                        esES = "Opacidad sin el ratón",
+                    },
+                    description = {
+                        enUS = "For \"On mouseover\".",
+                        esES = "Para «Al pasar el ratón».",
+                    },
+                },
+                {
+                    id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -1188,6 +1348,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "showGrid",
+                    inherit = "all.showGrid",
                     type = "toggle",
                     default = false,
                     label = {
@@ -1243,6 +1404,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "size",
+                    inherit = "all.size",
                     type = "range",
                     default = 36,
                     min = 16,
@@ -1255,6 +1417,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -1310,6 +1473,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -1322,6 +1486,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -1334,6 +1499,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -1391,6 +1557,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -1407,6 +1574,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -1434,6 +1602,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "showGrid",
+                    inherit = "all.showGrid",
                     type = "toggle",
                     default = false,
                     label = {
@@ -1489,6 +1658,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "size",
+                    inherit = "all.size",
                     type = "range",
                     default = 36,
                     min = 16,
@@ -1501,6 +1671,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -1556,6 +1727,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -1568,6 +1740,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -1580,6 +1753,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -1637,6 +1811,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -1653,6 +1828,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -1680,6 +1856,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "showGrid",
+                    inherit = "all.showGrid",
                     type = "toggle",
                     default = false,
                     label = {
@@ -1735,6 +1912,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "size",
+                    inherit = "all.size",
                     type = "range",
                     default = 36,
                     min = 16,
@@ -1747,6 +1925,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -1802,6 +1981,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -1814,6 +1994,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -1826,6 +2007,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -1883,6 +2065,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -1899,6 +2082,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -1926,6 +2110,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "showGrid",
+                    inherit = "all.showGrid",
                     type = "toggle",
                     default = false,
                     label = {
@@ -1981,6 +2166,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "size",
+                    inherit = "all.size",
                     type = "range",
                     default = 36,
                     min = 16,
@@ -1993,6 +2179,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -2048,6 +2235,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -2060,6 +2248,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -2072,6 +2261,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -2129,6 +2319,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -2145,6 +2336,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -2172,6 +2364,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "showGrid",
+                    inherit = "all.showGrid",
                     type = "toggle",
                     default = false,
                     label = {
@@ -2227,6 +2420,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "size",
+                    inherit = "all.size",
                     type = "range",
                     default = 36,
                     min = 16,
@@ -2239,6 +2433,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -2294,6 +2489,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -2306,6 +2502,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -2318,6 +2515,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -2375,6 +2573,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -2391,6 +2590,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -2418,6 +2618,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "showGrid",
+                    inherit = "all.showGrid",
                     type = "toggle",
                     default = false,
                     label = {
@@ -2473,6 +2674,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "size",
+                    inherit = "all.size",
                     type = "range",
                     default = 36,
                     min = 16,
@@ -2485,6 +2687,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -2540,6 +2743,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -2552,6 +2756,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -2564,6 +2769,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -2621,6 +2827,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -2637,6 +2844,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -2664,6 +2872,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "showGrid",
+                    inherit = "all.showGrid",
                     type = "toggle",
                     default = false,
                     label = {
@@ -2719,6 +2928,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "size",
+                    inherit = "all.size",
                     type = "range",
                     default = 36,
                     min = 16,
@@ -2731,6 +2941,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -2786,6 +2997,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -2798,6 +3010,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -2810,6 +3023,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -2867,6 +3081,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -2883,6 +3098,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -2910,6 +3126,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "showGrid",
+                    inherit = "all.showGrid",
                     type = "toggle",
                     default = false,
                     label = {
@@ -2965,6 +3182,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "size",
+                    inherit = "all.size",
                     type = "range",
                     default = 30,
                     min = 16,
@@ -2977,6 +3195,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -3032,6 +3251,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -3044,6 +3264,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -3056,6 +3277,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -3113,6 +3335,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -3129,6 +3352,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -3202,6 +3426,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "size",
+                    inherit = "all.size",
                     type = "range",
                     default = 30,
                     min = 16,
@@ -3214,6 +3439,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -3269,6 +3495,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -3281,6 +3508,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -3293,6 +3521,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -3350,6 +3579,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -3366,6 +3596,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -3393,6 +3624,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "showGrid",
+                    inherit = "all.showGrid",
                     type = "toggle",
                     default = false,
                     label = {
@@ -3440,6 +3672,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 0,
                     min = -10,
@@ -3495,6 +3728,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -3507,6 +3741,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -3519,6 +3754,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -3572,6 +3808,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -3588,6 +3825,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] hide; show",
                     maxLength = 200,
@@ -3650,6 +3888,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "size",
+                    inherit = "all.size",
                     type = "range",
                     default = 30,
                     min = 16,
@@ -3678,6 +3917,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -3733,6 +3973,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -3745,6 +3986,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -3757,6 +3999,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -3810,6 +4053,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -3826,6 +4070,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] hide; show",
                     maxLength = 200,
@@ -3875,6 +4120,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -3887,6 +4133,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -3899,6 +4146,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -3956,6 +4204,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -3972,6 +4221,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,
@@ -4047,6 +4297,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "spacing",
+                    inherit = "all.spacing",
                     type = "range",
                     default = 4,
                     min = 0,
@@ -4063,6 +4314,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "scale",
+                    inherit = "all.scale",
                     type = "range",
                     default = 1,
                     min = 0.5,
@@ -4075,6 +4327,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "alpha",
+                    inherit = "all.alpha",
                     type = "range",
                     default = 1,
                     min = 0,
@@ -4087,6 +4340,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "visibility",
+                    inherit = "all.visibility",
                     type = "select",
                     default = "always",
                     label = {
@@ -4144,6 +4398,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "fadedAlpha",
+                    inherit = "all.fadedAlpha",
                     type = "range",
                     default = 0,
                     min = 0,
@@ -4160,6 +4415,7 @@ ns.OptionsSchema = {
                 },
                 {
                     id = "conditions",
+                    inherit = "all.conditions",
                     type = "text",
                     default = "[combat] show; hide",
                     maxLength = 200,

@@ -1,0 +1,274 @@
+-- The look of the alerts: the General tab's options (names, countdown, sizes) and each rule's own.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Alerts"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function near(a, b)
+    return math.abs(a - b) < 0.01
+end
+
+@test("a rule's look starts as the row's, and broken saved values go back to it")
+local function defaults()
+    local Rules = module().Rules
+    local plain = Rules.Add("buff")
+    expect(plain.scale).toBe(100)
+    expect(plain.showName).toBe("default")
+    expect(plain.customGlow).toBe(false)
+    expect(plain.countdown).toBe(true)
+    expect(plain.iconOverride).toBe("")
+    local broken = Rules.Add("slots", { scale = 900, showName = "maybe", glowColor = "red", iconOverride = 5 })
+    expect(broken.scale).toBe(200)
+    expect(broken.showName).toBe("default")
+    expect(broken.glowColor).toBe("#FFD100")
+    expect(broken.iconOverride).toBe("")
+    local small = Rules.Add("slots", { scale = 10 })
+    expect(small.scale).toBe(50)
+    for _, rule in ipairs({ plain, broken, small }) do
+        Rules.Remove(rule)
+    end
+end
+
+@test("a rule's own icon: a spell or item ID, a texture, or nothing")
+local function ownIcon()
+    local Checks = module().Checks
+    local spell, item = C_Spell.GetSpellTexture, C_Item.GetItemIconByID
+    local spells, items = { [467] = 136104 }, { [6948] = 134414 }
+    C_Spell.GetSpellTexture = function(id)
+        if issecretvalue(id) then
+            return nil
+        end
+        return spells[id]
+    end
+    C_Item.GetItemIconByID = function(id)
+        return items[id]
+    end
+    local ok, err = pcall(function()
+        expect(Checks.OverrideIcon({ iconOverride = "" })).toBe(nil)
+        expect(Checks.OverrideIcon({ iconOverride = "467" })).toBe(136104)
+        expect(Checks.OverrideIcon({ iconOverride = "6948" })).toBe(134414)
+        expect(Checks.OverrideIcon({ iconOverride = "Interface\\Icons\\Spell_Nature_Thorns" })).toBe(
+            "Interface\\Icons\\Spell_Nature_Thorns"
+        )
+        -- It wins over the buff's own icon, in the list and on the row.
+        expect(Checks.Icon({ kind = "buff", spells = "Thorns", icon = 1, iconOverride = "467" })).toBe(136104)
+    end)
+    C_Spell.GetSpellTexture, C_Item.GetItemIconByID = spell, item
+    if not ok then
+        error(err, 0)
+    end
+end
+
+@test("cells of different sizes line up by the growth")
+local function cells()
+    local Cells = module().Display.Cells
+    local list = { { w = 40, h = 40 }, { w = 80, h = 80 } }
+    local right = Cells(list, "right", 10, 200, 80)
+    expect(right[1].x).toBe(0)
+    expect(right[2].x).toBe(50)
+    -- Centered across the growth.
+    expect(right[1].y).toBe(20)
+    expect(right[2].y).toBe(0)
+    local left = Cells(list, "left", 10, 200, 80)
+    expect(left[1].x).toBe(160)
+    expect(left[2].x).toBe(70)
+    local center = Cells(list, "center", 10, 200, 80)
+    expect(center[1].x).toBe(35)
+    expect(center[2].x).toBe(85)
+    local down = Cells(list, "down", 10, 80, 200)
+    expect(down[1].y).toBe(0)
+    expect(down[2].y).toBe(50)
+    expect(down[1].x).toBe(20)
+    local up = Cells(list, "up", 10, 80, 200)
+    expect(up[1].y).toBe(160)
+    expect(up[2].y).toBe(70)
+end
+
+@test("the General tab places and sizes names, values and the countdown")
+local function general()
+    local Display = module().Display
+    local store = EternityUI.store
+    store:Set(NAME, "display.labelPosition", "left")
+    store:Set(NAME, "display.labelSize", 16)
+    store:Set(NAME, "display.border", false)
+    store:Set(NAME, "countdown.position", "bottom")
+    store:Set(NAME, "countdown.size", 50)
+    store:Set(NAME, "countdown.color", "#00FF00")
+    local ok, err = pcall(function()
+        Display.Set({ { name = "A", icon = 1, value = "5", ends = GetTime() + 30 } })
+        local icon = Display.icons[1]
+        expect((icon.label:GetPoint(1))).toBe("RIGHT")
+        expect(icon.bordered).toBe(false)
+        expect((icon.countdown:GetPoint(1))).toBe("BOTTOM")
+        -- The value makes way for the countdown.
+        expect((icon.value:GetPoint(1))).toBe("TOP")
+        local r, g = icon.countdown:GetTextColor()
+        expect(near(r, 0) and near(g, 1)).toBe(true)
+        local _, height = icon.countdown:GetFont()
+        expect(math.floor(height + 0.5)).toBe(22)
+        local _, labelHeight = icon.label:GetFont()
+        expect(math.floor(labelHeight + 0.5)).toBe(16)
+        -- The name's room is beside the icon.
+        local _, _, _, x = icon:GetPoint(1)
+        expect(x >= 16 * 8).toBe(true)
+    end)
+    store:Reset(NAME)
+    Display.Set({})
+    if not ok then
+        error(err, 0)
+    end
+end
+
+@test("each rule sizes its icon, shows or hides its name and picks its glow")
+local function perRule()
+    local mod = module()
+    local Rules, Display = mod.Rules, mod.Display
+    local size = EternityUI.store:Get(NAME, "display.iconSize")
+    local big = Rules.Add("slots", {
+        threshold = 999,
+        scale = 150,
+        showName = "hide",
+        customGlow = true,
+        glowColor = "#00FF00",
+    })
+    mod:Evaluate()
+    local item, icon
+    for i, entry in ipairs(Display.items) do
+        if entry.scale == 1.5 then
+            item, icon = entry, Display.icons[i]
+        end
+    end
+    expect(item ~= nil).toBe(true)
+    expect(item.showName).toBe(false)
+    expect(item.glowColor).toBe("#00FF00")
+    expect(math.floor(icon:GetWidth() + 0.5)).toBe(math.floor(size * 1.5 + 0.5))
+    expect(icon.label:IsShown()).toBe(false)
+    -- Without its own glow color: the theme's.
+    big.customGlow = false
+    mod:Evaluate()
+    for _, entry in ipairs(Display.items) do
+        if entry.scale == 1.5 then
+            expect(entry.glowColor).toBe(nil)
+        end
+    end
+    Rules.Remove(big)
+    mod:Evaluate()
+end
+
+@test("a buff rule can keep its countdown off")
+local function noCountdown()
+    local mod = module()
+    local Rules = mod.Rules
+    local read = C_UnitAuras.GetAuraDataByIndex
+    local expires = GetTime() + 20
+    local function fake(auras)
+        C_UnitAuras.GetAuraDataByIndex = function(_, index)
+            return auras[index]
+        end
+    end
+    fake({ { name = "Thorns", spellId = 467, expirationTime = expires, duration = 600 } })
+    local rule = Rules.Add("buff", { spells = "Thorns", lowTime = true, lowTimeSeconds = 60, countdown = false })
+    local ok, err = pcall(function()
+        mod:Evaluate()
+        expect(mod.state[rule.id].firing).toBe(true)
+        for _, entry in ipairs(mod.Display.items) do
+            expect(entry.ends).toBe(nil)
+        end
+    end)
+    C_UnitAuras.GetAuraDataByIndex = read
+    Rules.Remove(rule)
+    mod:Evaluate()
+    if not ok then
+        error(err, 0)
+    end
+end
+
+@test("the rule form has the look fields, the glow color only with its switch")
+local function form()
+    local mod = module()
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 500)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    local Editor, Rules = mod.Editor, mod.Rules
+    local view = Editor.Build(child, function() end)
+    local rule = Rules.Add("slots")
+    Editor.Select(rule)
+    local fields = view.form
+    expect(fields.scaleRow:IsShown()).toBe(true)
+    expect(fields.showNameRow:IsShown()).toBe(true)
+    expect(fields.glowColorRow:IsShown()).toBe(false)
+    -- The countdown is for buff rules with "seconds left".
+    expect(fields.countdownRow:IsShown()).toBe(false)
+    rule.customGlow = true
+    Editor.Select(rule)
+    expect(fields.glowColorRow:IsShown()).toBe(true)
+    Editor.Delete(rule)
+end
+
+@test("the countdown can go under the icon, outside it, with the name below it")
+local function outside()
+    local Display = module().Display
+    local store = EternityUI.store
+    store:Set(NAME, "countdown.position", "below")
+    local ok, err = pcall(function()
+        Display.Set({ { name = "A", icon = 1, ends = GetTime() + 30 }, { name = "B", icon = 1 } })
+        local icon = Display.icons[1]
+        local point, anchor, relative = icon.countdown:GetPoint(1)
+        expect(point).toBe("TOP")
+        expect(anchor == icon and relative == "BOTTOM").toBe(true)
+        -- The name makes way for it, on every icon so they stay in line.
+        local _, _, _, _, y = icon.label:GetPoint(1)
+        local _, _, _, _, other = Display.icons[2].label:GetPoint(1)
+        expect(y < -20).toBe(true)
+        expect(other).toBe(y)
+        -- Without any countdown the name goes back next to the icon.
+        Display.Set({ { name = "B", icon = 1 } })
+        local _, _, _, _, alone = Display.icons[1].label:GetPoint(1)
+        expect(alone > -10).toBe(true)
+    end)
+    store:Reset(NAME)
+    Display.Set({})
+    if not ok then
+        error(err, 0)
+    end
+end
+
+@test("the countdown can have a border of its own color and size")
+local function border()
+    local Display = module().Display
+    local store = EternityUI.store
+    local ok, err = pcall(function()
+        Display.Set({ { name = "A", icon = 1, ends = GetTime() + 30 } })
+        local icon = Display.icons[1]
+        expect(icon.outline[1]:IsShown()).toBe(false)
+        store:Set(NAME, "countdown.outline", true)
+        store:Set(NAME, "countdown.outlineSize", 3)
+        store:Set(NAME, "countdown.outlineColor", "#0000FF")
+        Display.Draw()
+        local copy = icon.outline[2]
+        expect(copy:IsShown()).toBe(true)
+        local _, anchor, _, x, y = copy:GetPoint(1)
+        expect(anchor == icon.countdown and math.abs(x) == 3 and y == 0).toBe(true)
+        expect(copy:GetText()).toBe(icon.countdown:GetText())
+        local r, _, b = copy:GetTextColor()
+        expect(near(r, 0) and near(b, 1)).toBe(true)
+        -- The number over its border: in a frame above the copies'.
+        expect(icon.countdown:GetParent():GetFrameLevel() > copy:GetParent():GetFrameLevel()).toBe(true)
+        local shadowX = icon.countdown:GetShadowOffset()
+        expect(shadowX).toBe(0)
+        -- Off again: no copies, the shadow back.
+        store:Set(NAME, "countdown.outline", false)
+        Display.Draw()
+        expect(copy:IsShown()).toBe(false)
+    end)
+    store:Reset(NAME)
+    Display.Set({})
+    if not ok then
+        error(err, 0)
+    end
+end
+

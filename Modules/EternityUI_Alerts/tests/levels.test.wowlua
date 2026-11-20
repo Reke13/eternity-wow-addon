@@ -1,0 +1,116 @@
+-- "From level" and "up to level": a rule shows only between the two, both included.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Alerts"
+local CORE = "EternityUI"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function context(level)
+    return {
+        class = "WARRIOR",
+        level = level,
+        dead = false,
+        combat = false,
+        resting = false,
+        mounted = false,
+        raid = false,
+        party = false,
+        instance = false,
+    }
+end
+
+local function rule(minLevel, maxLevel)
+    return {
+        class = "",
+        minLevel = minLevel,
+        maxLevel = maxLevel,
+        group = "any",
+        place = "any",
+        hideResting = false,
+        hideMounted = false,
+        combat = "any",
+    }
+end
+
+@test("between the levels the rule shows, both ends included")
+local function inside()
+    local passes = module().Conditions.Passes
+    expect(passes(rule(20, 40), context(20))).toBe(true)
+    expect(passes(rule(20, 40), context(30))).toBe(true)
+    expect(passes(rule(20, 40), context(40))).toBe(true)
+end
+
+@test("under from level or over up to level it doesn't")
+local function outside()
+    local passes = module().Conditions.Passes
+    expect(passes(rule(20, 40), context(19))).toBe(false)
+    expect(passes(rule(20, 40), context(41))).toBe(false)
+end
+
+@test("without up to level any level from the first one counts")
+local function noMax()
+    local passes = module().Conditions.Passes
+    expect(passes(rule(20, 0), context(60))).toBe(true)
+    expect(passes(rule(0, 0), context(1))).toBe(true)
+    -- Rules saved before the field have none.
+    expect(passes(rule(20, nil), context(60))).toBe(true)
+end
+
+@test("saved rules get no limit, and a limit under from level is raised to it")
+local function migration()
+    local Rules = module().Rules
+    local old = Rules.Add("buff", { minLevel = 30 })
+    expect(old.maxLevel).toBe(0)
+    local crossed = Rules.Add("buff", { minLevel = 50, maxLevel = 20 })
+    expect(crossed.maxLevel).toBe(50)
+    local broken = Rules.Add("buff", { minLevel = "x", maxLevel = -5 })
+    expect(broken.minLevel).toBe(0)
+    expect(broken.maxLevel).toBe(0)
+    for _, each in ipairs({ old, crossed, broken }) do
+        Rules.Remove(each)
+    end
+end
+
+@test("moving one level past the other drags the other along")
+local function fit()
+    local Rules = module().Rules
+    local each = { minLevel = 30, maxLevel = 40 }
+    each.minLevel = 45
+    expect(Rules.FitLevels(each, "minLevel")).toBe(true)
+    expect(each.maxLevel).toBe(45)
+    each.maxLevel = 10
+    expect(Rules.FitLevels(each, "maxLevel")).toBe(true)
+    expect(each.minLevel).toBe(10)
+    -- No limit is never "under".
+    each.maxLevel = 0
+    expect(Rules.FitLevels(each, "maxLevel")).toBe(false)
+end
+
+@test("the form pairs from and up to level on one line in two columns")
+local function form()
+    local mod = module()
+    local Editor, Rules = mod.Editor, mod.Rules
+    local area = CreateFrame("ScrollFrame", nil, UIParent)
+    area:SetSize(800, 900)
+    local child = CreateFrame("Frame", nil, area)
+    child:SetSize(780, 1)
+    local view = Editor.Build(child, function() end)
+    local each = Rules.Add("buff", { minLevel = 10, maxLevel = 20 })
+    Editor.Select(each)
+    local fields = view.form
+    expect(fields.maxLevelRow:IsShown()).toBe(true)
+    expect(fields.levelInfo ~= nil).toBe(true)
+    if EternityUI.store:Set(CORE, "general.optionsVersion", "v2") then
+        Editor.Select(each)
+        local _, _, _, minX, minY = fields.minLevelRow:GetPoint(1)
+        local _, _, _, maxX, maxY = fields.maxLevelRow:GetPoint(1)
+        expect(minY).toBe(maxY)
+        expect(minX).toBe(0)
+        expect(maxX > 0).toBe(true)
+        EternityUI.store:Set(CORE, "general.optionsVersion", "v1")
+    end
+    Editor.Delete(each)
+end

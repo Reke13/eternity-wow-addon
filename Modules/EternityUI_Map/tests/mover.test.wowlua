@@ -1,0 +1,110 @@
+-- With another addon moving the world map (OpenMap...), the module leaves the map's spot and scale
+-- to it: our SetPoint calls made OpenMap put its own spot back, so the map froze when dragged.
+-- Own file: it stubs C_AddOns.IsAddOnLoaded and print.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Map"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+-- Runs fn while the named addons count as loaded; returns how many chat lines it printed.
+local function withAddons(names, fn)
+    local addons = C_AddOns
+    local loaded, printFn = addons.IsAddOnLoaded, print
+    local on = {}
+    for _, name in ipairs(names) do
+        on[name] = true
+    end
+    addons.IsAddOnLoaded = function(name)
+        if on[name] then
+            return true
+        end
+        return loaded(name)
+    end
+    local lines = 0
+    print = function()
+        lines = lines + 1
+    end
+    local ok, err = pcall(fn)
+    addons.IsAddOnLoaded, print = loaded, printFn
+    if not ok then
+        error(err)
+    end
+    return lines
+end
+
+@test("no other mover: the module moves the map")
+local function alone()
+    expect(module().Core.MapMover()).toBe(nil)
+    expect(module().Window:Wanted()).toBe(true)
+end
+
+@test("OpenMap loaded: it is the map's mover and the module stands down")
+local function openMap()
+    withAddons({ "OpenMap" }, function()
+        expect(module().Core.MapMover()).toBe("OpenMap")
+        expect(module().Window:Active()).toBe(true)
+        expect(module().Window:Wanted()).toBe(false)
+    end)
+end
+
+-- How many times the module anchors or scales the shown, windowed map with a saved spot.
+local function placements(names)
+    local map = WorldMapFrame
+    expect(map).never.toBe(nil)
+    if map:IsMaximized() then
+        map:Minimize()
+    end
+    map:Show()
+    EternityUIMapDB = { version = 1, position = { left = 300, top = -200 } }
+    local calls = 0
+    local setPoint, setScale = map.SetPoint, map.SetScale
+    withAddons(names, function()
+        map.SetPoint = function(_, ...)
+            calls = calls + 1
+            return setPoint(map, ...)
+        end
+        map.SetScale = function(_, ...)
+            calls = calls + 1
+            return setScale(map, ...)
+        end
+        local ok, err = pcall(function()
+            module().Window:Apply()
+            module().Window:Layout()
+        end)
+        map.SetPoint, map.SetScale = setPoint, setScale
+        if not ok then
+            error(err)
+        end
+    end)
+    EternityUIMapDB = { version = 1 }
+    return calls
+end
+
+@test("alone, the module puts the windowed map in its saved spot")
+local function placesAlone()
+    expect(placements({}) > 0).toBe(true)
+    module().Window:Reset()
+end
+
+@test("with OpenMap the module never anchors nor scales the map")
+local function noFight()
+    placements({})
+    expect(placements({ "OpenMap" })).toBe(0)
+    local handle = module().Window.handle
+    expect(handle == nil or not handle:IsShown()).toBe(true)
+    WorldMapFrame:Hide()
+end
+
+@test("the chat names the other mover once")
+local function noteOnce()
+    module().Window.noted = nil
+    local lines = withAddons({ "OpenMap" }, function()
+        module().Window:NoteMover()
+        module().Window:NoteMover()
+    end)
+    expect(lines).toBe(1)
+    module().Window.noted = nil
+end

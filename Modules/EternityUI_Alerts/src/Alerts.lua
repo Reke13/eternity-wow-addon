@@ -33,12 +33,16 @@ local EVENTS = {
 local UNIT_EVENTS = { "UNIT_AURA", "UNIT_INVENTORY_CHANGED", "UNIT_SPELLCAST_SUCCEEDED" }
 -- In combat buff rules run on an estimate that changes with time: checked every second.
 local COMBAT_TICK = 1
+-- How long after a buff goes under a rule's "seconds left" the rules are checked again.
+local WAKE_MARGIN = 0.05
 
 ---@class EternityUIAlertsModule: EternityUIModuleDefinition
 ---@field events table? event frame (created the first time it's enabled)
 ---@field ticker table?
 ---@field running boolean?
 ---@field armed boolean? sounds may play: the first evaluation is silent
+---@field wakeTimer table? the timer of SetWake
+---@field wakeAt number? when it goes off
 local Module = {
     schema = ns.OptionsSchema,
     state = {},
@@ -62,25 +66,34 @@ function Module:Evaluate()
     local context = Conditions.Context()
     local items = {}
     local sound
+    Checks.nextWake = nil
     for _, rule in ipairs(Rules.List()) do
         local state = self.state[rule.id] or {}
         self.state[rule.id] = state
-        local firing, value, icon = false, nil, nil
+        local firing, value, icon, ends = false, nil, nil, nil
         if rule.enabled then
-            firing, value, icon = Checks.Run(rule)
+            firing, value, icon, ends = Checks.Run(rule)
         end
         -- nil: it can't tell now, so it stays as it was.
         if firing ~= nil then
-            state.firing, state.value, state.icon = firing, value, icon
+            state.firing, state.value, state.icon, state.ends = firing, value, icon, ends
         end
         local showing = state.firing and Conditions.Passes(rule, context) or false
         if showing then
             local action, use = Checks.Action(rule)
+            local showName
+            if rule.showName ~= "default" then
+                showName = rule.showName == "show"
+            end
             items[#items + 1] = {
                 name = rule.name ~= "" and rule.name or L["KIND_" .. rule.kind],
-                icon = state.icon or Checks.Icon(rule),
+                icon = Checks.OverrideIcon(rule) or state.icon or Checks.Icon(rule),
                 value = state.value,
+                ends = rule.countdown ~= false and state.ends or nil,
                 glow = rule.glow,
+                glowColor = rule.customGlow and rule.glowColor or nil,
+                scale = (rule.scale or 100) / 100,
+                showName = showName,
                 action = action,
                 use = use,
             }
@@ -96,6 +109,32 @@ function Module:Evaluate()
         PlaySound(kit)
     end
     self.armed = true
+    self:SetWake(Checks.nextWake)
+end
+
+--- One timer for the moment a buff rule changes on its own ("seconds left"), instead of polling:
+--- nothing sends an event when a buff goes under a rule's margin. A new round replaces it.
+---@param at number? GetTime() of that moment, or nil for none
+function Module:SetWake(at)
+    if at == self.wakeAt then
+        return
+    end
+    if self.wakeTimer then
+        self.wakeTimer:Cancel()
+        self.wakeTimer = nil
+    end
+    self.wakeAt = at
+    if not at or not self.running then
+        return
+    end
+    -- A moment after it, so the check sees the buff past the margin.
+    local delay = math.max(at - GetTime(), 0) + WAKE_MARGIN
+    self.wakeTimer = C_Timer.NewTimer(delay, function()
+        self.wakeTimer, self.wakeAt = nil, nil
+        if self.running then
+            self:Evaluate()
+        end
+    end)
 end
 
 --- Evaluates a moment later, once for a burst of changes.
@@ -181,6 +220,7 @@ function Module:OnDisable()
         self.combatTicker:Cancel()
         self.combatTicker = nil
     end
+    self:SetWake(nil)
     if self.events then
         self.events:UnregisterAllEvents()
     end
@@ -188,10 +228,26 @@ function Module:OnDisable()
     Display.Stop()
 end
 
-function Module:OnConfigChanged()
-    if self.running then
-        Display.Draw()
+function Module:OnConfigChanged(path)
+    if not self.running then
+        return
     end
+    if path == nil then
+        -- Another profile (or a reset): its own rules, judged from scratch. Rule ids repeat between
+        -- profiles, so the state of the old ones goes.
+        local before = Rules.db
+        if Rules.Current() ~= before then
+            self.state = {}
+            self:SetWake(nil)
+            if Editor.current then
+                Editor.Select(nil)
+            elseif Editor.view and Editor.view:IsVisible() then
+                Editor.view:Refresh()
+            end
+            self:Schedule()
+        end
+    end
+    Display.Draw()
 end
 
 --- /etavisos: what the module believes about each buff rule now (to find out why one doesn't show).

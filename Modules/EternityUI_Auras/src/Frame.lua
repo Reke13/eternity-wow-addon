@@ -64,20 +64,35 @@ function Frame:MoverKey()
     return addonName .. "_" .. self.kind.key
 end
 
+-- The "Order" option -> Blizzard's AuraContainerSortMethod (name, value when the enum is missing).
+-- The container sorts in secure code, so every order also works in combat with secret auras.
+-- The plain ones (name, expiration, default) put the player's own auras first; the "Only" ones
+-- don't. "applied" is the order the auras came (aura instance ID).
+local SORT_METHODS = {
+    expiration = { "Expiration", 4 },
+    default = { "Default", 0 },
+    name = { "Name", 6 },
+    expirationOnly = { "ExpirationOnly", 5 },
+    nameOnly = { "NameOnly", 7 },
+    applied = { "AuraInstanceIDOnly", 8 },
+    important = { "ImportantOnly", 3 },
+}
+
 local function sortMethod(key)
     local methods = AuraContainerSortMethod or {}
-    if key == "name" then
-        return methods.Name or 6
-    elseif key == "default" then
-        return methods.Default or 0
-    end
-    return methods.Expiration or 4
+    local method = SORT_METHODS[key] or SORT_METHODS.expiration
+    return methods[method[1]] or method[2]
 end
 
-local function sortDirection()
+local function sortDirection(reverse)
     local directions = AuraContainerSortDirection or {}
+    if reverse then
+        return directions.Reverse or 1
+    end
     return directions.Normal or 0
 end
+
+Frame.SortMethod, Frame.SortDirection = sortMethod, sortDirection
 
 --- What Filters.Groups needs, from this frame's options and list.
 function Frame:FilterOptions()
@@ -194,7 +209,7 @@ function Frame:GroupOptions(group, layoutIndex)
         maxFrameCount = group.max,
         candidateFilters = group.candidate,
         sortMethod = sortMethod(self:Show("sort")),
-        sortDirection = sortDirection(),
+        sortDirection = sortDirection(self:Show("sortReverse") == true),
         initializeFrame = function(button)
             self:InitializeButton(button)
         end,
@@ -247,7 +262,7 @@ function Frame:ApplyFilters()
         return
     end
     local groups = Filters.Groups(self:FilterOptions())
-    local method, direction = sortMethod(self:Show("sort")), sortDirection()
+    local method, direction = sortMethod(self:Show("sort")), sortDirection(self:Show("sortReverse") == true)
     for _, key in ipairs(GROUPS) do
         local group = groups[key]
         container:SetAuraGroupFilterString(key, group.filter)
