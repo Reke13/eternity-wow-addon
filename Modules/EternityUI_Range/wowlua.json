@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-range",
+    "version": "0.10.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Range",
+    "title": "Eternity Range",
+    "notes": "Eternity module: your target's distance in yards, worked out from your class's spell ranges, colored by zone (melee, dead zone, in range, out of range)."
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": ["src/Generated/Options.lua", "src/Locale.lua", "src/Distance.lua", "src/Range.lua"]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": ["EternityUI", "EternityUIRangeText"]
+  }
+}

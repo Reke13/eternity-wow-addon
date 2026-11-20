@@ -266,6 +266,8 @@ function Copy:CreateButton(frame)
     end
     frame:HookScript("OnShow", follow)
     frame:HookScript("OnHide", follow)
+    -- Faded out completely by another addon: the button goes with it.
+    hooksecurefunc(frame, "SetAlpha", follow)
     self.buttons[frame] = E.Widgets.Track(b)
     return b
 end
@@ -281,7 +283,9 @@ function Copy:ApplyButton(frame)
         end
         b = self:CreateButton(frame)
     end
-    local show = want and frame:IsShown()
+    local alpha = frame:GetAlpha()
+    local faded = type(alpha) == "number" and not E.Secret.Is(alpha) and alpha <= 0
+    local show = want and frame:IsShown() and not faded
     b:SetShown(show)
     if not show then
         return

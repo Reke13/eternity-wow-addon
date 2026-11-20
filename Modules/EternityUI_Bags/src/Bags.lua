@@ -24,6 +24,11 @@ local E = EternityUI
 local Shape, Theme, Widgets = E.Shape, E.Theme, E.Widgets
 local L, Inventory, Viewer, Locks = ns.L, ns.Inventory, ns.Viewer, ns.Locks
 local LOCK_ICON = "Interface\\PetBattles\\PetBattle-LockIcon"
+-- The mark on items saved in an equipment set: the client's atlas for the bags' equipment
+-- filter, or a chest piece's icon where the atlas is missing.
+local SET_ATLAS = "bags-icon-equipment"
+local SET_ICON = "Interface\\Icons\\INV_Chest_Chain"
+local SET_ICON_SIZE = 14
 
 local QUALITY_FROM = { poor = 0, common = 1, uncommon = 2, rare = 3, epic = 4 }
 local QUEST_COLOR = { 1, 0.82, 0.2, 1 }
@@ -37,6 +42,7 @@ local EVENTS = {
     "BAG_UPDATE_COOLDOWN",
     "INVENTORY_SEARCH_UPDATE",
     "BAG_NEW_ITEMS_UPDATED",
+    "EQUIPMENT_SETS_CHANGED",
     "PLAYER_MONEY",
     "PLAYERBANKSLOTS_CHANGED",
     "BANK_TABS_CHANGED",
@@ -147,6 +153,16 @@ local function itemLevel(info, bag, slot)
     end
 end
 
+--- Whether the item in that slot is saved in one of the character's equipment sets.
+local function inEquipmentSet(bag, slot)
+    local get = C_Container.GetContainerItemEquipmentSetInfo
+    if not get then
+        return false
+    end
+    local ok, inSet = pcall(get, bag, slot)
+    return ok and inSet == true
+end
+
 --- Eternity look for a Blizzard item button (once per button).
 local function skinButton(b)
     b.etBack = Shape.New(b, "BACKGROUND", -8)
@@ -157,6 +173,15 @@ local function skinButton(b)
     b.etLock:SetTexture(LOCK_ICON)
     b.etLock:SetSize(14, 14)
     b.etLock:Hide()
+    b.etSet = b:CreateTexture(nil, "OVERLAY", nil, 6)
+    if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(SET_ATLAS) then
+        b.etSet:SetAtlas(SET_ATLAS)
+    else
+        b.etSet:SetTexture(SET_ICON)
+        b.etSet:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    end
+    b.etSet:SetSize(SET_ICON_SIZE, SET_ICON_SIZE)
+    b.etSet:Hide()
     local normal = b:GetNormalTexture()
     if normal then
         normal:SetAlpha(0)
@@ -226,6 +251,9 @@ local function styleButton(b, size)
     local lockCorner = corner == "BOTTOMLEFT" and "TOPLEFT" or "BOTTOMLEFT"
     b.etLock:ClearAllPoints()
     b.etLock:SetPoint(lockCorner, 1, lockCorner == "TOPLEFT" and -1 or 1)
+    local setCorner = opt("items.equipmentSetPosition")
+    b.etSet:ClearAllPoints()
+    b.etSet:SetPoint(setCorner, setCorner:find("LEFT") and 1 or -1, setCorner:find("TOP") and -1 or 1)
     if b.IconBorder then
         b.IconBorder:SetAlpha(opt("quality.border") and 0 or 1)
     end
@@ -310,6 +338,7 @@ local function updateButton(b)
     end
     b.etLevel:SetShown(level and true or false)
     b.etLock:SetShown(ownSort() and Locks.Is(bag, slot))
+    b.etSet:SetShown(info ~= nil and opt("items.equipmentSet") and inEquipmentSet(bag, slot))
 end
 
 -- Grid: one window (bags or bank) -----------------------------------------------------------
@@ -409,6 +438,7 @@ local function fillSaved(b, entry, needle)
     SetItemButtonCount(b, count)
     SetItemButtonQuality(b, quality, id)
     b.etLevel:Hide()
+    b.etSet:Hide()
     b:SetMatchesSearch(savedMatches(b, needle))
     local border
     if id and quality and opt("quality.border") and quality >= QUALITY_FROM[opt("quality.from")] then

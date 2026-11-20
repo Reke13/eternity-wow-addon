@@ -258,6 +258,61 @@ ns.OptionsSchema = {
                         esES = "Nivel de objeto del color de la calidad",
                     },
                 },
+                {
+                    id = "equipmentSet",
+                    type = "toggle",
+                    default = true,
+                    label = {
+                        enUS = "Mark equipment set items",
+                        esES = "Marcar los objetos de sets de equipo",
+                    },
+                    description = {
+                        enUS = "A small icon on items saved in one of your sets in the equipment manager. The item's tooltip says which.",
+                        esES = "Un iconito en los objetos guardados en alguno de tus sets del gestor de equipo. El tooltip del objeto dice en cuál.",
+                    },
+                },
+                {
+                    id = "equipmentSetPosition",
+                    type = "select",
+                    default = "TOPRIGHT",
+                    label = {
+                        enUS = "Equipment set icon position",
+                        esES = "Posición del icono de set de equipo",
+                    },
+                    visibleWhen = {
+                        ["items.equipmentSet"] = true,
+                    },
+                    values = {
+                        {
+                            value = "TOPLEFT",
+                            label = {
+                                enUS = "Top left",
+                                esES = "Arriba a la izquierda",
+                            },
+                        },
+                        {
+                            value = "TOPRIGHT",
+                            label = {
+                                enUS = "Top right",
+                                esES = "Arriba a la derecha",
+                            },
+                        },
+                        {
+                            value = "BOTTOMLEFT",
+                            label = {
+                                enUS = "Bottom left",
+                                esES = "Abajo a la izquierda",
+                            },
+                        },
+                        {
+                            value = "BOTTOMRIGHT",
+                            label = {
+                                enUS = "Bottom right",
+                                esES = "Abajo a la derecha",
+                            },
+                        },
+                    },
+                },
             },
         },
         {

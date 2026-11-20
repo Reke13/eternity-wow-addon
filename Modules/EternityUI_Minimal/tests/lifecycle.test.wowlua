@@ -1,0 +1,82 @@
+-- Minimal hides the picked parts and gives them back as they were, on toggle and on disable.
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Minimal"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+local function reset()
+    local m = module()
+    if m.hidden then
+        m:SetHidden(false, true)
+    end
+    EternityUIMinimalDB.parts = {}
+end
+
+@test("nothing picked: hiding does nothing")
+local function nothingPicked()
+    reset()
+    local m = module()
+    m:SetHidden(true, true)
+    expect(m.hidden == true).toBe(false)
+end
+
+@test("a picked Blizzard part hides and comes back with its alpha and parent")
+local function hidesAndShows()
+    reset()
+    local m = module()
+    local frame = MinimapCluster
+    local parent = frame:GetParent()
+    frame:SetAlpha(0.8)
+    m:SetPart("blizzard.minimap", true)
+    m:SetHidden(true, true)
+    expect(frame:GetAlpha()).toBe(0)
+    expect(frame:GetParent() ~= parent).toBe(true)
+    m:SetHidden(false, true)
+    expect(frame:GetParent() == parent).toBe(true)
+    expect(math.floor(frame:GetAlpha() * 10 + 0.5)).toBe(8)
+    frame:SetAlpha(1)
+    reset()
+end
+
+@test("an alpha set while hidden is kept for later and the frame stays invisible")
+local function alphaWhileHidden()
+    reset()
+    local m = module()
+    local frame = ObjectiveTrackerFrame
+    m:SetPart("blizzard.tracker", true)
+    m:SetHidden(true, true)
+    frame:SetAlpha(0.5)
+    expect(frame:GetAlpha()).toBe(0)
+    m:SetHidden(false, true)
+    expect(frame:GetAlpha()).toBe(0.5)
+    frame:SetAlpha(1)
+    reset()
+end
+
+@test("unpicking a part while hidden shows it at once")
+local function unpickWhileHidden()
+    reset()
+    local m = module()
+    m:SetPart("blizzard.minimap", true)
+    m:SetPart("blizzard.tracker", true)
+    m:SetHidden(true, true)
+    m:SetPart("blizzard.minimap", false)
+    expect(MinimapCluster:GetAlpha() > 0).toBe(true)
+    expect(ObjectiveTrackerFrame:GetAlpha()).toBe(0)
+    reset()
+end
+
+@test("disabling the module shows everything")
+local function disableShows()
+    reset()
+    local m = module()
+    m:SetPart("blizzard.minimap", true)
+    m:SetHidden(true, true)
+    EternityUI.store:SetModuleEnabled(NAME, false)
+    expect(MinimapCluster:GetAlpha() > 0).toBe(true)
+    EternityUI.store:SetModuleEnabled(NAME, true)
+    reset()
+end

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DomenikIrrgang/wowlua/main/schema/wowlua-0.1.json",
+  "package": {
+    "name": "eternity-ui-minimal",
+    "version": "0.10.0",
+    "authors": ["Jaime"],
+    "license": "MIT",
+    "wowlua": "^0.13"
+  },
+  "addon": {
+    "name": "EternityUI_Minimal",
+    "title": "Eternity Minimal",
+    "notes": "Eternity module: hides the parts of the interface you pick, Eternity's and Blizzard's, with one button, key or command.",
+    "saved-variables": ["EternityUIMinimalDB"]
+  },
+  "addon-dependencies": {
+    "required": ["EternityUI"]
+  },
+  "flavors": {
+    "camelot": {}
+  },
+  "build": {
+    "load-order": [
+      "src/Generated/Options.lua",
+      "src/Locale.lua",
+      "src/Parts.lua",
+      "src/Hiding.lua",
+      "src/Button.lua",
+      "src/PartsTab.lua",
+      "src/Minimal.lua"
+    ]
+  },
+  "test": {
+    "blizzard-ui": true,
+    "addons": ["../../../../dist/dev/EternityUI"]
+  },
+  "check": {
+    "globals": [
+      "EternityUI",
+      "EternityUIMinimalDB",
+      "EternityUIMinimalToggle",
+      "NUM_CHAT_WINDOWS"
+    ]
+  }
+}

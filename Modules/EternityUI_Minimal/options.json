@@ -1,0 +1,81 @@
+{
+  "format": 1,
+  "module": "EternityUI_Minimal",
+  "title": { "enUS": "Minimal", "esES": "Minimalista" },
+  "description": {
+    "enUS": "Hides the parts of the interface you pick in the Parts tab, and shows them again, with one button, a key or /etmin. Blizzard only lets you hide the whole interface.",
+    "esES": "Oculta las partes de la interfaz que elijas en la pestaña Partes, y las vuelve a mostrar, con un botón, una tecla o /etmin. Blizzard solo deja ocultar la interfaz entera."
+  },
+  "groups": [
+    {
+      "id": "toggle",
+      "label": { "enUS": "Turning it on", "esES": "Cómo se activa" },
+      "options": [
+        {
+          "id": "button",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Button on screen", "esES": "Botón en pantalla" },
+          "description": {
+            "enUS": "A small eye that hides and shows the parts. Move it with /etmove. Right-click opens these options.",
+            "esES": "Un ojo pequeño que oculta y muestra las partes. Muévelo con /etmove. Clic derecho abre estas opciones."
+          }
+        },
+        {
+          "id": "key",
+          "type": "text",
+          "default": "",
+          "maxLength": 40,
+          "label": { "enUS": "Key", "esES": "Tecla" },
+          "description": {
+            "enUS": "A key in the game's notation, e.g. CTRL-H, ALT-Z or F10. Empty: no key.",
+            "esES": "Una tecla con la notación del juego, p. ej. CTRL-H, ALT-Z o F10. Vacío: sin tecla."
+          }
+        },
+        {
+          "id": "remember",
+          "type": "toggle",
+          "default": true,
+          "label": { "enUS": "Remember after a reload", "esES": "Recordarlo tras recargar" },
+          "description": {
+            "enUS": "Keeps the parts hidden after /reload or logging in if they were hidden.",
+            "esES": "Mantiene las partes ocultas tras /reload o al entrar si estaban ocultas."
+          }
+        }
+      ]
+    },
+    {
+      "id": "extra",
+      "label": { "enUS": "Other frames", "esES": "Otros marcos" },
+      "options": [
+        {
+          "id": "frames",
+          "type": "text",
+          "default": "",
+          "maxLength": 500,
+          "label": { "enUS": "Frame names", "esES": "Nombres de marcos" },
+          "description": {
+            "enUS": "Any other frame to hide, by its name and separated by commas, e.g. from an addon the Parts tab doesn't know. /fstack shows the name of the frame under the mouse.",
+            "esES": "Cualquier otro marco que ocultar, por su nombre y separados por comas, p. ej. de un addon que la pestaña Partes no conoce. /fstack muestra el nombre del marco bajo el ratón."
+          }
+        }
+      ]
+    },
+    {
+      "id": "combat",
+      "label": { "enUS": "Combat", "esES": "Combate" },
+      "options": [
+        {
+          "id": "show",
+          "type": "toggle",
+          "default": false,
+          "label": { "enUS": "Show everything in combat", "esES": "Mostrarlo todo en combate" },
+          "description": {
+            "enUS": "The hidden parts come back while you fight and hide again when it ends.",
+            "esES": "Las partes ocultas vuelven mientras luchas y se ocultan de nuevo al acabar."
+          }
+        }
+      ]
+    }
+  ]
+}

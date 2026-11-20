@@ -2,9 +2,13 @@
 
 What changed in each release of the Eternity suite, newest first. Every addon shares the release's version.
 
-## Unreleased
+## 0.10.0 (2026-11-20)
 
 ### Added
+- Range: a new addon that shows your target's distance in yards (e.g. 8-35) as a text you place, colored by zone: melee, dead zone, in range or out of range, each color your choice.
+- Minimal: a new addon that hides the parts of the interface you pick (Eternity's, Blizzard's, Zygor, Questie, Spy or any frame by name) and shows them again with one button, a key or `/etmin`, in combat too.
+- Bags: a small icon on items saved in one of your equipment sets, with an option to place it in any corner.
+- Bags: `/etbags taint` checks what a bag item's click reads, to find the cause of a blocked item use.
 - Options: a new layout for the modules' pages, picked in Personalization > General ("Options layout"): cards that fold, two columns, a lighter field per option whose tone you set, a mark and a reset button on the options you changed, and a Basic / Advanced level. The classic layout stays the default.
 - Options: in the new layout, a module's preview (Action Bars, Unit Frames) opens in a window beside the options from a button next to the close button.
 - Action Bars: "All bars" settings for size, spacing, scale, opacity and when the bars show. Every bar follows them until you change that setting in the bar itself.

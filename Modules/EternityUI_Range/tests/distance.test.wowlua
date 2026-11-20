@@ -1,0 +1,51 @@
+-- The bracket worked out from spell answers, and its text.
+import test, expect from "wowlua:test"
+
+local function distance()
+    return EternityUI:GetModule("EternityUI_Range")
+end
+
+local function bracket(answers: any)
+    local low, high = distance().Distance.Bracket(answers)
+    return low, high
+end
+
+@test("a hunter at 20 yards: Auto Shot in range, Wing Clip out")
+local function hunterInRange()
+    expect(distance() ~= nil).toBe(true)
+    local low, high = bracket({
+        { low = 0, high = 5, result = false },
+        { low = 8, high = 35, result = true },
+        { low = 0, high = 100, result = true },
+    })
+    expect(low).toBe(8)
+    expect(high).toBe(35)
+end
+
+@test("a hunter at 6 yards: Auto Shot out and Wing Clip out is the dead zone")
+local function hunterDeadZone()
+    local low, high = bracket({
+        { low = 0, high = 5, result = false },
+        { low = 8, high = 35, result = false },
+        { low = 0, high = 10, result = true },
+    })
+    expect(low).toBe(5)
+    expect(high).toBe(8)
+end
+
+@test("beyond every spell: open ended")
+local function farAway()
+    local low, high = bracket({
+        { low = 8, high = 35, result = false },
+        { low = 0, high = 100, result = false },
+    })
+    expect(low).toBe(100)
+    expect(high).toBe(math.huge)
+end
+
+@test("the text of a bracket")
+local function format()
+    local D = distance().Distance
+    expect(D.Format(8, 35)).toBe("8-35")
+    expect(D.Format(100, math.huge)).toBe("100+")
+end

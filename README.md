@@ -35,6 +35,8 @@ Type `/et` to open the options. `EternityUI` and `EternityUI_Options` are requir
 | `EternityUI_SwingTimer` | Bars for your main hand, off hand and ranged auto attacks, one stack or each on its own |
 | `EternityUI_Resources` | Power bar that follows the druid's forms, combo point pips and the druid's mana while shapeshifted |
 | `EternityUI_Blacklist` | Your own list of players of either faction with the reason for each (`/bl`): added from a player's right-click menu, with a warning in the tooltip, on target and in your group |
+| `EternityUI_Minimal` | Hides the parts of the interface you pick, Eternity's and Blizzard's, and shows them again with one button, a key or `/etmin` |
+| `EternityUI_Range` | Your target's distance in yards as a text you place, worked out from your class's spell ranges and colored by zone: melee, dead zone, in range, out of range |
 | `EternityUI_Bugs` | Collects Lua errors, warnings and blocked actions and lists them to read, copy and clear (`/etbugs`) |
 | `EternityUI_Auras` | The target's debuffs and your own buffs, each in a frame of its own: filtered by caster, type, duration and your own list of spells per frame, in combat too (`/etauras`) |
 | `EternityUI_Tooltip` | Tooltips |

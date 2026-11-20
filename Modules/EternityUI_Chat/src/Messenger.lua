@@ -853,6 +853,17 @@ function Messenger:UpdateLauncher()
     local show = self.running and opt("mode.style") == "messenger" and opt("messenger.launcher")
     if show and not self.launcher then
         self:CreateLauncher()
+        -- It sits on the main chat window: faded out completely with it (by another addon).
+        if _G.ChatFrame1 then
+            hooksecurefunc(_G.ChatFrame1, "SetAlpha", function()
+                self:UpdateLauncher()
+            end)
+        end
+    end
+    local main = _G.ChatFrame1
+    local alpha = main and main:GetAlpha()
+    if type(alpha) == "number" and not E.Secret.Is(alpha) and alpha <= 0 then
+        show = false
     end
     local b = self.launcher
     if not b then
@@ -917,8 +928,16 @@ end
 
 -- Link kinds GameTooltip:SetHyperlink can show.
 local TOOLTIP_LINKS = {
-    item = true, spell = true, enchant = true, quest = true, achievement = true, talent = true,
-    currency = true, unit = true, instancelock = true, mount = true,
+    item = true,
+    spell = true,
+    enchant = true,
+    quest = true,
+    achievement = true,
+    talent = true,
+    currency = true,
+    unit = true,
+    instancelock = true,
+    mount = true,
 }
 
 --- The tooltip of a link in a bubble (items, spells, quests...), beside the mouse.

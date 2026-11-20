@@ -101,6 +101,13 @@ local function restore(region)
     end
 end
 
+-- True when a frame is faded out completely (another addon hiding the chat by its alpha, as
+-- Eternity Minimal does): our decorations, separate frames, hide with it.
+local function faded(frame)
+    local alpha = frame and frame:GetAlpha()
+    return type(alpha) == "number" and not E.Secret.Is(alpha) and alpha <= 0
+end
+
 local function setHidden(region, hidden)
     if hidden then
         hide(region)
@@ -147,6 +154,7 @@ local function background(frame)
     end
     frame:HookScript("OnShow", follow)
     frame:HookScript("OnHide", follow)
+    hooksecurefunc(frame, "SetAlpha", follow)
     return decor
 end
 
@@ -160,7 +168,7 @@ function ChatSkin:ApplyBackground(frame)
     if not decor then
         return
     end
-    local show = style == "eternity" and frame:IsShown()
+    local show = style == "eternity" and frame:IsShown() and not faded(frame)
     decor:SetShown(show)
     if not show then
         return
@@ -316,6 +324,11 @@ local function editDecor(box)
     box:HookScript("OnHide", follow)
     box:HookScript("OnEditFocusGained", follow)
     box:HookScript("OnEditFocusLost", follow)
+    -- The box is a child of its chat window: it fades with it.
+    local parent = box:GetParent()
+    if parent then
+        hooksecurefunc(parent, "SetAlpha", follow)
+    end
     return decor
 end
 
@@ -350,7 +363,7 @@ function ChatSkin:ApplyEditBox(box, frame)
     if not decor then
         return
     end
-    local show = style == "eternity" and box:IsShown()
+    local show = style == "eternity" and box:IsShown() and not faded(box) and not faded(box:GetParent())
     decor:SetShown(show)
     if not show then
         return

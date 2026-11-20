@@ -7,6 +7,7 @@
 ---@field Inventory EternityUIBagsInventory what every character carries (Inventory.lua)
 ---@field Locks EternityUIBagsLocks locked slots and the sort around them (Locks.lua)
 ---@field Supplies EternityUIBagsSupplies supply crates: their material and who has it (Supplies.lua)
+---@field Taint table /etbags taint, the blocked item use diagnostic (Taint.lua)
 
 ---@type string, EternityUIBagsNamespace
 local _, ns = ...
@@ -75,6 +76,11 @@ local strings = {
         SUPPLY_TITLE = "Supply crate: what you have",
         SUPPLY_ENOUGH = "(enough for %d)",
         ITEM_N = "Item %d",
+        TAINT_HOVER = "Eternity Bags: put the mouse on the item within %d seconds.",
+        TAINT_NO_BUTTON = "Eternity Bags: the mouse wasn't on a bag item.",
+        TAINT_NONE = "Eternity Bags: nothing tainted on that item's click path.",
+        TAINT_FOUND = "Eternity Bags: tainted on the click path:",
+        TAINT_HELP = "/etbags taint: checks what an item's click reads (to find blocked actions)",
     },
     esES = {
         BAGS = "Bolsas",
@@ -139,6 +145,11 @@ local strings = {
         SUPPLY_TITLE = "Cajón de suministros: lo que tienes",
         SUPPLY_ENOUGH = "(da para %d)",
         ITEM_N = "Objeto %d",
+        TAINT_HOVER = "Eternity Bags: pon el ratón sobre el objeto en %d segundos.",
+        TAINT_NO_BUTTON = "Eternity Bags: el ratón no estaba sobre un objeto de las bolsas.",
+        TAINT_NONE = "Eternity Bags: nada contaminado en el clic de ese objeto.",
+        TAINT_FOUND = "Eternity Bags: contaminado en el clic:",
+        TAINT_HELP = "/etbags taint: revisa lo que lee el clic de un objeto (para acciones bloqueadas)",
     },
 }
 ns.L = EternityUI.NewLocale(strings.enUS, strings.esES)

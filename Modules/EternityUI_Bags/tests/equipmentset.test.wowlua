@@ -1,0 +1,76 @@
+-- Items saved in an equipment set get a small icon (items.equipmentSet), in the corner the
+-- options pick (items.equipmentSetPosition).
+import test, expect from "wowlua:test"
+
+local NAME = "EternityUI_Bags"
+
+local function module()
+    return EternityUI:GetModule(NAME)
+end
+
+--- Refreshes the bags with the set answer replaced: slot (0, 1) is in a set when `inSet`.
+local function refreshWith(grid, inSet)
+    local real = C_Container.GetContainerItemEquipmentSetInfo
+    C_Container.GetContainerItemEquipmentSetInfo = function(bag, slot)
+        if bag == 0 and slot == 1 and inSet then
+            return true, "Tank"
+        end
+        return false, ""
+    end
+    grid:Refresh()
+    C_Container.GetContainerItemEquipmentSetInfo = real
+end
+
+--- Slot (0, 1) with an item in it, as the bags see it.
+local function withItem(fn)
+    local real = C_Container.GetContainerItemInfo
+    C_Container.GetContainerItemInfo = function(bag, slot)
+        if bag == 0 and slot == 1 then
+            local info: any = { iconFileID = 135349, itemID = 6948, quality = 1, stackCount = 1 }
+            return info
+        end
+        return real(bag, slot)
+    end
+    fn()
+    C_Container.GetContainerItemInfo = real
+end
+
+@test("an item in a set shows the icon, others don't")
+local function marksSetItems()
+    OpenAllBags()
+    local grid = module().bags
+    withItem(function()
+        refreshWith(grid, true)
+        local b = grid.buttons[0][1]
+        expect(b.etSet:IsShown()).toBe(true)
+        refreshWith(grid, false)
+        expect(b.etSet:IsShown()).toBe(false)
+    end)
+    CloseAllWindows()
+end
+
+@test("the option off hides the icon")
+local function optionOff()
+    local store = EternityUI.store
+    store:Set(NAME, "items.equipmentSet", false)
+    OpenAllBags()
+    local grid = module().bags
+    withItem(function()
+        refreshWith(grid, true)
+        expect(grid.buttons[0][1].etSet:IsShown()).toBe(false)
+    end)
+    store:Set(NAME, "items.equipmentSet", true)
+    CloseAllWindows()
+end
+
+@test("the icon sits in the chosen corner")
+local function corner()
+    local store = EternityUI.store
+    store:Set(NAME, "items.equipmentSetPosition", "BOTTOMLEFT")
+    OpenAllBags()
+    local b = module().bags.buttons[0][1]
+    local point = b.etSet:GetPoint(1)
+    expect(point).toBe("BOTTOMLEFT")
+    store:Set(NAME, "items.equipmentSetPosition", "TOPRIGHT")
+    CloseAllWindows()
+end
