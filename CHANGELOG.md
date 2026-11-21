@@ -2,6 +2,11 @@
 
 What changed in each release of the Eternity suite, newest first. Every addon shares the release's version.
 
+## Unreleased
+
+### Fixed
+- Range: out of combat it failed with "table index is nil" on every refresh (the duel and follow distances have no spell).
+
 ## 0.10.0 (2026-11-20)
 
 ### Added
