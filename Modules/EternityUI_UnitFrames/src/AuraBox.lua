@@ -195,7 +195,30 @@ end
 
 -- Buttons ---------------------------------------------------------------------------------------
 
+-- In a battleground or arena the game can make the container's buttons forbidden (their auras
+-- are secret there): addon code can't touch them, so they're styled once they're free again.
+local forbidden = {}
+local retry
+
 local function styleButton(f, button)
+    if button:IsForbidden() then
+        forbidden[button] = f
+        if not retry then
+            retry = CreateFrame("Frame")
+            retry:SetScript("OnEvent", function()
+                for waitingButton, owner in pairs(forbidden) do
+                    if not waitingButton:IsForbidden() then
+                        forbidden[waitingButton] = nil
+                        styleButton(owner, waitingButton)
+                    end
+                end
+            end)
+            retry:RegisterEvent("PLAYER_ENTERING_WORLD")
+            retry:RegisterEvent("PLAYER_REGEN_ENABLED")
+        end
+        return
+    end
+    forbidden[button] = nil
     local key = f.uf.key
     local size = U(key, "Auras", "size")
     button:SetSize(size, size)

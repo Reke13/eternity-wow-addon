@@ -7,6 +7,7 @@ What changed in each release of the Eternity suite, newest first. Every addon sh
 ### Fixed
 - Range: out of combat it failed with "table index is nil" on every refresh (the duel and follow distances have no spell).
 - Bags: every character showed twice in the gold list (and the total counted them twice) since the game started answering an empty realm name. Eternity now keeps the last realm name seen, and the characters, guild banks and Discs keys saved under the empty realm go back to the real one.
+- Unit frames: logging in or reloading in a battleground (Alterac Valley...) failed with "calling 'SetSize' on bad self": the game locks the aura icons there, so they get Eternity's look once it frees them.
 
 ## 0.10.0 (2026-11-20)
 
